@@ -1,8 +1,8 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
-import '../../Components/backgroud_widget.dart';
 import '../../Components/movie_card_widget.dart';
-import '../../Data/data.dart';
+import '../Components/backgroud_widget.dart';
+import '../Data/data.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -15,11 +15,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Lọc danh sách phim chỉ lấy phim đang chiếu
+    final showingMovies = movies.where((movie) => movie.isShowingNow).toList();
+
     return Scaffold(
       body: Stack(
         children: [
           BackgroundWidget(
-              controller: controller), // Đặt BackgroundWidget ở dưới cùng
+            controller: controller,
+            movies: showingMovies,
+          ),
           SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.only(
@@ -36,7 +41,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: Image.asset(
                             "assets/icons/user.png",
                             height: 80,
-                            color: Colors.white,
+                            color: Colors.orange,
                           ),
                         ),
                       ),
@@ -48,35 +53,33 @@ class _HomeScreenState extends State<HomeScreen> {
                             controller: _searchController,
                             decoration: InputDecoration(
                               suffixIcon: IconButton(
-                                onPressed: () {
-                                  // Xử lý tìm kiếm ở đây
-                                },
+                                onPressed: () {},
                                 icon: const Icon(Icons.search),
-                                color: Colors.white,
+                                color: Colors.orangeAccent,
                               ),
                               border: InputBorder.none,
-                              hintText: "Search Products",
+                              hintText: "Tìm kiếm phim...",
                               hintStyle: const TextStyle(
-                                color: Colors.white,
+                                color: Colors.orangeAccent,
                                 fontSize: 15.0,
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(15),
                                 borderSide: const BorderSide(
-                                  color: Colors.white24,
+                                  color: Colors.orange,
                                   width: 1.0,
                                 ),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(15),
                                 borderSide: const BorderSide(
-                                  color: Colors.white24,
+                                  color: Colors.orangeAccent,
                                   width: 1.0,
                                 ),
                               ),
                             ),
                             style: const TextStyle(
-                              color: Colors.white54,
+                              color: Colors.orange,
                               fontSize: 15.0,
                             ),
                           ),
@@ -84,25 +87,34 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ],
                   ),
-                  SizedBox(
-                      height:
-                          40), // Khoảng cách giữa thanh tìm kiếm và carousel
-                  CarouselSlider(
-                    items:
-                        movies.map((e) => MovieCardWidget(movie: e)).toList(),
-                    options: CarouselOptions(
-                      enableInfiniteScroll: false,
-                      viewportFraction: 0.75,
-                      height: MediaQuery.of(context).size.height * 0.7,
-                      enlargeCenterPage: true,
-                      onPageChanged: (index, _) => controller.animateToPage(
-                        index,
-                        duration: Duration(seconds: 1),
-                        curve: Curves.ease,
+                  const SizedBox(height: 40),
+                  if (showingMovies.isNotEmpty)
+                    CarouselSlider(
+                      items: showingMovies
+                          .map((movie) => MovieCardWidget(movie: movie))
+                          .toList(),
+                      options: CarouselOptions(
+                        enableInfiniteScroll: false,
+                        viewportFraction: 0.75,
+                        height: MediaQuery.of(context).size.height * 0.7,
+                        enlargeCenterPage: true,
+                        onPageChanged: (index, _) => controller.animateToPage(
+                          index,
+                          duration: const Duration(seconds: 1),
+                          curve: Curves.ease,
+                        ),
+                      ),
+                    )
+                  else
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(20.0),
+                        child: Text(
+                          "Hiện tại không có phim nào đang chiếu!",
+                          style: TextStyle(fontSize: 18, color: Colors.white),
+                        ),
                       ),
                     ),
-                  ),
-                  SizedBox(height: 20),
                 ],
               ),
             ),

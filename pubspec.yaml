@@ -13,6 +13,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   loop_page_view: ^1.2.5
   carousel_slider: ^5.0.0
+  cached_network_image: ^3.3.0
 
 dev_dependencies:
   flutter_test:
@@ -29,3 +30,7 @@ flutter:
     - assets/icons/user.png
     - assets/images/logo.png
     - assets/icons/buyticket.png
+    - assets/icons/film.png
+    - assets/icons/sale.png
+    - assets/icons/theater.png
+    - assets/icons/myticket.png

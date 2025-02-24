@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../Model/Movie.dart';
+import '../Model/Movie.dart'; // Đảm bảo import đúng tên file
 
 class MovieCardWidget extends StatelessWidget {
   final Movie movie;
@@ -11,33 +11,37 @@ class MovieCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.all(5.0),
+        padding: const EdgeInsets.all(8.0),
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(30),
-              topRight: Radius.circular(30),
-            ),
+            color: Colors.black,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 8,
+                offset: Offset(0, 4),
+              ),
+            ],
           ),
-          padding: EdgeInsets.symmetric(horizontal: 7, vertical: 10),
+          padding: const EdgeInsets.all(3),
           child: Column(
             children: [
               Expanded(child: buildImage(movie: movie)),
-              const SizedBox(height: 4),
+              const SizedBox(height: 8),
               Text(
-                movie.movieName,
+                movie.title,
                 textAlign: TextAlign.center,
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 22,
+                  color: Colors.orangeAccent,
+                ),
               ),
-              const SizedBox(height: 4),
-              buildGenre(movie: movie),
-              const SizedBox(height: 4),
+              const SizedBox(height: 8),
+              buildGenreAndDuration(movie: movie),
+              const SizedBox(height: 8),
               buildRating(movie: movie),
-              Text(
-                '...',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
             ],
           ),
         ),
@@ -47,40 +51,63 @@ class MovieCardWidget extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 12),
         padding: const EdgeInsets.symmetric(horizontal: 12),
         child: ClipRRect(
-          borderRadius: BorderRadius.all(Radius.circular(25)),
-          child: Image.asset(movie.imageUrl, fit: BoxFit.cover),
+          borderRadius: BorderRadius.circular(15),
+          child: Image.asset(movie.imagePath, fit: BoxFit.cover),
         ),
       );
 
-  Widget buildGenre({required Movie movie}) => Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: movie.genres
-            .map((genre) => Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 5),
-                  child: Container(
-                    decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(15)),
-                    padding: EdgeInsets.all(5),
-                    child: Text(
-                      genre,
-                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                    ),
-                  ),
-                ))
-            .toList(),
-      );
-
-  Widget buildRating({required Movie movie}) => Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+  Widget buildGenreAndDuration({required Movie movie}) => Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(movie.rating.toStringAsFixed(1)),
-          SizedBox(width: 10),
-          ...List.generate(
-            movie.stars,
-            (index) => Icon(Icons.star_rate, size: 18, color: Colors.orange),
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.orangeAccent),
+              borderRadius: BorderRadius.circular(15),
+              color: Colors.black54,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+            child: Text(
+              movie.genre,
+              style: const TextStyle(color: Colors.orangeAccent, fontSize: 14),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.orangeAccent),
+              borderRadius: BorderRadius.circular(15),
+              color: Colors.black54,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+            child: Text(
+              movie.duration,
+              style: const TextStyle(color: Colors.orangeAccent, fontSize: 14),
+            ),
           ),
         ],
+      );
+
+  Widget buildRating({required Movie movie}) => Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.orangeAccent),
+          borderRadius: BorderRadius.circular(15),
+          color: Colors.black54,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              movie.rating.toStringAsFixed(1),
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.orangeAccent,
+              ),
+            ),
+            const SizedBox(width: 5),
+            const Icon(Icons.star, size: 18, color: Colors.orangeAccent),
+          ],
+        ),
       );
 }

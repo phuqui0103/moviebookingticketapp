@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:movieticketbooking/Components/bottom_nav_bar.dart';
 import 'package:movieticketbooking/Components/date_picker.dart';
 import 'package:movieticketbooking/Components/time_picker.dart';
 
@@ -25,7 +26,10 @@ class _ShowtimePickerState extends State<Showtimepickerscreen> {
                 children: [
                   GestureDetector(
                     onTap: () {
-                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => BottomNavBar()),
+                      );
                     },
                     child: Container(
                       height: 50,
