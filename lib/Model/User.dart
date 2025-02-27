@@ -1,52 +1,53 @@
-import 'District.dart';
-import 'Provice.dart';
-
 class User {
-  String name; // Họ tên
-  String phone; // Số điện thoại
-  String email; // Email
-  String password; // Mật khẩu
-  String birthDate; // Ngày sinh
-  String gender; // Giới tính
-  Province province; // Tỉnh
-  District district; // Huyện
+  String fullName;
+  String phoneNumber;
+  String email;
+  String password;
+  DateTime birthDate;
+  String gender;
+  String province;
+  String district;
+  bool agreedToTerms;
 
   User({
-    required this.name,
-    required this.phone,
+    required this.fullName,
+    required this.phoneNumber,
     required this.email,
     required this.password,
     required this.birthDate,
     required this.gender,
     required this.province,
     required this.district,
+    required this.agreedToTerms,
   });
 
-  // Phương thức chuyển đổi từ Map sang User
-  factory User.fromMap(Map<String, dynamic> map) {
-    return User(
-      name: map['name'],
-      phone: map['phone'],
-      email: map['email'],
-      password: map['password'],
-      birthDate: map['birthDate'],
-      gender: map['gender'],
-      province: Province.fromMap(map['province']),
-      district: District.fromMap(map['district']),
-    );
+  // Chuyển đổi User thành Map (dùng khi lưu vào database hoặc API)
+  Map<String, dynamic> toJson() {
+    return {
+      "fullName": fullName,
+      "phoneNumber": phoneNumber,
+      "email": email,
+      "password": password, // Cần mã hóa khi lưu thực tế
+      "birthDate": birthDate.toIso8601String(),
+      "gender": gender,
+      "province": province,
+      "district": district,
+      "agreedToTerms": agreedToTerms,
+    };
   }
 
-  // Phương thức chuyển đổi từ User sang Map
-  Map<String, dynamic> toMap() {
-    return {
-      'name': name,
-      'phone': phone,
-      'email': email,
-      'password': password,
-      'birthDate': birthDate,
-      'gender': gender,
-      'province': province.toMap(),
-      'district': district.toMap(),
-    };
+  // Tạo User từ Map (dùng khi đọc từ database hoặc API)
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User(
+      fullName: json["fullName"],
+      phoneNumber: json["phoneNumber"],
+      email: json["email"],
+      password: json["password"], // Cần giải mã nếu mã hóa
+      birthDate: DateTime.parse(json["birthDate"]),
+      gender: json["gender"],
+      province: json["province"],
+      district: json["district"],
+      agreedToTerms: json["agreedToTerms"],
+    );
   }
 }

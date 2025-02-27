@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:movieticketbooking/Components/bottom_nav_bar.dart';
 import 'package:movieticketbooking/Model/District.dart';
 import 'package:movieticketbooking/Model/Provice.dart';
 import 'package:movieticketbooking/Model/User.dart';
@@ -40,21 +41,12 @@ class LoginScreen extends StatelessWidget {
 
     try {
       // Tạo đối tượng User
-      User user = User(
-        name: 'q@gmail.com', // Bạn có thể lấy tên từ một nguồn khác nếu cần
-        phone:
-            '0393867403', // Bạn có thể lấy số điện thoại từ một nguồn khác nếu cần
-        email: 'q@gmail.com',
-        password: '123123123',
-        birthDate: '', // Bạn có thể lấy ngày sinh từ một nguồn khác nếu cần
-        gender: '', // Bạn có thể lấy giới tính từ một nguồn khác nếu cần
-        province: Province(id: '', name: ''), // Tạo tỉnh mặc định
-        district:
-            District(id: '', name: '', provinceId: ''), // Tạo huyện mặc định
-      );
-      if ((emailController.text == user.email ||
-              emailController.text == user.phone) &&
-          passwordController.text == user.password) {}
+      if ((emailController.text == 'email' ||
+              emailController.text == '0231231231') &&
+          passwordController.text == '123123123') {
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => BottomNavBar()));
+      }
       // Điều hướng đến trang chính sau khi đăng nhập thành công
     } catch (e) {
       // Hiển thị thông báo lỗi

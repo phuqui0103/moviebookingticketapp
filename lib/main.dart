@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:movieticketbooking/Components/bottom_nav_bar.dart';
-import 'package:movieticketbooking/View/MovieListScreen.dart';
-import 'package:movieticketbooking/View/ShowtimePickerScreen.dart';
-import 'package:movieticketbooking/View/HomeScreen.dart';
-import 'package:movieticketbooking/View/LoginScreen.dart';
+import 'package:movieticketbooking/View/movie_list_screen.dart';
+import 'package:movieticketbooking/View/showtime_picker_screen.dart';
+import 'package:movieticketbooking/View/home_screen.dart';
+import 'package:movieticketbooking/View/login_screen.dart';
 import 'package:movieticketbooking/View/RegisterScreen.dart';
 
 void main() async {
