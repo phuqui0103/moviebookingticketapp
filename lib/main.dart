@@ -32,7 +32,6 @@ class MyApp extends StatelessWidget {
         '/register': (context) => RegisterScreen(),
         '/login': (context) => LoginScreen(),
         '/home': (context) => HomeScreen(),
-        '/details': (context) => Showtimepickerscreen(title: 'PhuQui')
       },
     );
   }

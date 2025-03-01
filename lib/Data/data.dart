@@ -1,7 +1,15 @@
+import '../Model/Cinema.dart';
+import '../Model/Comment.dart';
+import '../Model/District.dart';
 import '../Model/Movie.dart';
+import '../Model/Provice.dart';
+import '../Model/Room.dart';
+import '../Model/Seat.dart';
+import '../Model/Showtime.dart';
 
 final List<Movie> movies = [
   Movie(
+    id: "movie_1",
     title: "Ròm",
     imagePath: "assets/images/movie1.jpg",
     trailerUrl:
@@ -38,6 +46,7 @@ final List<Movie> movies = [
     ],
   ),
   Movie(
+    id: "movie_2",
     title: "Mai",
     imagePath: "assets/images/movie2.webp",
     trailerUrl:
@@ -64,6 +73,7 @@ final List<Movie> movies = [
     ],
   ),
   Movie(
+    id: "movie_3",
     title: "Sáng Đèn",
     imagePath: "assets/images/movie3.webp",
     trailerUrl:
@@ -86,6 +96,7 @@ final List<Movie> movies = [
     ],
   ),
   Movie(
+    id: "movie_4",
     title: "Lật Mặt 4",
     imagePath: "assets/images/movie3.webp",
     trailerUrl: "https://filesamples.com/samples/video/mp4/sample_640x360.mp4",
@@ -108,4 +119,64 @@ final List<Movie> movies = [
           rating: 8.0),
     ],
   ),
+];
+final List<Province> province = [
+  Province(id: "t1", name: "An Giang"),
+  Province(id: "t2", name: "Đồng Tháp")
+];
+final List<District> district = [
+  District(id: "h1", name: "Long Xuyên", provinceId: "t1"),
+  District(id: "h2", name: "Cao Lãnh", provinceId: "t2")
+];
+final List<Cinema> cinemas = [
+  Cinema(
+    id: "cinema_1",
+    name: "CGV Nguyễn Trãi",
+    districtId: "h1",
+    address: "123 Nguyễn Trãi, Quận 1, TP.HCM",
+  ),
+  Cinema(
+    id: "cinema_2",
+    name: "Lotte Cinema Nam Sài Gòn",
+    districtId: "h2",
+    address: "469 Nguyễn Hữu Thọ, Quận 7, TP.HCM",
+  ),
+];
+
+final List<Room> rooms = [
+  Room(id: "room_101", cinemaId: "cinema_1", name: "Phòng 1", seatCount: 100),
+  Room(id: "room_201", cinemaId: "cinema_2", name: "Phòng 1", seatCount: 120),
+];
+
+final List<Showtime> showtimes = [
+  Showtime(
+    id: "show_1",
+    movieId: "movie_1",
+    roomId: "room_101",
+    dateTime: DateTime(2025, 3, 2, 11, 0),
+    format: "2D",
+    availableSeats: 50,
+  ),
+  Showtime(
+    id: "show_2",
+    movieId: "movie_2",
+    roomId: "room_201",
+    dateTime: DateTime(2025, 3, 3, 10, 0),
+    format: "2D",
+    availableSeats: 75,
+  ),
+  Showtime(
+    id: "show_3",
+    movieId: "movie_3",
+    roomId: "room_101",
+    dateTime: DateTime(2025, 3, 5, 13, 30),
+    format: "2D",
+    availableSeats: 75,
+  ),
+];
+
+final List<Seat> seats = [
+  Seat(id: "seat_1", roomId: "room_101", type: "Standard", status: "available"),
+  Seat(id: "seat_2", roomId: "room_101", type: "VIP", status: "available"),
+  Seat(id: "seat_3", roomId: "room_201", type: "Standard", status: "booked"),
 ];

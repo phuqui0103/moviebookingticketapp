@@ -1,72 +1,75 @@
 import 'package:flutter/material.dart';
+import '../Model/Showtime.dart';
 
 class TimePicker extends StatefulWidget {
-  const TimePicker({Key? key}) : super(key: key);
+  final List<Showtime> availableShowtimes; // Danh sách suất chiếu
+  final Function(Showtime) onTimeSelected; // Callback khi chọn suất chiếu
+
+  const TimePicker({
+    Key? key,
+    required this.availableShowtimes,
+    required this.onTimeSelected,
+  }) : super(key: key);
 
   @override
   _TimePickerState createState() => _TimePickerState();
 }
 
 class _TimePickerState extends State<TimePicker> {
-  int selectedIndex = 0;
-  final List<String> _time = [
-    "11:00",
-    "12:30",
-    "14:30",
-    "16:00",
-    "17:30",
-    "19:00",
-    "20:30",
-  ];
+  Showtime? selectedShowtime;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 350, // Tăng chiều cao để phù hợp với lưới
+      height: 200,
       child: GridView.builder(
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3, // Số cột trong lưới
-          childAspectRatio: 2, // Tỷ lệ chiều rộng và chiều cao của mỗi ô
-          crossAxisSpacing: 10, // Khoảng cách giữa các cột
-          mainAxisSpacing: 10, // Khoảng cách giữa các hàng
+          crossAxisCount: 3,
+          childAspectRatio: 2.5,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
         ),
-        itemCount: _time.length,
+        itemCount: widget.availableShowtimes.length,
         physics: const BouncingScrollPhysics(),
-        itemBuilder: (context, index) => GestureDetector(
-          onTap: () {
-            setState(() {
-              selectedIndex = index;
-            });
-          },
-          child: _buildTimePicker(index),
-        ),
+        itemBuilder: (context, index) {
+          final showtime = widget.availableShowtimes[index];
+          return GestureDetector(
+            onTap: () {
+              setState(() {
+                selectedShowtime = showtime;
+              });
+              widget.onTimeSelected(showtime);
+            },
+            child: _buildTimeButton(showtime),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildTimePicker(int index) {
+  Widget _buildTimeButton(Showtime showtime) {
+    bool isSelected = selectedShowtime == showtime;
+    String formattedTime =
+        "${showtime.dateTime.hour.toString().padLeft(2, '0')}:${showtime.dateTime.minute.toString().padLeft(2, '0')}";
+
     return Container(
       decoration: BoxDecoration(
         border: Border.all(
-          color: selectedIndex == index ? Colors.orangeAccent : Colors.white10,
+          color: isSelected ? Colors.orangeAccent : Colors.white10,
           width: 1.5,
         ),
         borderRadius: BorderRadius.circular(10),
-        color: selectedIndex == index ? Colors.black54 : Colors.transparent,
+        color: isSelected ? Colors.black54 : Colors.transparent,
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            _time[index],
-            style: TextStyle(
-              color:
-                  selectedIndex == index ? Colors.orangeAccent : Colors.white,
-              fontSize: 22.0,
-              fontWeight: FontWeight.bold,
-            ),
+      child: Center(
+        child: Text(
+          formattedTime,
+          style: TextStyle(
+            color: isSelected ? Colors.orangeAccent : Colors.white,
+            fontSize: 18.0,
+            fontWeight: FontWeight.bold,
           ),
-        ],
+        ),
       ),
     );
   }

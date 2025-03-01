@@ -1,4 +1,7 @@
+import 'Comment.dart';
+
 class Movie {
+  final String id;
   final String title; // Tên phim
   final String imagePath; // Đường dẫn ảnh
   final String trailerUrl; // Đường dẫn video trailer
@@ -15,6 +18,7 @@ class Movie {
 
   /// Constructor với các tham số bắt buộc
   const Movie({
+    required this.id,
     required this.title,
     required this.imagePath,
     required this.trailerUrl, // Thêm đường dẫn video trailer
@@ -33,6 +37,7 @@ class Movie {
   /// Chuyển đổi từ JSON sang đối tượng Movie
   factory Movie.fromJson(Map<String, dynamic> json) {
     return Movie(
+      id: json['id'] as String,
       title: json['title'] as String,
       imagePath: json['imagePath'] as String,
       trailerUrl: json['trailerUrl'] as String, // Lấy đường dẫn video từ JSON
@@ -53,6 +58,7 @@ class Movie {
 
   /// Chuyển đổi từ đối tượng Movie sang JSON
   Map<String, dynamic> toJson() => {
+        'id': id,
         'title': title,
         'imagePath': imagePath,
         'trailerUrl': trailerUrl, // Xuất đường dẫn video trailer
@@ -66,34 +72,5 @@ class Movie {
         'releaseDate': releaseDate,
         'director': director,
         'comments': comments.map((comment) => comment.toJson()).toList(),
-      };
-}
-
-/// 🔹 Model bình luận của người dùng
-class Comment {
-  final String userName; // Tên người dùng
-  final String content; // Nội dung bình luận
-  final double rating; // Điểm đánh giá của người dùng
-
-  const Comment({
-    required this.userName,
-    required this.content,
-    required this.rating,
-  });
-
-  /// Chuyển đổi từ JSON sang Comment object
-  factory Comment.fromJson(Map<String, dynamic> json) {
-    return Comment(
-      userName: json['userName'] as String,
-      content: json['content'] as String,
-      rating: (json['rating'] as num).toDouble(),
-    );
-  }
-
-  /// Chuyển đổi từ Comment object sang JSON
-  Map<String, dynamic> toJson() => {
-        'userName': userName,
-        'content': content,
-        'rating': rating,
       };
 }

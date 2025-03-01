@@ -28,7 +28,7 @@ class _MovieListScreenState extends State<MovieListScreen> {
 
     return Scaffold(
       appBar: _buildAppBar(),
-      backgroundColor: Colors.black,
+      backgroundColor: const Color(0xff252429),
       body: Column(
         children: [
           _buildTabBar(),
@@ -53,7 +53,7 @@ class _MovieListScreenState extends State<MovieListScreen> {
     return AppBar(
       title: _buildSearchField(),
       centerTitle: true,
-      backgroundColor: Colors.black87,
+      backgroundColor: const Color(0xff252429),
       elevation: 0,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -172,7 +172,7 @@ class _MovieListScreenState extends State<MovieListScreen> {
         margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12),
         padding: const EdgeInsets.all(10.0),
         decoration: BoxDecoration(
-          color: Colors.grey[900],
+          color: Colors.black,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(

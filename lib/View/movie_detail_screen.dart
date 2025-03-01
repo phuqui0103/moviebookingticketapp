@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:movieticketbooking/Data/data.dart';
+import 'package:movieticketbooking/Model/Showtime.dart';
+import 'package:movieticketbooking/View/showtime_picker_screen.dart';
 import '../Model/Movie.dart';
 import 'trailer_screen.dart';
 
@@ -140,6 +143,34 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
                   ],
                 ),
               ),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          ShowtimePickerScreen(movie: widget.movie),
+                    ),
+                  );
+                },
+                child: Container(
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: Colors.orangeAccent,
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      "Đặt Vé",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 22.0,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              )
             ],
           ),
         ],

@@ -16,7 +16,6 @@ class _BottomNavBarState extends State<BottomNavBar> {
   final List<Widget> pages = [
     HomeScreen(),
     MovieListScreen(),
-    Showtimepickerscreen(title: 'Ròm'),
     LoginScreen(),
     RegisterScreen(),
   ];
@@ -34,34 +33,48 @@ class _BottomNavBarState extends State<BottomNavBar> {
       builder: (BuildContext context) {
         return Container(
           padding: EdgeInsets.all(16.0),
-          height: 200, // Chiều cao của modal
+          height: 220, // Chiều cao của modal
+          decoration: BoxDecoration(
+            color: Colors.black,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Chọn cách mua vé',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              Center(
+                child: Text(
+                  'Chọn cách mua vé',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.orangeAccent,
+                  ),
+                ),
               ),
               SizedBox(height: 20),
-              ListTile(
-                leading: Icon(Icons.movie),
-                title: Text('Mua vé theo phim'),
+              buildTicketOption(
+                icon: Icons.movie,
+                text: 'Mua vé theo phim',
                 onTap: () {
-                  // Xử lý hành động khi chọn "Mua vé theo phim"
-                  Navigator.pop(context);
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => Showtimepickerscreen(
-                              title: 'Ròm',
-                            )),
-                  ); // Đóng modal
+                      builder: (context) => MovieListScreen(),
+                    ),
+                  );
                 },
               ),
-              ListTile(
-                leading: Icon(Icons.theater_comedy),
-                title: Text('Mua vé theo rạp'),
+              SizedBox(height: 10),
+              buildTicketOption(
+                icon: Icons.theater_comedy,
+                text: 'Mua vé theo rạp',
                 onTap: () {
-                  Navigator.pop(context); // Đóng modal
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => MovieListScreen(),
+                    ),
+                  );
                 },
               ),
             ],
@@ -304,4 +317,38 @@ class BNBCustomPainter extends CustomPainter {
   bool shouldRepaint(CustomPainter oldDelegate) {
     return false;
   }
+}
+
+Widget buildTicketOption(
+    {required IconData icon,
+    required String text,
+    required VoidCallback onTap}) {
+  return InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(10),
+    child: Container(
+      padding: EdgeInsets.symmetric(vertical: 12, horizontal: 15),
+      decoration: BoxDecoration(
+        color: Colors.white12,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.orangeAccent, size: 28),
+          SizedBox(width: 15),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          Icon(Icons.arrow_forward_ios, color: Colors.orangeAccent, size: 20),
+        ],
+      ),
+    ),
+  );
 }
