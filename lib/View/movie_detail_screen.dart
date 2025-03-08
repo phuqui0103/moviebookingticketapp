@@ -143,37 +143,42 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
                   ],
                 ),
               ),
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          ShowtimePickerScreen(movie: widget.movie),
-                    ),
-                  );
-                },
-                child: Container(
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: Colors.orangeAccent,
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: const Center(
-                    child: Text(
-                      "Đặt Vé",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22.0,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              )
             ],
           ),
         ],
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      ShowtimePickerScreen(movie: widget.movie),
+                ),
+              );
+            },
+            child: Container(
+              height: 50,
+              decoration: BoxDecoration(
+                color: Colors.orangeAccent,
+                borderRadius: BorderRadius.circular(30),
+              ),
+              child: const Center(
+                child: Text(
+                  "Đặt Vé",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22.0,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -246,7 +251,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
 
   Widget buildReviewsTab() {
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -346,7 +351,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
                 Expanded(
                   child: TextField(
                     controller: _commentController,
-                    style: TextStyle(color: Colors.white),
+                    style: TextStyle(color: Colors.white, fontSize: 16),
                     decoration: InputDecoration(
                       hintText: "Viết đánh giá...",
                       hintStyle: TextStyle(color: Colors.white54),

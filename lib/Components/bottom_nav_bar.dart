@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:movieticketbooking/View/cinema_list_screen.dart';
 import 'package:movieticketbooking/View/home_screen.dart';
 import 'package:movieticketbooking/View/login_screen.dart';
 import 'package:movieticketbooking/View/movie_list_screen.dart';
@@ -17,7 +18,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
     HomeScreen(),
     MovieListScreen(),
     LoginScreen(),
-    RegisterScreen(),
+    CinemaListScreen(),
   ];
 
   setBottomBarIndex(index) {
@@ -72,7 +73,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => MovieListScreen(),
+                      builder: (context) => CinemaListScreen(),
                     ),
                   );
                 },

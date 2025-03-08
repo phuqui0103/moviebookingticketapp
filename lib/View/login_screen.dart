@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:movieticketbooking/Components/bottom_nav_bar.dart';
 import 'package:movieticketbooking/Model/District.dart';
-import 'package:movieticketbooking/Model/Provice.dart';
+import 'package:movieticketbooking/Model/Province.dart';
 import 'package:movieticketbooking/Model/User.dart';
 import 'package:movieticketbooking/main.dart';
 

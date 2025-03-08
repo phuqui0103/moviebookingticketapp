@@ -31,13 +31,14 @@ class _DatePickerState extends State<DatePicker> {
             widget.onDateSelected(DateFormat('yyyy-MM-dd').format(days[index]));
           },
           child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 8),
-            padding: const EdgeInsets.all(10),
+            width: 60,
+            margin: const EdgeInsets.symmetric(horizontal: 6),
+            padding: const EdgeInsets.all(5),
             decoration: BoxDecoration(
               border: Border.all(
                 color: selectedIndex == index
                     ? Colors.orangeAccent
-                    : Colors.white10,
+                    : Colors.grey.shade800,
                 width: 1.5,
               ),
               borderRadius: BorderRadius.circular(10),

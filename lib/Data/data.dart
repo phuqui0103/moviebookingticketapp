@@ -2,7 +2,7 @@ import '../Model/Cinema.dart';
 import '../Model/Comment.dart';
 import '../Model/District.dart';
 import '../Model/Movie.dart';
-import '../Model/Provice.dart';
+import '../Model/Province.dart';
 import '../Model/Room.dart';
 import '../Model/Seat.dart';
 import '../Model/Showtime.dart';
@@ -120,56 +120,163 @@ final List<Movie> movies = [
     ],
   ),
 ];
-final List<Province> province = [
-  Province(id: "t1", name: "An Giang"),
-  Province(id: "t2", name: "Đồng Tháp")
+List<Province> provinces = [
+  Province(id: "1", name: "Hà Nội"),
+  Province(id: "2", name: "Hồ Chí Minh"),
+  Province(id: "3", name: "Đà Nẵng"),
+  Province(id: "4", name: "Cần Thơ"),
+  Province(id: "5", name: "Hải Phòng"),
 ];
+
 final List<District> district = [
   District(id: "h1", name: "Long Xuyên", provinceId: "t1"),
   District(id: "h2", name: "Cao Lãnh", provinceId: "t2")
 ];
-final List<Cinema> cinemas = [
+List<Cinema> cinemas = [
+  // Rạp ở Hà Nội
   Cinema(
-    id: "cinema_1",
-    name: "CGV Nguyễn Trãi",
-    districtId: "h1",
-    address: "123 Nguyễn Trãi, Quận 1, TP.HCM",
-  ),
+      id: "101",
+      name: "CGV Vincom Bà Triệu",
+      provinceId: "1",
+      address: "Vincom Center, 191 Bà Triệu, Hà Nội"),
   Cinema(
-    id: "cinema_2",
-    name: "Lotte Cinema Nam Sài Gòn",
-    districtId: "h2",
-    address: "469 Nguyễn Hữu Thọ, Quận 7, TP.HCM",
-  ),
+      id: "102",
+      name: "Lotte Cinema Tây Sơn",
+      provinceId: "1",
+      address: "229 Tây Sơn, Đống Đa, Hà Nội"),
+  Cinema(
+      id: "103",
+      name: "BHD Star Phạm Ngọc Thạch",
+      provinceId: "1",
+      address: "Vincom, 2 Phạm Ngọc Thạch, Hà Nội"),
+
+  // Rạp ở Hồ Chí Minh
+  Cinema(
+      id: "201",
+      name: "CGV VivoCity",
+      provinceId: "2",
+      address: "SC VivoCity, Quận 7, TP. Hồ Chí Minh"),
+  Cinema(
+      id: "202",
+      name: "BHD Star 3/2",
+      provinceId: "2",
+      address: "Lầu 5, Siêu thị Maximark, 3/2, Quận 10"),
+  Cinema(
+      id: "203",
+      name: "Lotte Cinema Nam Sài Gòn",
+      provinceId: "2",
+      address: "Quận 7, TP. Hồ Chí Minh"),
+
+  // Rạp ở Đà Nẵng
+  Cinema(
+      id: "301",
+      name: "CGV Vĩnh Trung Plaza",
+      provinceId: "3",
+      address: "Vĩnh Trung Plaza, Thanh Khê, Đà Nẵng"),
+  Cinema(
+      id: "302",
+      name: "Lotte Cinema Đà Nẵng",
+      provinceId: "3",
+      address: "6 Nại Nam, Hải Châu, Đà Nẵng"),
+
+  // Rạp ở Cần Thơ
+  Cinema(
+      id: "401",
+      name: "CGV Sense City Cần Thơ",
+      provinceId: "4",
+      address: "Sense City, Ninh Kiều, Cần Thơ"),
+
+  // Rạp ở Hải Phòng
+  Cinema(
+      id: "501",
+      name: "Lotte Cinema Hải Phòng",
+      provinceId: "5",
+      address: "Vincom Imperia, Hải Phòng"),
 ];
 
 final List<Room> rooms = [
-  Room(id: "room_101", cinemaId: "cinema_1", name: "Phòng 1", seatCount: 100),
-  Room(id: "room_201", cinemaId: "cinema_2", name: "Phòng 1", seatCount: 120),
+  Room(id: "101", cinemaId: "101", name: "Phòng 1", seatCount: 100),
+  Room(id: "201", cinemaId: "202", name: "Phòng 1", seatCount: 120),
 ];
 
 final List<Showtime> showtimes = [
   Showtime(
-    id: "show_1",
+    id: "show_4",
+    movieId: "movie_4",
+    roomId: "201",
+    dateTime: DateTime(2025, 3, 9, 13, 0),
+    format: "2D",
+    availableSeats: 50,
+  ),
+  Showtime(
+    id: "show_5",
     movieId: "movie_1",
-    roomId: "room_101",
-    dateTime: DateTime(2025, 3, 2, 11, 0),
+    roomId: "101",
+    dateTime: DateTime(2025, 3, 10, 1, 0),
+    format: "2D",
+    availableSeats: 50,
+  ),
+  Showtime(
+    id: "show_6",
+    movieId: "movie_1",
+    roomId: "101",
+    dateTime: DateTime(2025, 3, 10, 16, 0),
+    format: "2D",
+    availableSeats: 50,
+  ),
+  Showtime(
+    id: "show_10",
+    movieId: "movie_1",
+    roomId: "101",
+    dateTime: DateTime(2025, 3, 10, 19, 0),
+    format: "2D",
+    availableSeats: 50,
+  ),
+  Showtime(
+    id: "show_11",
+    movieId: "movie_1",
+    roomId: "101",
+    dateTime: DateTime(2025, 3, 13, 11, 0),
+    format: "2D",
+    availableSeats: 50,
+  ),
+  Showtime(
+    id: "show_7",
+    movieId: "movie_1",
+    roomId: "101",
+    dateTime: DateTime(2025, 3, 10, 15, 0),
+    format: "2D",
+    availableSeats: 50,
+  ),
+  Showtime(
+    id: "show_8",
+    movieId: "movie_1",
+    roomId: "101",
+    dateTime: DateTime(2025, 3, 11, 14, 0),
+    format: "2D",
+    availableSeats: 50,
+  ),
+  Showtime(
+    id: "show_9",
+    movieId: "movie_1",
+    roomId: "101",
+    dateTime: DateTime(2025, 3, 11, 13, 0),
     format: "2D",
     availableSeats: 50,
   ),
   Showtime(
     id: "show_2",
     movieId: "movie_2",
-    roomId: "room_201",
-    dateTime: DateTime(2025, 3, 3, 10, 0),
+    roomId: "201",
+    dateTime: DateTime(2025, 3, 10, 10, 0),
     format: "2D",
     availableSeats: 75,
   ),
   Showtime(
     id: "show_3",
     movieId: "movie_3",
-    roomId: "room_101",
-    dateTime: DateTime(2025, 3, 5, 13, 30),
+    roomId: "101",
+    dateTime: DateTime(2025, 3, 10, 13, 30),
     format: "2D",
     availableSeats: 75,
   ),

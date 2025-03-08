@@ -1,15 +1,13 @@
-import 'District.dart';
-
 class Cinema {
   final String id;
   final String name;
-  final String districtId;
+  final String provinceId;
   final String address;
 
   Cinema({
     required this.id,
     required this.name,
-    required this.districtId,
+    required this.provinceId,
     required this.address,
   });
 
@@ -17,7 +15,7 @@ class Cinema {
     return Cinema(
       id: json['id'],
       name: json['name'],
-      districtId: json['district'],
+      provinceId: json['provice'],
       address: json['address'],
     );
   }
@@ -26,7 +24,7 @@ class Cinema {
     return {
       'id': id,
       'name': name,
-      'district': districtId,
+      'provice': provinceId,
       'address': address,
     };
   }
