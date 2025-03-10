@@ -20,7 +20,7 @@ class Showtime {
       id: json['id'],
       movieId: json['movieId'],
       roomId: json['roomId'],
-      dateTime: json['dateTime'],
+      dateTime: DateTime.parse(json['dateTime']), // Chuyển đổi từ chuỗi
       format: json['format'],
       availableSeats: json['availableSeats'],
     );
@@ -31,7 +31,7 @@ class Showtime {
       'id': id,
       'movieId': movieId,
       'roomId': roomId,
-      'dateTime': dateTime,
+      'dateTime': dateTime.toIso8601String(), // Chuyển đổi thành chuỗi ISO 8601
       'format': format,
       'availableSeats': availableSeats,
     };

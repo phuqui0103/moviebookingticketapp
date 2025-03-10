@@ -5,9 +5,12 @@ import '../Components/date_picker.dart';
 import '../Components/time_picker.dart';
 import '../Data/data.dart';
 import '../Model/Movie.dart';
+import '../Model/Province.dart';
 import '../Model/Room.dart';
 import '../Model/Showtime.dart';
 import '../Model/Cinema.dart';
+import 'seat_selection_screen.dart';
+import 'province_list_screen.dart';
 
 class ShowtimePickerScreen extends StatefulWidget {
   final Movie movie;
@@ -21,26 +24,55 @@ class ShowtimePickerScreen extends StatefulWidget {
 class _ShowtimePickerScreenState extends State<ShowtimePickerScreen> {
   DateTime selectedDate = DateTime.now();
   Showtime? selectedShowtime;
-  List<Showtime> availableShowtimes = [];
-  Cinema? nearestCinema;
+  Cinema? selectedCinema;
+  List<Cinema> availableCinemas = [];
+  Map<String, List<Showtime>> cinemaShowtimes = {};
+  String selectedProvince = "Tất cả tỉnh";
 
   @override
   void initState() {
     super.initState();
-    _fetchShowtimesAndNearestCinema();
+    _fetchCinemasAndShowtimes();
   }
 
-  void _fetchShowtimesAndNearestCinema() {
+  void _fetchCinemasAndShowtimes() {
     setState(() {
-      availableShowtimes = _getFilteredShowtimes(selectedDate);
+      cinemaShowtimes.clear();
+      availableCinemas.clear();
+      List<Showtime> filteredShowtimes = _getFilteredShowtimes(selectedDate);
 
-      if (availableShowtimes.isNotEmpty) {
-        String roomId = availableShowtimes.first.roomId;
-        Room? room = rooms.firstWhere((r) => r.id == roomId,
+      for (var showtime in filteredShowtimes) {
+        Room? room = rooms.firstWhere((r) => r.id == showtime.roomId,
             orElse: () => Room(id: "", cinemaId: "", name: "", seatCount: 0));
-        nearestCinema = cinemas.firstWhere((c) => c.id == room.cinemaId,
+        Cinema? cinema = cinemas.firstWhere((c) => c.id == room.cinemaId,
             orElse: () => Cinema(
                 id: "", name: "Không tìm thấy", provinceId: "", address: ""));
+
+        if (cinema.id.isNotEmpty) {
+          if (!cinemaShowtimes.containsKey(cinema.id)) {
+            cinemaShowtimes[cinema.id] = [];
+            availableCinemas.add(cinema);
+          }
+          cinemaShowtimes[cinema.id]!.add(showtime);
+        }
+      }
+
+      // Nếu đã chọn tỉnh, chỉ hiển thị rạp thuộc tỉnh đó
+      if (selectedProvince != "Tất cả tỉnh") {
+        availableCinemas = availableCinemas
+            .where((c) =>
+                c.provinceId ==
+                provinces
+                    .firstWhere(
+                      (p) => p.name == selectedProvince,
+                      orElse: () => Province(id: "", name: ""),
+                    )
+                    .id)
+            .toList();
+      }
+
+      if (availableCinemas.isNotEmpty) {
+        selectedCinema = availableCinemas.first;
       }
     });
   }
@@ -58,8 +90,29 @@ class _ShowtimePickerScreenState extends State<ShowtimePickerScreen> {
   void _onDateSelected(String formattedDate) {
     setState(() {
       selectedDate = DateFormat('yyyy-MM-dd').parse(formattedDate);
-      availableShowtimes = _getFilteredShowtimes(selectedDate);
+      _fetchCinemasAndShowtimes();
       selectedShowtime = null;
+    });
+  }
+
+  void _onCinemaSelected(Cinema cinema) {
+    setState(() {
+      selectedCinema = cinema;
+      selectedShowtime = null;
+    });
+  }
+
+  void _fetchCinemasByProvince(String provinceId) {
+    setState(() {
+      selectedProvince = provinces
+          .firstWhere(
+            (p) => p.id == provinceId,
+            orElse: () => Province(id: "", name: "Tất cả tỉnh"),
+          )
+          .name;
+
+      availableCinemas =
+          cinemas.where((c) => c.provinceId == provinceId).toList();
     });
   }
 
@@ -67,52 +120,45 @@ class _ShowtimePickerScreenState extends State<ShowtimePickerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xff252429),
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent, // Làm trong suốt AppBar
+        elevation: 0,
+        centerTitle: true, // Căn giữa tiêu đề
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          widget.movie.title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 30.0,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
       body: Stack(
         children: [
           Container(
             decoration: BoxDecoration(
               image: DecorationImage(
-                image: AssetImage(widget.movie.imagePath), // Ảnh poster phim
+                image: AssetImage(widget.movie.imagePath),
                 fit: BoxFit.cover,
               ),
             ),
           ),
-          // Lớp màu đen mờ giúp chữ dễ đọc hơn
           Container(
             color: Colors.black.withOpacity(0.7),
           ),
-
           SingleChildScrollView(
             child: Column(
               children: [
                 Padding(
                   padding:
-                      const EdgeInsets.only(top: 50.0, left: 20, right: 20),
-                  child: Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: Container(
-                          height: 50,
-                          width: 50,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child:
-                              const Icon(Icons.arrow_back, color: Colors.white),
-                        ),
-                      ),
-                      const Spacer(),
-                      Text(widget.movie.title,
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 24.0,
-                              fontWeight: FontWeight.bold)),
-                      const Spacer(),
-                    ],
-                  ),
+                      const EdgeInsets.only(top: 90.0, left: 20, right: 20),
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 10),
                 Container(
                   height: 120,
                   width: MediaQuery.of(context).size.width * 0.9,
@@ -131,40 +177,85 @@ class _ShowtimePickerScreenState extends State<ShowtimePickerScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                if (nearestCinema != null)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                GestureDetector(
+                  onTap: () async {
+                    final selectedProvinceId = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => ProvinceListScreen()),
+                    );
+
+                    if (selectedProvinceId is String) {
+                      _fetchCinemasByProvince(selectedProvinceId);
+                    }
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 10),
                     child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Icon(Icons.location_on_rounded,
-                            color: Colors.white),
-                        const SizedBox(width: 10),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text("Rạp phim gần nhất",
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 18.0,
-                                    fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 5),
-                            Text(nearestCinema!.name,
-                                style: const TextStyle(
-                                    color: Colors.white54, fontSize: 15.0)),
-                          ],
-                        ),
-                        const Spacer(),
-                        const Icon(Icons.arrow_forward_ios_rounded,
-                            color: Colors.white),
+                        Text("Chọn rạp - ${selectedProvince}",
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 18.0,
+                                fontWeight: FontWeight.bold)),
+                        const Icon(Icons.arrow_forward_ios,
+                            color: Colors.white, size: 20),
                       ],
                     ),
                   ),
+                ),
+                // Danh sách các rạp có suất chiếu
+                if (availableCinemas.isNotEmpty)
+                  Column(
+                    children: availableCinemas.map((cinema) {
+                      bool isSelected = cinema == selectedCinema;
+                      return GestureDetector(
+                        onTap: () => _onCinemaSelected(cinema),
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(
+                              vertical: 5, horizontal: 20),
+                          padding: const EdgeInsets.all(15),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? Colors.orangeAccent
+                                : Colors.black54,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.location_on_rounded,
+                                  color: Colors.white),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(cinema.name,
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18.0,
+                                        fontWeight: FontWeight.bold)),
+                              ),
+                              Icon(
+                                  isSelected
+                                      ? Icons.check_circle
+                                      : Icons.circle_outlined,
+                                  color: Colors.white),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+
                 const SizedBox(height: 20),
-                if (availableShowtimes.isNotEmpty)
+
+                // Hiển thị các suất chiếu theo rạp đã chọn
+                if (selectedCinema != null &&
+                    cinemaShowtimes[selectedCinema!.id] != null)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 25),
                     child: TimePicker(
-                      availableShowtimes: availableShowtimes,
+                      availableShowtimes: cinemaShowtimes[selectedCinema!.id]!,
                       onTimeSelected: (Showtime showtime) {
                         setState(() {
                           selectedShowtime = showtime;
@@ -174,79 +265,84 @@ class _ShowtimePickerScreenState extends State<ShowtimePickerScreen> {
                     ),
                   )
                 else
-                  Column(children: [
-                    const SizedBox(
-                      height: 120,
-                    ),
-                    Text("Không có suất chiếu khả dụng",
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 50),
+                    child: const Text("Không có suất chiếu khả dụng",
                         style: TextStyle(color: Colors.white, fontSize: 16)),
-                  ]),
+                  ),
+
                 const SizedBox(height: 20),
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 100, vertical: 20),
-                ),
               ],
             ),
           ),
         ],
       ),
       bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-          child: Row(
-            mainAxisAlignment: selectedShowtime == null
-                ? MainAxisAlignment.center
-                : MainAxisAlignment.spaceBetween,
-            children: [
-              if (selectedShowtime != null)
+        child: Container(
+          color: Colors.black, // Thêm màu đen cho background
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            child: Row(
+              mainAxisAlignment: selectedShowtime == null
+                  ? MainAxisAlignment.center
+                  : MainAxisAlignment.spaceBetween,
+              children: [
+                if (selectedShowtime != null)
+                  Expanded(
+                    child: Container(
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: Colors.grey,
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: Center(
+                        child: Text(
+                          "${selectedShowtime!.availableSeats} ghế trống",
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18.0,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ),
+                if (selectedShowtime != null) const SizedBox(width: 10),
                 Expanded(
-                  child: Container(
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: Colors.black54,
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: Center(
-                      child: Text(
-                        "${selectedShowtime!.availableSeats} ghế trống",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18.0,
-                          fontWeight: FontWeight.bold,
-                        ),
+                  child: GestureDetector(
+                    onTap: selectedShowtime != null
+                        ? () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => SeatSelectionScreen(
+                                  showtime: selectedShowtime!,
+                                  movieTitle: widget.movie.title,
+                                  moviePoster: widget.movie.imagePath,
+                                ),
+                              ),
+                            );
+                          }
+                        : null,
+                    child: Container(
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: selectedShowtime != null
+                            ? Colors.orangeAccent
+                            : Colors.grey,
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: const Center(
+                        child: Text("Đặt vé",
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 22.0,
+                                fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ),
                 ),
-              if (selectedShowtime != null) const SizedBox(width: 10),
-              Expanded(
-                child: GestureDetector(
-                  onTap: selectedShowtime != null
-                      ? () => print("Đặt vé cho suất ${selectedShowtime!.id}")
-                      : null,
-                  child: Container(
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: selectedShowtime != null
-                          ? Colors.orangeAccent
-                          : Colors.grey,
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: Center(
-                      child: Text(
-                        "Đặt vé",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 22.0,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

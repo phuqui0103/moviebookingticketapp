@@ -8,6 +8,7 @@ import '../Model/Movie.dart';
 import '../Model/Room.dart';
 import '../Model/Showtime.dart';
 import '../Model/Cinema.dart';
+import 'seat_selection_screen.dart';
 
 class CinemaBookingScreen extends StatefulWidget {
   final Cinema cinema;
@@ -198,7 +199,23 @@ class _CinemaBookingScreenState extends State<CinemaBookingScreen> {
               Expanded(
                 child: GestureDetector(
                   onTap: selectedShowtime != null
-                      ? () => print("Đặt vé cho suất ${selectedShowtime!.id}")
+                      ? () {
+                          final selectedMovie = moviesShowing.firstWhere(
+                            (movie) => movie.id == selectedShowtime!.movieId,
+                          );
+
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => SeatSelectionScreen(
+                                showtime: selectedShowtime!,
+                                movieTitle: selectedMovie.title,
+                                moviePoster: selectedMovie
+                                    .imagePath, // Truyền movie.title vào
+                              ),
+                            ),
+                          );
+                        }
                       : null,
                   child: Container(
                     height: 50,
