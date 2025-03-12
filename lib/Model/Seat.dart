@@ -1,31 +1,35 @@
 class Seat {
-  final String id;
-  final String roomId; // Thuộc phòng nào
-  final String type; // VIP, Standard, Couple,...
-  String status; // available | booked | reserved
+  final String id; // ID của ghế (vd: "A-1", "B-2")
+  final String row; // Hàng ghế (A, B, C, ...)
+  final int column; // Số cột ghế (1, 2, 3, ...)
+  final bool isVip; // Ghế VIP hay không
+  bool isBooked; // Ghế đã đặt hay chưa (có thể thay đổi)
 
   Seat({
     required this.id,
-    required this.roomId,
-    required this.type,
-    required this.status,
+    required this.row,
+    required this.column,
+    required this.isVip,
+    required this.isBooked,
   });
 
   factory Seat.fromJson(Map<String, dynamic> json) {
     return Seat(
       id: json['id'],
-      roomId: json['roomId'],
-      type: json['type'],
-      status: json['status'],
+      row: json['row'],
+      column: json['column'],
+      isVip: json['isVip'],
+      isBooked: json['isBooked'],
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'roomId': roomId,
-      'type': type,
-      'status': status,
+      'row': row,
+      'column': column,
+      'isVip': isVip,
+      'isBooked': isBooked,
     };
   }
 }

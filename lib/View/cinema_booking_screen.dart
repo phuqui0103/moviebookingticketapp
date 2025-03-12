@@ -47,9 +47,9 @@ class _CinemaBookingScreenState extends State<CinemaBookingScreen> {
         .where((s) =>
             rooms.any((room) =>
                 room.id == s.roomId && room.cinemaId == widget.cinema.id) &&
-            s.dateTime.year == date.year &&
-            s.dateTime.month == date.month &&
-            s.dateTime.day == date.day)
+            s.startTime.year == date.year &&
+            s.startTime.month == date.month &&
+            s.startTime.day == date.day)
         .toList();
   }
 

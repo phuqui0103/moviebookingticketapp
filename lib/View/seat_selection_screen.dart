@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:movieticketbooking/View/payment_screen.dart';
 import '../Model/Showtime.dart';
 
 class SeatSelectionScreen extends StatefulWidget {
@@ -178,7 +179,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
   Widget _buildBottomBar() {
     double totalPrice = selectedSeats.fold(0, (sum, seatId) {
       int rowNumber = seatId.codeUnitAt(0) - 65;
-      double price = rowNumber < 6 ? normalSeatPrice : vipSeatPrice;
+      double price = rowNumber < rows / 3 ? normalSeatPrice : vipSeatPrice;
       return sum + price;
     });
 
@@ -219,9 +220,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
           Expanded(
             flex: 7, // Tỷ lệ 7 phần
             child: ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context, selectedSeats);
-              },
+              onPressed: () {},
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.orangeAccent,
                 padding:
@@ -231,7 +230,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                 ),
               ),
               child: const Text(
-                'Tiếp Theo',
+                'Thanh Toán',
                 style: TextStyle(fontSize: 20, color: Colors.black),
               ),
             ),

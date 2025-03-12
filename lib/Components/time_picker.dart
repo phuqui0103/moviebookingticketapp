@@ -60,7 +60,7 @@ class _TimePickerState extends State<TimePicker> {
   Widget _buildTimeButton(Showtime showtime) {
     bool isSelected = selectedShowtime == showtime;
     String formattedTime =
-        "${showtime.dateTime.hour.toString().padLeft(2, '0')}:${showtime.dateTime.minute.toString().padLeft(2, '0')}";
+        "${showtime.startTime.hour.toString().padLeft(2, '0')}:${showtime.startTime.minute.toString().padLeft(2, '0')}";
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),

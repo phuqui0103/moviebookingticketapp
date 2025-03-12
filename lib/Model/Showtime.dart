@@ -1,28 +1,38 @@
+import 'package:movieticketbooking/Model/Room.dart';
+
+import '../Data/data.dart';
+
 class Showtime {
   final String id;
-  final String movieId; // Phim nào
-  final String roomId; // Phòng nào
-  final DateTime dateTime; // Thời gian chiếu
-  final String format; // 2D, 3D, IMAX,...
-  int availableSeats; // Số ghế còn trống
+  final String movieId;
+  final String cinemaId;
+  final String roomId;
+  final DateTime startTime;
+  final List<String> bookedSeats;
 
   Showtime({
     required this.id,
     required this.movieId,
+    required this.cinemaId,
     required this.roomId,
-    required this.dateTime,
-    required this.format,
-    required this.availableSeats,
+    required this.startTime,
+    required this.bookedSeats,
   });
+
+  int get availableSeats {
+    Room room = rooms.firstWhere((room) => room.id == roomId);
+    int totalSeats = room.cols * room.rows;
+    return totalSeats - bookedSeats.length;
+  }
 
   factory Showtime.fromJson(Map<String, dynamic> json) {
     return Showtime(
       id: json['id'],
       movieId: json['movieId'],
+      cinemaId: json['cinemaId'],
       roomId: json['roomId'],
-      dateTime: DateTime.parse(json['dateTime']), // Chuyển đổi từ chuỗi
-      format: json['format'],
-      availableSeats: json['availableSeats'],
+      startTime: DateTime.parse(json['startTime']),
+      bookedSeats: List<String>.from(json['bookedSeats'] ?? []),
     );
   }
 
@@ -30,10 +40,10 @@ class Showtime {
     return {
       'id': id,
       'movieId': movieId,
+      'cinemaId': cinemaId,
       'roomId': roomId,
-      'dateTime': dateTime.toIso8601String(), // Chuyển đổi thành chuỗi ISO 8601
-      'format': format,
-      'availableSeats': availableSeats,
+      'startTime': startTime.toIso8601String(),
+      'bookedSeats': bookedSeats,
     };
   }
 }

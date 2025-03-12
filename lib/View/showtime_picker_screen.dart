@@ -43,7 +43,13 @@ class _ShowtimePickerScreenState extends State<ShowtimePickerScreen> {
 
       for (var showtime in filteredShowtimes) {
         Room? room = rooms.firstWhere((r) => r.id == showtime.roomId,
-            orElse: () => Room(id: "", cinemaId: "", name: "", seatCount: 0));
+            orElse: () => Room(
+                id: "",
+                cinemaId: "",
+                name: "",
+                rows: 0,
+                cols: 0,
+                seatLayout: []));
         Cinema? cinema = cinemas.firstWhere((c) => c.id == room.cinemaId,
             orElse: () => Cinema(
                 id: "", name: "Không tìm thấy", provinceId: "", address: ""));
@@ -81,9 +87,9 @@ class _ShowtimePickerScreenState extends State<ShowtimePickerScreen> {
     return showtimes
         .where((s) =>
             s.movieId == widget.movie.id &&
-            s.dateTime.year == date.year &&
-            s.dateTime.month == date.month &&
-            s.dateTime.day == date.day)
+            s.startTime.year == date.year &&
+            s.startTime.month == date.month &&
+            s.startTime.day == date.day)
         .toList();
   }
 
