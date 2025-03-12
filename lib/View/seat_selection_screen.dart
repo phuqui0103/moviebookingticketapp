@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:movieticketbooking/View/payment_screen.dart';
+import '../Data/data.dart';
+import '../Model/Room.dart';
 import '../Model/Showtime.dart';
 
 class SeatSelectionScreen extends StatefulWidget {
@@ -19,10 +21,16 @@ class SeatSelectionScreen extends StatefulWidget {
 }
 
 class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
-  final int rows = 9;
-  final int cols = 9;
+  late Room selectedRoom;
   final double vipSeatPrice = 50000;
   final double normalSeatPrice = 45000;
+
+  @override
+  void initState() {
+    super.initState();
+    selectedRoom =
+        rooms.firstWhere((room) => room.id == widget.showtime.roomId);
+  }
 
   List<String> selectedSeats = [];
   Set<String> bookedSeats = {'A1', 'B2', 'C3', 'G1'};
@@ -123,6 +131,8 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
   }
 
   Widget _buildSeatGrid(Function(String) toggleSeat) {
+    final int rows = selectedRoom.rows;
+    final int cols = selectedRoom.cols;
     return GridView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 30),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -177,6 +187,8 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
   }
 
   Widget _buildBottomBar() {
+    final int rows = selectedRoom.rows;
+    final int cols = selectedRoom.cols;
     double totalPrice = selectedSeats.fold(0, (sum, seatId) {
       int rowNumber = seatId.codeUnitAt(0) - 65;
       double price = rowNumber < rows / 3 ? normalSeatPrice : vipSeatPrice;
@@ -201,7 +213,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  "Total Price",
+                  "Tổng tiền",
                   style: TextStyle(color: Colors.white70, fontSize: 14),
                 ),
                 Text(
@@ -218,13 +230,42 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
 
           // Phần nút thanh toán (Chiếm 70%)
           Expanded(
-            flex: 7, // Tỷ lệ 7 phần
+            flex: 7,
             child: ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                if (selectedSeats.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content:
+                            Text("Vui lòng chọn ghế trước khi thanh toán!")),
+                  );
+                  return;
+                }
+
+                double totalPrice = selectedSeats.fold(0, (sum, seatId) {
+                  int rowNumber = seatId.codeUnitAt(0) - 65;
+                  double price = rowNumber < selectedRoom.rows / 3
+                      ? normalSeatPrice
+                      : vipSeatPrice;
+                  return sum + price;
+                });
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PaymentScreen(
+                      movieTitle: widget.movieTitle,
+                      moviePoster: widget.moviePoster,
+                      showtime: widget.showtime,
+                      selectedSeats: selectedSeats,
+                      totalPrice: totalPrice,
+                    ),
+                  ),
+                );
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.orangeAccent,
-                padding:
-                    const EdgeInsets.symmetric(vertical: 15), // Làm nút cao hơn
+                padding: const EdgeInsets.symmetric(vertical: 15),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),

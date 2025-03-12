@@ -1,5 +1,5 @@
+import 'package:intl/intl.dart';
 import 'package:movieticketbooking/Model/Room.dart';
-
 import '../Data/data.dart';
 
 class Showtime {
@@ -18,6 +18,15 @@ class Showtime {
     required this.startTime,
     required this.bookedSeats,
   });
+
+  // Getter để định dạng ngày giờ theo "dd/MM/yyyy HH:mm"
+  String get formattedTime {
+    return DateFormat('HH:mm').format(startTime);
+  }
+
+  String get formattedDate {
+    return DateFormat('dd/MM/yyyy').format(startTime);
+  }
 
   int get availableSeats {
     Room room = rooms.firstWhere((room) => room.id == roomId);
