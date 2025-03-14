@@ -18,6 +18,7 @@ dependencies:
   url_launcher: ^6.3.1
   intl: ^0.20.0
   qr_flutter: ^4.1.0
+  provider: ^6.1.2
 
 dev_dependencies:
   flutter_test:
@@ -38,3 +39,4 @@ flutter:
     - assets/icons/sale.png
     - assets/icons/theater.png
     - assets/icons/myticket.png
+    - assets/images/bapnuoc.png

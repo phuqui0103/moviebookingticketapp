@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:movieticketbooking/Data/data.dart';
 import 'package:movieticketbooking/View/cinema_list_screen.dart';
 import 'package:movieticketbooking/View/home_screen.dart';
 import 'package:movieticketbooking/View/login_screen.dart';
 import 'package:movieticketbooking/View/movie_list_screen.dart';
 import 'package:movieticketbooking/View/RegisterScreen.dart';
+import 'package:movieticketbooking/View/my_ticket_list_screen.dart';
 import 'package:movieticketbooking/View/showtime_picker_screen.dart';
 
 class BottomNavBar extends StatefulWidget {
@@ -19,6 +21,9 @@ class _BottomNavBarState extends State<BottomNavBar> {
     MovieListScreen(),
     LoginScreen(),
     CinemaListScreen(),
+    MyTicketListScreen(
+      myTickets: myTickets,
+    )
   ];
 
   setBottomBarIndex(index) {

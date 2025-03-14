@@ -3,6 +3,7 @@ import 'package:movieticketbooking/View/payment_screen.dart';
 import '../Data/data.dart';
 import '../Model/Room.dart';
 import '../Model/Showtime.dart';
+import 'food_selection_screen.dart';
 
 class SeatSelectionScreen extends StatefulWidget {
   final Showtime showtime;
@@ -250,10 +251,22 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                   return sum + price;
                 });
 
+                //Navigator.push(
+                //  context,
+                //  MaterialPageRoute(
+                //    builder: (context) => PaymentScreen(
+                //      movieTitle: widget.movieTitle,
+                //      moviePoster: widget.moviePoster,
+                //      showtime: widget.showtime,
+                //      selectedSeats: selectedSeats,
+                //      totalPrice: totalPrice,
+                //    ),
+                //  ),
+                //);
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => PaymentScreen(
+                    builder: (context) => FoodSelectionScreen(
                       movieTitle: widget.movieTitle,
                       moviePoster: widget.moviePoster,
                       showtime: widget.showtime,
@@ -271,7 +284,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                 ),
               ),
               child: const Text(
-                'Thanh Toán',
+                'Tiếp tục',
                 style: TextStyle(fontSize: 20, color: Colors.black),
               ),
             ),

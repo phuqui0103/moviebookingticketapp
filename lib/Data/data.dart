@@ -1,11 +1,13 @@
 import '../Model/Cinema.dart';
 import '../Model/Comment.dart';
 import '../Model/District.dart';
+import '../Model/Food.dart';
 import '../Model/Movie.dart';
 import '../Model/Province.dart';
 import '../Model/Room.dart';
 import '../Model/Seat.dart';
 import '../Model/Showtime.dart';
+import '../Model/Ticket.dart';
 
 final List<Movie> movies = [
   Movie(
@@ -238,7 +240,7 @@ final List<Showtime> showtimes = [
     movieId: "movie_4",
     cinemaId: "cinema_1",
     roomId: "201",
-    startTime: DateTime(2025, 3, 12, 13, 0),
+    startTime: DateTime(2025, 3, 15, 13, 0),
     bookedSeats: ["A1", "A2", "B3"], // Ví dụ ghế đã đặt
   ),
   Showtime(
@@ -246,7 +248,7 @@ final List<Showtime> showtimes = [
     movieId: "movie_1",
     cinemaId: "cinema_1",
     roomId: "301",
-    startTime: DateTime(2025, 3, 10, 1, 0),
+    startTime: DateTime(2025, 3, 15, 1, 0),
     bookedSeats: ["C5", "C6"],
   ),
   Showtime(
@@ -254,7 +256,7 @@ final List<Showtime> showtimes = [
     movieId: "movie_1",
     cinemaId: "cinema_1",
     roomId: "202",
-    startTime: DateTime(2025, 3, 13, 16, 0),
+    startTime: DateTime(2025, 3, 15, 16, 0),
     bookedSeats: [],
   ),
   Showtime(
@@ -262,7 +264,7 @@ final List<Showtime> showtimes = [
     movieId: "movie_1",
     cinemaId: "cinema_2",
     roomId: "201",
-    startTime: DateTime(2025, 3, 12, 19, 0),
+    startTime: DateTime(2025, 3, 15, 19, 0),
     bookedSeats: ["D1", "D2", "D3"],
   ),
   Showtime(
@@ -270,7 +272,7 @@ final List<Showtime> showtimes = [
     movieId: "movie_1",
     cinemaId: "cinema_2",
     roomId: "101",
-    startTime: DateTime(2025, 3, 13, 11, 0),
+    startTime: DateTime(2025, 3, 15, 11, 0),
     bookedSeats: [],
   ),
   Showtime(
@@ -278,7 +280,7 @@ final List<Showtime> showtimes = [
     movieId: "movie_1",
     cinemaId: "cinema_1",
     roomId: "101",
-    startTime: DateTime(2025, 3, 12, 15, 0),
+    startTime: DateTime(2025, 3, 15, 15, 0),
     bookedSeats: ["E4", "E5", "F6"],
   ),
   Showtime(
@@ -286,7 +288,7 @@ final List<Showtime> showtimes = [
     movieId: "movie_1",
     cinemaId: "cinema_1",
     roomId: "201",
-    startTime: DateTime(2025, 3, 11, 14, 0),
+    startTime: DateTime(2025, 3, 15, 14, 0),
     bookedSeats: ["G1", "G2"],
   ),
   Showtime(
@@ -294,7 +296,7 @@ final List<Showtime> showtimes = [
     movieId: "movie_1",
     cinemaId: "cinema_2",
     roomId: "101",
-    startTime: DateTime(2025, 3, 11, 13, 0),
+    startTime: DateTime(2025, 3, 15, 13, 0),
     bookedSeats: [],
   ),
   Showtime(
@@ -302,7 +304,7 @@ final List<Showtime> showtimes = [
     movieId: "movie_2",
     cinemaId: "cinema_1",
     roomId: "201",
-    startTime: DateTime(2025, 3, 13, 10, 0),
+    startTime: DateTime(2025, 3, 15, 10, 0),
     bookedSeats: ["H10", "H11"],
   ),
   Showtime(
@@ -324,4 +326,61 @@ final List<Seat> seats = [
   Seat(id: "5", row: "C", column: 3, isVip: false, isBooked: true),
   Seat(id: "6", row: "D", column: 4, isVip: false, isBooked: true),
   Seat(id: "7", row: "E", column: 5, isVip: true, isBooked: true),
+];
+
+final List<Food> foodItems = [
+  Food(
+    id: "1",
+    name: "Bắp rang bơ",
+    price: 50000,
+    image: "assets/images/bapnuoc.png",
+    description: "Bắp rang giòn tan, vị bơ thơm ngon",
+  ),
+  Food(
+    id: "2",
+    name: "Nước ngọt lớn",
+    price: 30000,
+    image: "assets/images/bapnuoc.png",
+    description: "Nước ngọt mát lạnh, nhiều vị lựa chọn",
+  ),
+  Food(
+    id: "3",
+    name: "Combo bắp nước",
+    price: 70000,
+    image: "assets/images/bapnuoc.png",
+    description: "Combo tiết kiệm, bắp rang + nước ngọt",
+  ),
+];
+
+List<Ticket> myTickets = [
+  Ticket(
+    id: "1",
+    showtime: Showtime(
+      id: "show_1",
+      movieId: "movie_1",
+      cinemaId: "202",
+      roomId: "202",
+      startTime: DateTime(2025, 3, 20, 18, 30),
+      bookedSeats: ["A1", "A2"],
+    ),
+    selectedSeats: ["A1", "A2"],
+    selectedFoods: ["Bắp rang", "Nước ngọt"],
+    totalPrice: 180000,
+    isUsed: false, // Vé chưa sử dụng
+  ),
+  Ticket(
+    id: "2",
+    showtime: Showtime(
+      id: "show_2",
+      movieId: "movie_2",
+      cinemaId: "202",
+      roomId: "202",
+      startTime: DateTime(2025, 3, 21, 20, 00),
+      bookedSeats: ["C5", "C6", "C7"],
+    ),
+    selectedSeats: ["C5", "C6", "C7"],
+    selectedFoods: ["Combo bắp nước"],
+    totalPrice: 270000,
+    isUsed: true,
+  )
 ];

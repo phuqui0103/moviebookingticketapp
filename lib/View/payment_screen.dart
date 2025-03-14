@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../Data/data.dart';
+import '../Model/Food.dart';
 import '../Model/Showtime.dart';
 import '../Model/Room.dart';
 import '../Model/Cinema.dart';
-import 'ticket_screen.dart';
+import 'payment_success_screen.dart';
+import 'ticket_detail_screen.dart';
 
 class PaymentScreen extends StatefulWidget {
   final String movieTitle;
@@ -11,6 +13,7 @@ class PaymentScreen extends StatefulWidget {
   final Showtime showtime;
   final List<String> selectedSeats;
   final double totalPrice;
+  final Map<String, int> selectedFoods;
 
   const PaymentScreen({
     Key? key,
@@ -19,6 +22,7 @@ class PaymentScreen extends StatefulWidget {
     required this.showtime,
     required this.selectedSeats,
     required this.totalPrice,
+    required this.selectedFoods,
   }) : super(key: key);
 
   @override
@@ -49,84 +53,155 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   void _showBankPaymentDialog() {
+    Room? selectedRoom = rooms.firstWhere(
+      (room) => room.id == widget.showtime.roomId,
+      orElse: () => Room(
+        id: "",
+        cinemaId: "",
+        name: "Không xác định",
+        rows: 0,
+        seatLayout: [],
+        cols: 0,
+      ),
+    );
+
+    // Lấy tên rạp từ cinemaId trong showtime
+    Cinema? selectedCinema = cinemas.firstWhere(
+      (cinema) => cinema.id == selectedRoom.cinemaId,
+      orElse: () => Cinema(
+        id: "",
+        name: "Không xác định",
+        provinceId: '',
+        address: '',
+      ),
+    );
     setState(() {
       cardNumberError = null;
       expiryError = null;
       cvvError = null;
     });
-
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("Nhập thông tin thẻ ngân hàng"),
-          content: StatefulBuilder(
-            builder: (context, setDialogState) {
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: cardNumberController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: "Số thẻ",
-                      errorText: cardNumberError,
+          title: Text("Nhập thông tin thẻ ngân hàng",
+              style: TextStyle(fontWeight: FontWeight.bold)),
+          content: SingleChildScrollView(
+            child: StatefulBuilder(
+              builder: (context, setDialogState) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Số thẻ
+                    TextFormField(
+                      controller: cardNumberController,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: "Số thẻ",
+                        prefixIcon: Icon(Icons.credit_card),
+                        border: OutlineInputBorder(),
+                        errorText: cardNumberError,
+                      ),
+                      onChanged: (value) {
+                        setDialogState(() {
+                          cardNumberError =
+                              value.isEmpty ? "Vui lòng nhập số thẻ" : null;
+                        });
+                      },
                     ),
-                  ),
-                  TextField(
-                    controller: expiryController,
-                    keyboardType: TextInputType.datetime,
-                    decoration: InputDecoration(
-                      labelText: "Ngày hết hạn (MM/YY)",
-                      errorText: expiryError,
+                    SizedBox(height: 10),
+
+                    // Ngày hết hạn
+                    TextFormField(
+                      controller: expiryController,
+                      keyboardType: TextInputType.datetime,
+                      decoration: InputDecoration(
+                        labelText: "Ngày hết hạn (MM/YY)",
+                        prefixIcon: Icon(Icons.date_range),
+                        border: OutlineInputBorder(),
+                        errorText: expiryError,
+                      ),
+                      onChanged: (value) {
+                        setDialogState(() {
+                          expiryError = value.isEmpty
+                              ? "Vui lòng nhập ngày hết hạn"
+                              : null;
+                        });
+                      },
                     ),
-                  ),
-                  TextField(
-                    controller: cvvController,
-                    keyboardType: TextInputType.number,
-                    obscureText: true,
-                    decoration: InputDecoration(
-                      labelText: "CVV",
-                      errorText: cvvError,
+                    SizedBox(height: 10),
+
+                    // CVV
+                    TextFormField(
+                      controller: cvvController,
+                      keyboardType: TextInputType.number,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        labelText: "CVV",
+                        prefixIcon: Icon(Icons.lock),
+                        border: OutlineInputBorder(),
+                        errorText: cvvError,
+                      ),
+                      onChanged: (value) {
+                        setDialogState(() {
+                          cvvError = value.isEmpty ? "Vui lòng nhập CVV" : null;
+                        });
+                      },
                     ),
-                  ),
-                ],
-              );
-            },
+                  ],
+                );
+              },
+            ),
           ),
           actions: [
             TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text("Hủy")),
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text("Hủy"),
+            ),
             ElevatedButton(
               onPressed: () {
-                setState(() {
-                  cardNumberError = cardNumberController.text.isEmpty
-                      ? "Vui lòng nhập số thẻ"
-                      : null;
-                  expiryError = expiryController.text.isEmpty
-                      ? "Vui lòng nhập ngày hết hạn"
-                      : null;
-                  cvvError =
-                      cvvController.text.isEmpty ? "Vui lòng nhập CVV" : null;
-                });
-
-                if (cardNumberError == null &&
-                    expiryError == null &&
-                    cvvError == null) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => TicketScreen(
-                        movieTitle: widget.movieTitle,
-                        moviePoster: widget.moviePoster,
-                        showtime: widget.showtime, // Truyền nguyên showtime
-                        selectedSeats: widget.selectedSeats,
-                        totalPrice: widget.totalPrice,
-                      ),
+                //setState(() {
+                //  cardNumberError = cardNumberController.text.isEmpty
+                //      ? "Vui lòng nhập số thẻ"
+                //      : null;
+                //  expiryError = expiryController.text.isEmpty
+                //      ? "Vui lòng nhập ngày hết hạn"
+                //      : null;
+                //  cvvError =
+                //      cvvController.text.isEmpty ? "Vui lòng nhập CVV" : null;
+                //});
+//
+                //if (cardNumberError == null &&
+                //    expiryError == null &&
+                //    cvvError == null) {
+                //  Navigator.push(
+                //    context,
+                //    MaterialPageRoute(
+                //      builder: (context) => TicketScreen(
+                //        movieTitle: widget.movieTitle,
+                //        moviePoster: widget.moviePoster,
+                //        showtime: widget.showtime,
+                //        selectedSeats: widget.selectedSeats,
+                //        totalPrice: widget.totalPrice,
+                //        selectedFoods: widget.selectedFoods,
+                //      ),
+                //    ),
+                //  );
+                //}
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PaymentSuccessScreen(
+                      movieTitle: widget.movieTitle,
+                      moviePoster: widget.moviePoster,
+                      showtime: widget.showtime,
+                      roomName: selectedRoom.name,
+                      cinemaName: selectedCinema.name,
+                      selectedSeats: widget.selectedSeats,
+                      totalPrice: widget.totalPrice,
                     ),
-                  );
-                }
+                  ),
+                );
               },
               child: Text("Thanh Toán"),
             ),
@@ -175,8 +250,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: ListView(
           children: [
             /// 1. Thông tin đặt vé trong khung viền cam
             Container(
@@ -236,6 +310,143 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 ],
               ),
             ),
+            SizedBox(height: 20),
+            if (widget.selectedFoods.isNotEmpty)
+              Container(
+                padding: EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    /// Tiêu đề
+                    //Text(
+                    //  "Bắp nước đã chọn",
+                    //  style: TextStyle(
+                    //    color: Colors.orange,
+                    //    fontSize: 22,
+                    //    fontWeight: FontWeight.bold,
+                    //  ),
+                    //),
+                    //SizedBox(height: 10),
+
+                    /// Danh sách món ăn
+
+                    Text(
+                      "Bắp nước đã chọn",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+
+                    Column(
+                      children: widget.selectedFoods.entries.map((entry) {
+                        Food food = foodItems
+                            .firstWhere((item) => item.id == entry.key);
+                        int quantity = entry.value;
+                        double totalFoodPrice = quantity * food.price;
+
+                        return Container(
+                          margin: EdgeInsets.symmetric(vertical: 8),
+                          padding: EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[900],
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            children: [
+                              /// Hình ảnh món ăn
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: Image.asset(
+                                  food.image,
+                                  width: 80,
+                                  height: 80,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              SizedBox(width: 12),
+
+                              /// Thông tin món ăn
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      food.name,
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    SizedBox(height: 5),
+                                    Text(
+                                      "$quantity x ${food.price.toStringAsFixed(0)}đ",
+                                      style: TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              /// Tổng tiền từng món
+                              Text(
+                                "${totalFoodPrice.toStringAsFixed(0)}đ",
+                                style: TextStyle(
+                                  color: Colors.orangeAccent,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+
+                    SizedBox(height: 10),
+
+                    /// Tổng tiền bắp nước
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.black,
+                        border:
+                            Border.all(color: Colors.orangeAccent, width: 2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            "Tổng tiền bắp nước",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            "${widget.selectedFoods.entries.fold(0, (sum, entry) {
+                              Food food = foodItems
+                                  .firstWhere((item) => item.id == entry.key);
+                              return sum + (entry.value * food.price).toInt();
+                            }).toStringAsFixed(0)}đ",
+                            style: const TextStyle(
+                              color: Colors.orangeAccent,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
             SizedBox(height: 20),
 
