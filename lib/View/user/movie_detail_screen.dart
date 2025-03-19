@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:movieticketbooking/Data/data.dart';
 import 'package:movieticketbooking/Model/Showtime.dart';
-import 'package:movieticketbooking/View/showtime_picker_screen.dart';
-import '../Model/Movie.dart';
+import 'package:movieticketbooking/View/user/showtime_picker_screen.dart';
+import '../../Model/Movie.dart';
 import 'trailer_screen.dart';
 
 class MovieDetailScreen extends StatefulWidget {
@@ -54,7 +54,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
           Positioned.fill(
             child: Opacity(
               opacity: 0.2, // Điều chỉnh độ mờ tại đây
-              child: Image.asset(
+              child: Image.network(
                 widget.movie.imagePath,
                 fit: BoxFit.cover,
               ),
@@ -74,7 +74,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(10),
-                      child: Image.asset(widget.movie.imagePath,
+                      child: Image.network(widget.movie.imagePath,
                           width: 200, height: 280, fit: BoxFit.cover),
                     ),
                     SizedBox(width: 15),
@@ -210,7 +210,8 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          buildDetailRow("Thể loại:", widget.movie.genres.join(", ")),
+          buildDetailRow("Thể loại:",
+              widget.movie.genres.map((genre) => genre.name).join(" , ")),
           buildDetailRow("Đạo diễn:", widget.movie.director),
           buildDetailRow("Diễn viên:", widget.movie.cast.join(", ")),
           SizedBox(height: 10),

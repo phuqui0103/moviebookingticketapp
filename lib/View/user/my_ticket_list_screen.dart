@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import '../Components/bottom_nav_bar.dart';
-import '../Model/Movie.dart';
-import '../Model/Ticket.dart';
-import '../Data/data.dart'; // Chứa danh sách phim & phòng chiếu
+import 'package:movieticketbooking/Model/Food.dart';
+import '../../Components/bottom_nav_bar.dart';
+import '../../Model/Movie.dart';
+import '../../Model/Ticket.dart';
+import '../../Data/data.dart';
+import 'ticket_detail_screen.dart'; // Chứa danh sách phim & phòng chiếu
 
 class MyTicketListScreen extends StatefulWidget {
   final List<Ticket> myTickets;
@@ -97,16 +99,53 @@ class _MyTicketListScreenState extends State<MyTicketListScreen>
   /// Widget hiển thị 1 vé
   Widget _buildTicketItem(Ticket ticket) {
     // Lấy tên phim và poster
-    Movie? movie =
-        movies.firstWhere((movie) => movie.id == ticket.showtime.movieId);
+    Movie? movie = movies.firstWhere(
+      (movie) => movie.id == ticket.showtime.movieId,
+      orElse: () => Movie(
+          id: "",
+          title: "Không xác định",
+          imagePath: "",
+          trailerUrl: '',
+          genres: [],
+          duration: '',
+          rating: 0,
+          isShowingNow: false,
+          description: '',
+          reviewCount: 0,
+          cast: [],
+          releaseDate: '',
+          director: '',
+          comments: []),
+    );
     String movieTitle = movie.title ?? "";
-
-// Lấy poster phim
     String moviePoster = movie.imagePath ?? "";
+    Map<String, int> getSelectedFoods(List<String> selectedFoods) {
+      Map<String, int> foodCountMap = {};
+      for (var food in selectedFoods) {
+        if (foodCountMap.containsKey(food)) {
+          foodCountMap[food] = foodCountMap[food]! + 1;
+        } else {
+          foodCountMap[food] = 1;
+        }
+      }
+      return foodCountMap;
+    }
 
     return GestureDetector(
       onTap: () {
-        // Chuyển đến màn hình chi tiết vé (chưa triển khai)
+        // Khi nhấn vào vé, điều hướng đến màn hình chi tiết vé
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TicketDetailScreen(
+                movieTitle: movieTitle,
+                moviePoster: moviePoster,
+                showtime: ticket.showtime,
+                selectedSeats: ticket.selectedSeats,
+                totalPrice: ticket.totalPrice,
+                selectedFoods: ticket.selectedFoods),
+          ),
+        );
       },
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12),
@@ -120,7 +159,7 @@ class _MyTicketListScreenState extends State<MyTicketListScreen>
             /// Ảnh phim
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.asset(
+              child: Image.network(
                 moviePoster,
                 width: 80,
                 height: 100,

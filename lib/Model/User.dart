@@ -1,53 +1,66 @@
 class User {
+  String id;
   String fullName;
   String phoneNumber;
   String email;
-  String password;
+  String hashedPassword; // Mật khẩu đã mã hóa
   DateTime birthDate;
   String gender;
   String province;
   String district;
-  bool agreedToTerms;
+  String status; // "Active", "Blocked", "Deleted"
+  DateTime createdAt; // Thời gian tạo tài khoản
+  DateTime? updatedAt; // Thời gian cập nhật gần nhất
 
   User({
+    required this.id,
     required this.fullName,
     required this.phoneNumber,
     required this.email,
-    required this.password,
+    required this.hashedPassword,
     required this.birthDate,
     required this.gender,
     required this.province,
     required this.district,
-    required this.agreedToTerms,
+    this.status = "Active",
+    required this.createdAt,
+    this.updatedAt,
   });
 
-  // Chuyển đổi User thành Map (dùng khi lưu vào database hoặc API)
+  // Chuyển đổi User thành JSON (lưu database hoặc gửi API)
   Map<String, dynamic> toJson() {
     return {
+      "id": id,
       "fullName": fullName,
       "phoneNumber": phoneNumber,
       "email": email,
-      "password": password, // Cần mã hóa khi lưu thực tế
+      "hashedPassword": hashedPassword, // Mật khẩu phải mã hóa trước khi lưu
       "birthDate": birthDate.toIso8601String(),
       "gender": gender,
       "province": province,
       "district": district,
-      "agreedToTerms": agreedToTerms,
+      "status": status,
+      "createdAt": createdAt.toIso8601String(),
+      "updatedAt": updatedAt?.toIso8601String(),
     };
   }
 
-  // Tạo User từ Map (dùng khi đọc từ database hoặc API)
+  // Tạo User từ JSON (dùng khi lấy dữ liệu từ database hoặc API)
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
+      id: json["id"],
       fullName: json["fullName"],
       phoneNumber: json["phoneNumber"],
       email: json["email"],
-      password: json["password"], // Cần giải mã nếu mã hóa
+      hashedPassword: json["hashedPassword"],
       birthDate: DateTime.parse(json["birthDate"]),
       gender: json["gender"],
       province: json["province"],
       district: json["district"],
-      agreedToTerms: json["agreedToTerms"],
+      status: json["status"] ?? "Active",
+      createdAt: DateTime.parse(json["createdAt"]),
+      updatedAt:
+          json["updatedAt"] != null ? DateTime.parse(json["updatedAt"]) : null,
     );
   }
 }

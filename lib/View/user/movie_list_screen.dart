@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:movieticketbooking/Components/bottom_nav_bar.dart';
-import 'package:movieticketbooking/View/movie_detail_screen.dart';
-import '../Data/data.dart';
-import '../Model/Movie.dart';
+import 'package:movieticketbooking/View/user/movie_detail_screen.dart';
+import '../../Data/data.dart';
+import '../../Model/Movie.dart';
+import '../../Model/Genre.dart';
 
 class MovieListScreen extends StatefulWidget {
   @override
@@ -14,13 +15,19 @@ class _MovieListScreenState extends State<MovieListScreen> {
   String selectedGenre = "Tất cả";
   String searchQuery = "";
   final TextEditingController _searchController = TextEditingController();
-  final List<String> genres = [
-    "Tất cả",
-    "Tâm lý",
-    "Tình cảm",
-    "Hành động",
-    "Tài liệu"
-  ];
+  List<String> genres = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadGenres();
+  }
+
+  void _loadGenres() {
+    setState(() {
+      genres.addAll(Genres.map((genre) => genre.name));
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,13 +39,9 @@ class _MovieListScreenState extends State<MovieListScreen> {
       body: Column(
         children: [
           _buildTabBar(),
-          const SizedBox(
-            height: 10,
-          ),
+          const SizedBox(height: 10),
           _buildGenreFilter(),
-          const SizedBox(
-            height: 5,
-          ),
+          const SizedBox(height: 5),
           Expanded(
             child: filteredMovies.isEmpty
                 ? _buildNoMoviesMessage()
@@ -69,14 +72,13 @@ class _MovieListScreenState extends State<MovieListScreen> {
     return TextField(
       controller: _searchController,
       onChanged: (value) => setState(() => searchQuery = value),
-      decoration: InputDecoration(
+      decoration: const InputDecoration(
         hintText: "Tìm kiếm phim...",
         hintStyle: TextStyle(color: Colors.white70),
         border: InputBorder.none,
-        suffixIcon:
-            Icon(Icons.search, color: Colors.white), // Đưa icon qua phải
+        suffixIcon: Icon(Icons.search, color: Colors.white),
       ),
-      style: TextStyle(color: Colors.white, fontSize: 18),
+      style: const TextStyle(color: Colors.white, fontSize: 18),
     );
   }
 
@@ -179,7 +181,7 @@ class _MovieListScreenState extends State<MovieListScreen> {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.asset(
+              child: Image.network(
                 movie.imagePath,
                 width: 80,
                 height: 100,
@@ -208,7 +210,7 @@ class _MovieListScreenState extends State<MovieListScreen> {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  buildTag(movie.genres.join(", ")),
+                  buildTag(movie.genres.map((genre) => genre.name).join(" | ")),
                   const SizedBox(height: 6),
                   Row(
                     children: [
@@ -235,26 +237,28 @@ class _MovieListScreenState extends State<MovieListScreen> {
 
   Widget buildTag(String text) => Container(
         decoration: BoxDecoration(
-          border: Border.all(color: const Color.fromARGB(255, 255, 255, 255)),
+          border: Border.all(color: Colors.white),
           borderRadius: BorderRadius.circular(10),
           color: Colors.black54,
         ),
         padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 2),
         child: Text(
           text,
-          style: const TextStyle(
-              color: Color.fromARGB(255, 255, 255, 255), fontSize: 14),
+          style: const TextStyle(color: Colors.white, fontSize: 14),
         ),
       );
 
   List<Movie> _filterMovies() {
     return movies.where((movie) {
       bool matchesTab =
-          (selectedTab == 0 ? movie.isShowingNow : !movie.isShowingNow);
-      bool matchesGenre =
-          selectedGenre == "Tất cả" || movie.genres.contains(selectedGenre);
+          selectedTab == 0 ? movie.isShowingNow : !movie.isShowingNow;
+
+      bool matchesGenre = selectedGenre == "Tất cả" ||
+          movie.genres.any((genre) => genre.name == selectedGenre);
+
       bool matchesSearch = searchQuery.isEmpty ||
           movie.title.toLowerCase().contains(searchQuery.toLowerCase());
+
       return matchesTab && matchesGenre && matchesSearch;
     }).toList();
   }

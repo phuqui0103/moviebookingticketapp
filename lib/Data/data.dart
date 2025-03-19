@@ -8,16 +8,32 @@ import '../Model/Room.dart';
 import '../Model/Seat.dart';
 import '../Model/Showtime.dart';
 import '../Model/Ticket.dart';
+import '../Model/Genre.dart';
+
+final List<Genre> Genres = [
+  Genre(id: "0", name: "Tất cả"),
+  Genre(id: "1", name: "Tâm lý"),
+  Genre(id: "2", name: "Kịch tính"),
+  Genre(id: "3", name: "Tình cảm"),
+  Genre(id: "4", name: "Lãng mạn"),
+  Genre(id: "5", name: "Tài liệu"),
+  Genre(id: "6", name: "Tiểu sử"),
+  Genre(id: "7", name: "Hành động"),
+  Genre(id: "8", name: "Hài hước"),
+];
 
 final List<Movie> movies = [
   Movie(
     id: "movie_1",
     title: "Ròm",
-    imagePath: "assets/images/movie1.jpg",
+    imagePath: "https://innovavietnam.vn/wp-content/uploads/poster-561x800.jpg",
     trailerUrl:
         "https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-mp4-file.mp4",
     duration: "1 giờ 32 phút",
-    genres: ["Tâm lý", "Kịch tính"],
+    genres: [
+      Genre(id: "1", name: "Tâm lý"),
+      Genre(id: "2", name: "Kịch tính"),
+    ],
     rating: 8.5,
     isShowingNow: true,
     description:
@@ -33,28 +49,20 @@ final List<Movie> movies = [
           userName: "Minh Trần",
           content: "Tình tiết hấp dẫn và cảm động.",
           rating: 8.5),
-      Comment(
-          userName: "Minh Trần",
-          content: "Tình tiết hấp dẫn và cảm động.",
-          rating: 8.5),
-      Comment(
-          userName: "Minh Trần",
-          content: "Tình tiết hấp dẫn và cảm động.",
-          rating: 8.5),
-      Comment(
-          userName: "Minh Trần",
-          content: "Tình tiết hấp dẫn và cảm động.",
-          rating: 8.5),
     ],
   ),
   Movie(
     id: "movie_2",
     title: "Mai",
-    imagePath: "assets/images/movie2.webp",
+    imagePath:
+        "https://images2.thanhnien.vn/528068263637045248/2024/2/20/special-poster-2-mai-17084211313531000860296.jpg",
     trailerUrl:
         "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4",
     duration: "1 giờ 45 phút",
-    genres: ["Tình cảm", "Lãng mạn"],
+    genres: [
+      Genre(id: "3", name: "Tình cảm"),
+      Genre(id: "4", name: "Lãng mạn"),
+    ],
     rating: 8.0,
     isShowingNow: true,
     description:
@@ -77,11 +85,15 @@ final List<Movie> movies = [
   Movie(
     id: "movie_3",
     title: "Sáng Đèn",
-    imagePath: "assets/images/movie3.webp",
+    imagePath:
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQp9ythB56pAlsr-yj15gLoWJ1ZcWSWeOJVkSWXNnLmXpP6j7DxFSHDkNvvVmXOJ0re9yQ&usqp=CAU",
     trailerUrl:
         "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4",
     duration: "1 giờ 20 phút",
-    genres: ["Tài liệu", "Tiểu sử"],
+    genres: [
+      Genre(id: "5", name: "Tài liệu"),
+      Genre(id: "6", name: "Tiểu sử"),
+    ],
     rating: 7.8,
     isShowingNow: false,
     description:
@@ -100,10 +112,14 @@ final List<Movie> movies = [
   Movie(
     id: "movie_4",
     title: "Lật Mặt 4",
-    imagePath: "assets/images/movie3.webp",
+    imagePath:
+        "https://media-cdn-v2.laodong.vn/Storage/NewsPortal/2022/9/6/1089731/03_TIEU-VY-01.jpg",
     trailerUrl: "https://filesamples.com/samples/video/mp4/sample_640x360.mp4",
     duration: "2 giờ 10 phút",
-    genres: ["Hành động", "Hài hước"],
+    genres: [
+      Genre(id: "7", name: "Hành động"),
+      Genre(id: "8", name: "Hài hước"),
+    ],
     rating: 8.2,
     isShowingNow: true,
     description:
@@ -122,6 +138,7 @@ final List<Movie> movies = [
     ],
   ),
 ];
+
 List<Province> provinces = [
   Province(id: "1", name: "Hà Nội"),
   Province(id: "2", name: "Hồ Chí Minh"),
@@ -198,19 +215,21 @@ List<Cinema> cinemas = [
 
 final List<Room> rooms = [
   Room(
-      id: "101",
-      cinemaId: "101",
-      name: "Phòng 1",
-      rows: 9,
-      cols: 9,
-      seatLayout: []),
+    id: "101",
+    cinemaId: "101",
+    name: "Phòng 1",
+    rows: 8,
+    cols: 8,
+    seatLayout: [],
+  ),
   Room(
-      id: "201",
-      cinemaId: "202",
-      name: "Phòng 1",
-      rows: 9,
-      cols: 10,
-      seatLayout: []),
+    id: "201",
+    cinemaId: "202",
+    name: "Phòng 1",
+    rows: 8,
+    cols: 10,
+    seatLayout: [],
+  ),
   Room(
       id: "301",
       cinemaId: "301",
@@ -236,84 +255,28 @@ final List<Room> rooms = [
 
 final List<Showtime> showtimes = [
   Showtime(
-    id: "show_4",
-    movieId: "movie_4",
-    cinemaId: "cinema_1",
+    id: "show_1",
+    movieId: "movie_1",
+    cinemaId: "202",
     roomId: "201",
-    startTime: DateTime(2025, 3, 15, 13, 0),
-    bookedSeats: ["A1", "A2", "B3"], // Ví dụ ghế đã đặt
-  ),
-  Showtime(
-    id: "show_5",
-    movieId: "movie_1",
-    cinemaId: "cinema_1",
-    roomId: "301",
-    startTime: DateTime(2025, 3, 15, 1, 0),
-    bookedSeats: ["C5", "C6"],
-  ),
-  Showtime(
-    id: "show_6",
-    movieId: "movie_1",
-    cinemaId: "cinema_1",
-    roomId: "202",
-    startTime: DateTime(2025, 3, 15, 16, 0),
-    bookedSeats: [],
-  ),
-  Showtime(
-    id: "show_10",
-    movieId: "movie_1",
-    cinemaId: "cinema_2",
-    roomId: "201",
-    startTime: DateTime(2025, 3, 15, 19, 0),
-    bookedSeats: ["D1", "D2", "D3"],
-  ),
-  Showtime(
-    id: "show_11",
-    movieId: "movie_1",
-    cinemaId: "cinema_2",
-    roomId: "101",
-    startTime: DateTime(2025, 3, 15, 11, 0),
-    bookedSeats: [],
-  ),
-  Showtime(
-    id: "show_7",
-    movieId: "movie_1",
-    cinemaId: "cinema_1",
-    roomId: "101",
-    startTime: DateTime(2025, 3, 15, 15, 0),
-    bookedSeats: ["E4", "E5", "F6"],
-  ),
-  Showtime(
-    id: "show_8",
-    movieId: "movie_1",
-    cinemaId: "cinema_1",
-    roomId: "201",
-    startTime: DateTime(2025, 3, 15, 14, 0),
-    bookedSeats: ["G1", "G2"],
-  ),
-  Showtime(
-    id: "show_9",
-    movieId: "movie_1",
-    cinemaId: "cinema_2",
-    roomId: "101",
-    startTime: DateTime(2025, 3, 15, 13, 0),
-    bookedSeats: [],
+    startTime: DateTime.now().add(Duration(days: 1, hours: 2)),
+    bookedSeats: ["A1", "A2", "B5", "B6"],
   ),
   Showtime(
     id: "show_2",
     movieId: "movie_2",
-    cinemaId: "cinema_1",
+    cinemaId: "202",
     roomId: "201",
-    startTime: DateTime(2025, 3, 15, 10, 0),
-    bookedSeats: ["H10", "H11"],
+    startTime: DateTime.now().add(Duration(days: 1, hours: 5)),
+    bookedSeats: ["C5", "C6", "C7"],
   ),
   Showtime(
     id: "show_3",
-    movieId: "movie_3",
-    cinemaId: "cinema_2",
-    roomId: "101",
-    startTime: DateTime(2025, 3, 14, 13, 30),
-    bookedSeats: [],
+    movieId: "movie_4",
+    cinemaId: "201",
+    roomId: "302",
+    startTime: DateTime.now().add(Duration(days: 2)),
+    bookedSeats: ["E4", "E5", "F1", "F2"],
   ),
 ];
 
@@ -330,57 +293,59 @@ final List<Seat> seats = [
 
 final List<Food> foodItems = [
   Food(
-    id: "1",
+    id: "food_1",
     name: "Bắp rang bơ",
-    price: 50000,
+    price: 45000,
     image: "assets/images/bapnuoc.png",
     description: "Bắp rang giòn tan, vị bơ thơm ngon",
   ),
   Food(
-    id: "2",
+    id: "food_2",
     name: "Nước ngọt lớn",
-    price: 30000,
+    price: 35000,
     image: "assets/images/bapnuoc.png",
     description: "Nước ngọt mát lạnh, nhiều vị lựa chọn",
   ),
   Food(
-    id: "3",
+    id: "food_3",
     name: "Combo bắp nước",
-    price: 70000,
+    price: 75000,
     image: "assets/images/bapnuoc.png",
-    description: "Combo tiết kiệm, bắp rang + nước ngọt",
+    description: "Combo tiết kiệm: 1 bắp lớn + 1 nước lớn",
   ),
 ];
 
 List<Ticket> myTickets = [
   Ticket(
-    id: "1",
-    showtime: Showtime(
-      id: "show_1",
-      movieId: "movie_1",
-      cinemaId: "202",
-      roomId: "202",
-      startTime: DateTime(2025, 3, 20, 18, 30),
-      bookedSeats: ["A1", "A2"],
-    ),
+    id: "ticket_1",
+    showtime: showtimes[0],
     selectedSeats: ["A1", "A2"],
-    selectedFoods: ["Bắp rang", "Nước ngọt"],
-    totalPrice: 180000,
-    isUsed: false, // Vé chưa sử dụng
+    selectedFoods: {
+      "Bắp rang bơ": 1,
+      "Nước ngọt lớn": 2,
+    },
+    totalPrice: 215000,
+    isUsed: false,
   ),
   Ticket(
-    id: "2",
-    showtime: Showtime(
-      id: "show_2",
-      movieId: "movie_2",
-      cinemaId: "202",
-      roomId: "202",
-      startTime: DateTime(2025, 3, 21, 20, 00),
-      bookedSeats: ["C5", "C6", "C7"],
-    ),
+    id: "ticket_2",
+    showtime: showtimes[1],
     selectedSeats: ["C5", "C6", "C7"],
-    selectedFoods: ["Combo bắp nước"],
-    totalPrice: 270000,
+    selectedFoods: {
+      "Combo bắp nước": 2,
+    },
+    totalPrice: 300000,
     isUsed: true,
-  )
+  ),
+  Ticket(
+    id: "ticket_3",
+    showtime: showtimes[2],
+    selectedSeats: ["E4", "E5"],
+    selectedFoods: {
+      "Bắp rang bơ": 1,
+      "Nước ngọt lớn": 1,
+    },
+    totalPrice: 180000,
+    isUsed: false,
+  ),
 ];

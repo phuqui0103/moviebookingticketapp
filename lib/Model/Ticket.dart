@@ -1,18 +1,18 @@
-import 'package:movieticketbooking/Model/Showtime.dart';
+import 'Showtime.dart';
 
 class Ticket {
   final String id;
   final Showtime showtime;
   final List<String> selectedSeats;
-  final List<String> selectedFoods;
+  final Map<String, int> selectedFoods; // Đổi thành Map<String, int>
   final double totalPrice;
-  final bool isUsed; // Trạng thái vé đã sử dụng hay chưa
+  final bool isUsed;
 
   Ticket({
     required this.id,
     required this.showtime,
     required this.selectedSeats,
-    required this.selectedFoods,
+    required this.selectedFoods, // Truyền vào Map<String, int>
     required this.totalPrice,
     required this.isUsed,
   });
@@ -22,7 +22,7 @@ class Ticket {
       id: json['id'],
       showtime: Showtime.fromJson(json['showtime']),
       selectedSeats: List<String>.from(json['selectedSeats'] ?? []),
-      selectedFoods: List<String>.from(json['selectedFoods'] ?? []),
+      selectedFoods: Map<String, int>.from(json['selectedFoods'] ?? {}),
       totalPrice: json['totalPrice'].toDouble(),
       isUsed: json['isUsed'] ?? false,
     );
@@ -33,7 +33,7 @@ class Ticket {
       'id': id,
       'showtime': showtime.toJson(),
       'selectedSeats': selectedSeats,
-      'selectedFoods': selectedFoods,
+      'selectedFoods': selectedFoods, // Truyền Map<String, int> vào JSON
       'totalPrice': totalPrice,
       'isUsed': isUsed,
     };

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:movieticketbooking/Data/data.dart';
-import '../Model/Food.dart';
+import '../../Model/Food.dart';
 import 'payment_screen.dart';
 
 class FoodSelectionScreen extends StatefulWidget {

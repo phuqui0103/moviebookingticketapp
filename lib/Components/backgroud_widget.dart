@@ -29,7 +29,7 @@ class BackgroundWidget extends StatelessWidget {
     return Stack(
       children: [
         Positioned.fill(
-          child: Image.asset(
+          child: Image.network(
             movie.imagePath,
             fit: BoxFit.cover,
           ),

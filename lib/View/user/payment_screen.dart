@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import '../Data/data.dart';
-import '../Model/Food.dart';
-import '../Model/Showtime.dart';
-import '../Model/Room.dart';
-import '../Model/Cinema.dart';
+import '../../Data/data.dart';
+import '../../Model/Food.dart';
+import '../../Model/Showtime.dart';
+import '../../Model/Room.dart';
+import '../../Model/Cinema.dart';
 import 'payment_success_screen.dart';
-import 'ticket_detail_screen.dart';
 
 class PaymentScreen extends StatefulWidget {
   final String movieTitle;
@@ -199,6 +198,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       cinemaName: selectedCinema.name,
                       selectedSeats: widget.selectedSeats,
                       totalPrice: widget.totalPrice,
+                      selectedFoods: widget.selectedFoods,
                     ),
                   ),
                 );
@@ -267,7 +267,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(10),
-                    child: Image.asset(
+                    child: Image.network(
                       widget.moviePoster,
                       width: 140, // Kích thước ảnh nhỏ gọn
                       height: 180,

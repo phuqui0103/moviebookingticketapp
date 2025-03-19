@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:movieticketbooking/Components/bottom_nav_bar.dart';
+import 'package:movieticketbooking/Model/Showtime.dart';
+import '../../Components/bottom_nav_bar.dart';
+import '../../Data/data.dart';
+import '../../Model/Ticket.dart';
 import 'ticket_detail_screen.dart';
-import 'movie_list_screen.dart'; // Màn hình trang chủ phim
-import '../Model/Showtime.dart';
 
 class PaymentSuccessScreen extends StatelessWidget {
   final String movieTitle;
@@ -12,6 +13,7 @@ class PaymentSuccessScreen extends StatelessWidget {
   final String cinemaName;
   final List<String> selectedSeats;
   final double totalPrice;
+  final Map<String, int> selectedFoods;
 
   const PaymentSuccessScreen({
     Key? key,
@@ -22,6 +24,7 @@ class PaymentSuccessScreen extends StatelessWidget {
     required this.totalPrice,
     required this.roomName,
     required this.cinemaName,
+    required this.selectedFoods,
   }) : super(key: key);
 
   @override
@@ -34,11 +37,8 @@ class PaymentSuccessScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              /// Check xanh thành công
               Icon(Icons.check_circle, color: Colors.greenAccent, size: 80),
               SizedBox(height: 16),
-
-              /// Tiêu đề
               Text(
                 "Thanh toán thành công!",
                 style: TextStyle(
@@ -48,15 +48,12 @@ class PaymentSuccessScreen extends StatelessWidget {
                 ),
               ),
               SizedBox(height: 20),
-
-              /// Row chứa poster và thông tin phim
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  /// Ảnh poster phim
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: Image.asset(
+                    child: Image.network(
                       moviePoster,
                       width: 120,
                       height: 180,
@@ -64,8 +61,6 @@ class PaymentSuccessScreen extends StatelessWidget {
                     ),
                   ),
                   SizedBox(width: 16),
-
-                  /// Thông tin phim
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -82,8 +77,6 @@ class PaymentSuccessScreen extends StatelessWidget {
                 ],
               ),
               SizedBox(height: 20),
-
-              /// Tổng tiền
               Container(
                 padding: EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -100,26 +93,37 @@ class PaymentSuccessScreen extends StatelessWidget {
                 ),
               ),
               SizedBox(height: 30),
-
-              /// Hai nút "Xem vé" và "Về trang chủ" ngang nhau, kích thước bằng nhau
               Row(
                 children: [
-                  /// Nút "Xem vé"
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        //Navigator.pushReplacement(
-                        //  context,
-                        //  MaterialPageRoute(
-                        //    builder: (context) => TicketDetailScreen(
-                        //      movieTitle: movieTitle,
-                        //      moviePoster: moviePoster,
-                        //      showtime: showtime,
-                        //      selectedSeats: selectedSeats,
-                        //      totalPrice: totalPrice,
-                        //    ),
-                        //  ),
-                        //);
+                        // Tạo một vé mới từ thông tin thanh toán
+                        Ticket newTicket = Ticket(
+                          id: DateTime.now().millisecondsSinceEpoch.toString(),
+                          showtime: showtime,
+                          selectedSeats: selectedSeats,
+                          selectedFoods: selectedFoods,
+                          totalPrice: totalPrice,
+                          isUsed: false, // Vé chưa được sử dụng
+                        );
+
+                        // Thêm vé vào danh sách myTickets
+                        myTickets.add(newTicket);
+
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => TicketDetailScreen(
+                              movieTitle: movieTitle,
+                              moviePoster: moviePoster,
+                              showtime: showtime,
+                              selectedSeats: selectedSeats,
+                              totalPrice: totalPrice,
+                              selectedFoods: selectedFoods,
+                            ),
+                          ),
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.orangeAccent,
@@ -133,8 +137,6 @@ class PaymentSuccessScreen extends StatelessWidget {
                     ),
                   ),
                   SizedBox(width: 16),
-
-                  /// Nút "Về trang chủ"
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
@@ -166,7 +168,6 @@ class PaymentSuccessScreen extends StatelessWidget {
     );
   }
 
-  /// Hàm tạo dòng thông tin
   Widget _buildInfoText(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),

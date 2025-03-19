@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:movieticketbooking/View/payment_screen.dart';
-import '../Data/data.dart';
-import '../Model/Room.dart';
-import '../Model/Showtime.dart';
+import 'package:movieticketbooking/View/user/payment_screen.dart';
+import '../../Data/data.dart';
+import '../../Model/Room.dart';
+import '../../Model/Showtime.dart';
 import 'food_selection_screen.dart';
 
 class SeatSelectionScreen extends StatefulWidget {
@@ -92,7 +92,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
           Container(
             decoration: BoxDecoration(
               image: DecorationImage(
-                image: AssetImage(widget.moviePoster),
+                image: NetworkImage(widget.moviePoster),
                 fit: BoxFit.cover,
                 colorFilter: ColorFilter.mode(
                   Colors.black.withOpacity(0.8),

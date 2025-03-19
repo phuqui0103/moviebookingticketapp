@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../Components/bottom_nav_bar.dart';
-import '../Components/date_picker.dart';
-import '../Components/time_picker.dart';
-import '../Data/data.dart';
-import '../Model/Movie.dart';
-import '../Model/Room.dart';
-import '../Model/Showtime.dart';
-import '../Model/Cinema.dart';
+import '../../Components/bottom_nav_bar.dart';
+import '../../Components/date_picker.dart';
+import '../../Components/time_picker.dart';
+import '../../Data/data.dart';
+import '../../Model/Movie.dart';
+import '../../Model/Room.dart';
+import '../../Model/Showtime.dart';
+import '../../Model/Cinema.dart';
 import 'seat_selection_screen.dart';
 
 class CinemaBookingScreen extends StatefulWidget {
@@ -137,7 +137,7 @@ class _CinemaBookingScreenState extends State<CinemaBookingScreen> {
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(10),
-                          child: Image.asset(
+                          child: Image.network(
                             movie.imagePath,
                             height: 100,
                             width: 70,

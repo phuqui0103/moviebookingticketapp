@@ -1,8 +1,8 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
-import '../../Components/movie_card_widget.dart';
-import '../Components/backgroud_widget.dart';
-import '../Data/data.dart';
+import '../../../Components/movie_card_widget.dart';
+import '../../Components/backgroud_widget.dart';
+import '../../Data/data.dart';
 import 'login_screen.dart';
 import 'movie_list_screen.dart';
 import 'profile_screen.dart';

@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../Components/bottom_nav_bar.dart';
-import '../Components/date_picker.dart';
-import '../Components/time_picker.dart';
-import '../Data/data.dart';
-import '../Model/Movie.dart';
-import '../Model/Province.dart';
-import '../Model/Room.dart';
-import '../Model/Showtime.dart';
-import '../Model/Cinema.dart';
+import '../../Components/bottom_nav_bar.dart';
+import '../../Components/date_picker.dart';
+import '../../Components/time_picker.dart';
+import '../../Data/data.dart';
+import '../../Model/Movie.dart';
+import '../../Model/Province.dart';
+import '../../Model/Room.dart';
+import '../../Model/Showtime.dart';
+import '../../Model/Cinema.dart';
 import 'seat_selection_screen.dart';
 import 'province_list_screen.dart';
 
@@ -149,7 +149,7 @@ class _ShowtimePickerScreenState extends State<ShowtimePickerScreen> {
           Container(
             decoration: BoxDecoration(
               image: DecorationImage(
-                image: AssetImage(widget.movie.imagePath),
+                image: NetworkImage(widget.movie.imagePath),
                 fit: BoxFit.cover,
               ),
             ),

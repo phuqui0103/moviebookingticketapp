@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../Model/Movie.dart';
-import '../View/movie_detail_screen.dart';
+import '../View/user/movie_detail_screen.dart';
 
 class MovieCardWidget extends StatelessWidget {
   final Movie movie;
@@ -66,7 +66,7 @@ class MovieCardWidget extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(15),
-          child: Image.asset(movie.imagePath, fit: BoxFit.cover),
+          child: Image.network(movie.imagePath, fit: BoxFit.cover),
         ),
       );
 
@@ -78,7 +78,7 @@ class MovieCardWidget extends StatelessWidget {
       ]);
 
   Widget buildGenre({required Movie movie}) =>
-      buildTag(movie.genres.join(" | "));
+      buildTag(movie.genres.map((genre) => genre.name).join(" | "));
 
   Widget buildRating({required Movie movie}) => buildTagWithIcon(
         text: movie.rating.toStringAsFixed(1),
