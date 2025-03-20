@@ -24,6 +24,7 @@ class _CinemaBookingScreenState extends State<CinemaBookingScreen> {
   Showtime? selectedShowtime;
   List<Showtime> availableShowtimes = [];
   List<Movie> moviesShowing = [];
+  Map<String, bool> selectedTimeStates = {};
 
   @override
   void initState() {
@@ -58,6 +59,7 @@ class _CinemaBookingScreenState extends State<CinemaBookingScreen> {
       selectedDate = DateFormat('yyyy-MM-dd').parse(formattedDate);
       _fetchShowtimesAndMovies();
       selectedShowtime = null;
+      selectedTimeStates.clear();
     });
   }
 
@@ -68,38 +70,41 @@ class _CinemaBookingScreenState extends State<CinemaBookingScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 50.0, left: 20, right: 20),
+            // Header
+            Container(
+              padding: const EdgeInsets.only(
+                  top: 50.0, left: 20, right: 20, bottom: 20),
               child: Row(
                 children: [
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
-                    child: Container(
-                      height: 50,
-                      width: 50,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(Icons.arrow_back, color: Colors.white),
-                    ),
+                    child: const Icon(Icons.arrow_back, color: Colors.white),
                   ),
                   const Spacer(),
-                  Text(widget.cinema.name,
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 24.0,
-                          fontWeight: FontWeight.bold)),
+                  Text(
+                    widget.cinema.name,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 24.0,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const Spacer(),
                 ],
               ),
             ),
             const SizedBox(height: 20),
+            // Date Picker Container
             Container(
               height: 120,
               width: MediaQuery.of(context).size.width * 0.9,
               decoration: BoxDecoration(
-                color: Colors.black,
+                color: Colors.black.withOpacity(0.3),
                 borderRadius: BorderRadius.circular(25),
+                border: Border.all(
+                  color: Colors.orange.withOpacity(0.3),
+                  width: 1,
+                ),
               ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -112,64 +117,111 @@ class _CinemaBookingScreenState extends State<CinemaBookingScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            if (availableShowtimes.isNotEmpty == false)
-              Column(children: [
-                const SizedBox(
-                  height: 120,
+            // Movies List
+            if (availableShowtimes.isEmpty)
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(15),
+                  border: Border.all(
+                    color: Colors.orange.withOpacity(0.3),
+                    width: 1,
+                  ),
                 ),
-                Text("Không có suất chiếu khả dụng",
-                    style: TextStyle(color: Colors.white, fontSize: 16)),
-              ]),
-            for (var movie in moviesShowing)
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(movie.title,
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18.0,
-                            fontWeight: FontWeight.bold)),
-                    Row(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: Image.network(
-                            movie.imagePath,
-                            height: 100,
-                            width: 70,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: TimePicker(
-                            availableShowtimes: availableShowtimes
-                                .where((s) => s.movieId == movie.id)
-                                .toList(),
-                            onTimeSelected: (Showtime showtime) {
-                              setState(() {
-                                selectedShowtime = showtime;
-                              });
-                            },
-                            height: 30,
-                          ),
-                        ),
-                      ],
+                child: const Text(
+                  "Không có suất chiếu khả dụng",
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 16,
+                  ),
+                ),
+              )
+            else
+              for (var movie in moviesShowing)
+                Container(
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding: const EdgeInsets.all(15),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(15),
+                    border: Border.all(
+                      color: Colors.orange.withOpacity(0.3),
+                      width: 1,
                     ),
-                  ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        movie.title,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18.0,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Container(
+                            height: 120,
+                            width: 80,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.orange.withOpacity(0.2),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Image.network(
+                                movie.imagePath,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 15),
+                          Expanded(
+                            child: TimePicker(
+                              availableShowtimes: availableShowtimes
+                                  .where((s) => s.movieId == movie.id)
+                                  .toList(),
+                              onTimeSelected: (Showtime showtime) {
+                                setState(() {
+                                  selectedTimeStates.clear();
+                                  selectedTimeStates[showtime.id] = true;
+                                  selectedShowtime = showtime;
+                                });
+                              },
+                              height: 30,
+                              selectedTimeStates: selectedTimeStates,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
             const SizedBox(height: 20),
           ],
         ),
       ),
       bottomNavigationBar: SafeArea(
-        child: Padding(
+        child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.3),
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(20),
+            ),
+          ),
           child: Row(
             mainAxisAlignment: selectedShowtime == null
                 ? MainAxisAlignment.center
@@ -180,8 +232,12 @@ class _CinemaBookingScreenState extends State<CinemaBookingScreen> {
                   child: Container(
                     height: 50,
                     decoration: BoxDecoration(
-                      color: Colors.black54,
-                      borderRadius: BorderRadius.circular(30),
+                      color: Colors.black.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(25),
+                      border: Border.all(
+                        color: Colors.orange.withOpacity(0.3),
+                        width: 1,
+                      ),
                     ),
                     child: Center(
                       child: Text(
@@ -210,8 +266,7 @@ class _CinemaBookingScreenState extends State<CinemaBookingScreen> {
                               builder: (context) => SeatSelectionScreen(
                                 showtime: selectedShowtime!,
                                 movieTitle: selectedMovie.title,
-                                moviePoster: selectedMovie
-                                    .imagePath, // Truyền movie.title vào
+                                moviePoster: selectedMovie.imagePath,
                               ),
                             ),
                           );
@@ -220,17 +275,28 @@ class _CinemaBookingScreenState extends State<CinemaBookingScreen> {
                   child: Container(
                     height: 50,
                     decoration: BoxDecoration(
-                      color: selectedShowtime != null
-                          ? Colors.orangeAccent
-                          : Colors.grey,
-                      borderRadius: BorderRadius.circular(30),
+                      gradient: LinearGradient(
+                        colors: selectedShowtime != null
+                            ? [Colors.orange, Colors.orange.shade700]
+                            : [Colors.grey, Colors.grey.shade700],
+                      ),
+                      borderRadius: BorderRadius.circular(25),
+                      boxShadow: selectedShowtime != null
+                          ? [
+                              BoxShadow(
+                                color: Colors.orange.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ]
+                          : null,
                     ),
                     child: Center(
                       child: Text(
                         "Đặt vé",
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 22.0,
+                          fontSize: 20.0,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

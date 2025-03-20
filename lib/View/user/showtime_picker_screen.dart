@@ -28,6 +28,7 @@ class _ShowtimePickerScreenState extends State<ShowtimePickerScreen> {
   List<Cinema> availableCinemas = [];
   Map<String, List<Showtime>> cinemaShowtimes = {};
   String selectedProvince = "Tất cả tỉnh";
+  Map<String, bool> selectedTimeStates = {};
 
   @override
   void initState() {
@@ -128,9 +129,9 @@ class _ShowtimePickerScreenState extends State<ShowtimePickerScreen> {
       backgroundColor: const Color(0xff252429),
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: Colors.transparent, // Làm trong suốt AppBar
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        centerTitle: true, // Căn giữa tiêu đề
+        centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
@@ -147,6 +148,8 @@ class _ShowtimePickerScreenState extends State<ShowtimePickerScreen> {
       body: Stack(
         children: [
           Container(
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height,
             decoration: BoxDecoration(
               image: DecorationImage(
                 image: NetworkImage(widget.movie.imagePath),
@@ -155,16 +158,14 @@ class _ShowtimePickerScreenState extends State<ShowtimePickerScreen> {
             ),
           ),
           Container(
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height,
             color: Colors.black.withOpacity(0.7),
           ),
           SingleChildScrollView(
             child: Column(
               children: [
-                Padding(
-                  padding:
-                      const EdgeInsets.only(top: 90.0, left: 20, right: 20),
-                ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 100),
                 Container(
                   height: 120,
                   width: MediaQuery.of(context).size.width * 0.9,
@@ -212,7 +213,6 @@ class _ShowtimePickerScreenState extends State<ShowtimePickerScreen> {
                     ),
                   ),
                 ),
-                // Danh sách các rạp có suất chiếu
                 if (availableCinemas.isNotEmpty)
                   Column(
                     children: availableCinemas.map((cinema) {
@@ -252,10 +252,7 @@ class _ShowtimePickerScreenState extends State<ShowtimePickerScreen> {
                       );
                     }).toList(),
                   ),
-
                 const SizedBox(height: 20),
-
-                // Hiển thị các suất chiếu theo rạp đã chọn
                 if (selectedCinema != null &&
                     cinemaShowtimes[selectedCinema!.id] != null)
                   Padding(
@@ -264,10 +261,13 @@ class _ShowtimePickerScreenState extends State<ShowtimePickerScreen> {
                       availableShowtimes: cinemaShowtimes[selectedCinema!.id]!,
                       onTimeSelected: (Showtime showtime) {
                         setState(() {
+                          selectedTimeStates.clear();
+                          selectedTimeStates[showtime.id] = true;
                           selectedShowtime = showtime;
                         });
                       },
-                      height: 30,
+                      height: 50,
+                      selectedTimeStates: selectedTimeStates,
                     ),
                   )
                 else
@@ -276,7 +276,6 @@ class _ShowtimePickerScreenState extends State<ShowtimePickerScreen> {
                     child: const Text("Không có suất chiếu khả dụng",
                         style: TextStyle(color: Colors.white, fontSize: 16)),
                   ),
-
                 const SizedBox(height: 20),
               ],
             ),
@@ -285,7 +284,7 @@ class _ShowtimePickerScreenState extends State<ShowtimePickerScreen> {
       ),
       bottomNavigationBar: SafeArea(
         child: Container(
-          color: Colors.black, // Thêm màu đen cho background
+          color: Colors.black,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
             child: Row(

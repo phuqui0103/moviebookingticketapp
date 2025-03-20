@@ -45,32 +45,55 @@ class _MyTicketListScreenState extends State<MyTicketListScreen>
         .toList();
 
     return Scaffold(
+      backgroundColor: const Color(0xff252429),
       appBar: AppBar(
-        title: const Text("Vé của tôi", style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.black,
+        title: Text(
+          "Vé của tôi",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
+          ),
+        ),
+        backgroundColor: const Color(0xff252429),
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
             Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) =>
-                        BottomNavBar())); // Quay lại màn hình trước
+              context,
+              MaterialPageRoute(builder: (context) => BottomNavBar()),
+            );
           },
         ),
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: Colors.orange,
+          indicatorWeight: 3,
+          labelColor: Colors.orange,
+          unselectedLabelColor: Colors.white70,
           tabs: [
             _buildTab("Chưa sử dụng", 0),
             _buildTab("Đã sử dụng", 1),
           ],
         ),
       ),
-      backgroundColor: Colors.black,
-      body: filteredTickets.isEmpty
-          ? _buildEmptyState()
-          : _buildTicketList(filteredTickets),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xff252429),
+              Color(0xff2A2A2A),
+            ],
+          ),
+        ),
+        child: filteredTickets.isEmpty
+            ? _buildEmptyState()
+            : _buildTicketList(filteredTickets),
+      ),
     );
   }
 
@@ -80,7 +103,6 @@ class _MyTicketListScreenState extends State<MyTicketListScreen>
       child: Text(
         title,
         style: TextStyle(
-          color: selectedTab == index ? Colors.orange : Colors.white70,
           fontSize: 16,
           fontWeight: FontWeight.bold,
         ),
@@ -91,6 +113,7 @@ class _MyTicketListScreenState extends State<MyTicketListScreen>
   /// Hiển thị danh sách vé
   Widget _buildTicketList(List<Ticket> tickets) {
     return ListView.builder(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       itemCount: tickets.length,
       itemBuilder: (context, index) => _buildTicketItem(tickets[index]),
     );
@@ -102,34 +125,22 @@ class _MyTicketListScreenState extends State<MyTicketListScreen>
     Movie? movie = movies.firstWhere(
       (movie) => movie.id == ticket.showtime.movieId,
       orElse: () => Movie(
-          id: "",
-          title: "Không xác định",
-          imagePath: "",
-          trailerUrl: '',
-          genres: [],
-          duration: '',
-          rating: 0,
-          isShowingNow: false,
-          description: '',
-          reviewCount: 0,
-          cast: [],
-          releaseDate: '',
-          director: '',
-          comments: []),
+        id: "",
+        title: "Không xác định",
+        imagePath: "",
+        trailerUrl: '',
+        genres: [],
+        duration: '',
+        rating: 0,
+        isShowingNow: false,
+        description: '',
+        reviewCount: 0,
+        cast: [],
+        releaseDate: '',
+        director: '',
+        comments: [],
+      ),
     );
-    String movieTitle = movie.title ?? "";
-    String moviePoster = movie.imagePath ?? "";
-    Map<String, int> getSelectedFoods(List<String> selectedFoods) {
-      Map<String, int> foodCountMap = {};
-      for (var food in selectedFoods) {
-        if (foodCountMap.containsKey(food)) {
-          foodCountMap[food] = foodCountMap[food]! + 1;
-        } else {
-          foodCountMap[food] = 1;
-        }
-      }
-      return foodCountMap;
-    }
 
     return GestureDetector(
       onTap: () {
@@ -138,73 +149,88 @@ class _MyTicketListScreenState extends State<MyTicketListScreen>
           context,
           MaterialPageRoute(
             builder: (context) => TicketDetailScreen(
-                movieTitle: movieTitle,
-                moviePoster: moviePoster,
-                showtime: ticket.showtime,
-                selectedSeats: ticket.selectedSeats,
-                totalPrice: ticket.totalPrice,
-                selectedFoods: ticket.selectedFoods),
+              movieTitle: movie.title ?? "",
+              moviePoster: movie.imagePath ?? "",
+              showtime: ticket.showtime,
+              selectedSeats: ticket.selectedSeats,
+              totalPrice: ticket.totalPrice,
+              selectedFoods: ticket.selectedFoods,
+            ),
           ),
         );
       },
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12),
-        padding: const EdgeInsets.all(10.0),
+        margin: EdgeInsets.only(bottom: 16),
+        padding: EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.grey[900],
-          borderRadius: BorderRadius.circular(12),
+          color: Colors.white.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.1),
+            width: 1,
+          ),
         ),
         child: Row(
           children: [
-            /// Ảnh phim
             ClipRRect(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               child: Image.network(
-                moviePoster,
-                width: 80,
-                height: 100,
+                movie.imagePath ?? "",
+                width: 90,
+                height: 120,
                 fit: BoxFit.cover,
               ),
             ),
-            const SizedBox(width: 12),
-
-            /// Thông tin vé
+            SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    movieTitle,
-                    style: const TextStyle(
+                    movie.title ?? "",
+                    style: TextStyle(
                       color: Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 6),
-
-                  /// Suất chiếu
-                  _buildInfoRow(Icons.schedule,
-                      "Suất: ${ticket.showtime.formattedDate} - ${ticket.showtime.formattedTime}"),
-
-                  /// Ghế ngồi
-                  _buildInfoRow(Icons.event_seat,
-                      "Ghế: ${ticket.selectedSeats.join(", ")}"),
-
-                  const SizedBox(height: 6),
-                  Text(
-                    "${ticket.totalPrice.toStringAsFixed(0)}đ",
-                    style: const TextStyle(
-                      color: Colors.orangeAccent,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  SizedBox(height: 8),
+                  _buildInfoRow(
+                    Icons.schedule,
+                    "${ticket.showtime.formattedDate} - ${ticket.showtime.formattedTime}",
+                  ),
+                  SizedBox(height: 4),
+                  _buildInfoRow(
+                    Icons.event_seat,
+                    "Ghế: ${ticket.selectedSeats.join(", ")}",
+                  ),
+                  SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "${ticket.totalPrice.toStringAsFixed(0)}đ",
+                        style: TextStyle(
+                          color: Colors.orange,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios,
-                color: Colors.white54, size: 18),
+            Container(
+              padding: EdgeInsets.all(8),
+              child: Icon(
+                Icons.arrow_forward_ios,
+                color: Colors.white54,
+                size: 16,
+              ),
+            ),
           ],
         ),
       ),
@@ -215,12 +241,15 @@ class _MyTicketListScreenState extends State<MyTicketListScreen>
   Widget _buildInfoRow(IconData icon, String text) {
     return Row(
       children: [
-        Icon(icon, color: Colors.white54, size: 16),
-        const SizedBox(width: 6),
+        Icon(icon, color: Colors.white70, size: 16),
+        SizedBox(width: 8),
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(color: Colors.white70, fontSize: 14),
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.9),
+              fontSize: 14,
+            ),
             overflow: TextOverflow.ellipsis,
           ),
         ),
@@ -230,10 +259,35 @@ class _MyTicketListScreenState extends State<MyTicketListScreen>
 
   /// Hiển thị khi không có vé nào
   Widget _buildEmptyState() {
-    return const Center(
-      child: Text(
-        "Không có vé nào!",
-        style: TextStyle(color: Colors.white70, fontSize: 16),
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.confirmation_number_outlined,
+            color: Colors.orange.withOpacity(0.5),
+            size: 64,
+          ),
+          SizedBox(height: 16),
+          Text(
+            "Không có vé nào!",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            selectedTab == 0
+                ? "Bạn chưa mua vé nào"
+                : "Bạn chưa sử dụng vé nào",
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.7),
+              fontSize: 14,
+            ),
+          ),
+        ],
       ),
     );
   }

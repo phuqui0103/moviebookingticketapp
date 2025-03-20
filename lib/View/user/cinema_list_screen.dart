@@ -17,22 +17,28 @@ class _CinemaListScreenState extends State<CinemaListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Chọn rạp",
-            style: TextStyle(
-                color: Colors.orangeAccent, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.black,
-        iconTheme: IconThemeData(color: Colors.white),
+        title: const Text(
+          "Chọn rạp",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: const Color(0xff252429),
+        iconTheme: const IconThemeData(color: Colors.white),
+        elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
             Navigator.push(context,
                 MaterialPageRoute(builder: (context) => BottomNavBar()));
           },
         ),
       ),
-      backgroundColor: Colors.black,
+      backgroundColor: const Color(0xff252429),
       body: ListView.builder(
-        padding: EdgeInsets.all(10),
+        padding: const EdgeInsets.all(16),
         itemCount: provinces.length,
         itemBuilder: (context, index) {
           final province = provinces[index];
@@ -41,25 +47,35 @@ class _CinemaListScreenState extends State<CinemaListScreen> {
               .where((cinema) => cinema.provinceId == province.id)
               .toList();
 
-          return Card(
-            color: Colors.black54,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-              side: BorderSide(color: Colors.orangeAccent, width: 1),
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: Colors.black12,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Colors.orange.withOpacity(0.3),
+                width: 1,
+              ),
             ),
             child: Column(
               children: [
                 ListTile(
-                  title: Text(province.name,
-                      style: TextStyle(
-                          color: Colors.orangeAccent,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold)),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  title: Text(
+                    province.name,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                   trailing: Icon(
                     isExpanded
                         ? Icons.keyboard_arrow_up
                         : Icons.keyboard_arrow_down,
-                    color: Colors.orangeAccent,
+                    color: Colors.orange,
+                    size: 20,
                   ),
                   onTap: () {
                     setState(() {
@@ -70,35 +86,49 @@ class _CinemaListScreenState extends State<CinemaListScreen> {
                 if (isExpanded)
                   Column(
                     children: provinceCinemas.map((cinema) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16.0, vertical: 4.0),
-                        child: Card(
-                          color: Colors.black54,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            side: BorderSide(
-                                color: Colors.orangeAccent, width: 1),
+                      return Container(
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.black12,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.orange.withOpacity(0.3),
+                            width: 1,
                           ),
-                          child: ListTile(
-                            title: Text(cinema.name,
-                                style: TextStyle(
-                                    color: Colors.white, fontSize: 16)),
-                            subtitle: Text(cinema.address,
-                                style: TextStyle(
-                                    color: Colors.white70, fontSize: 14)),
-                            leading: Icon(Icons.local_movies,
-                                color: Colors.orangeAccent),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      CinemaBookingScreen(cinema: cinema),
-                                ),
-                              );
-                            },
+                        ),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 8),
+                          leading: const Icon(
+                            Icons.local_movies,
+                            color: Colors.orange,
+                            size: 24,
                           ),
+                          title: Text(
+                            cinema.name,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          subtitle: Text(
+                            cinema.address,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                            ),
+                          ),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    CinemaBookingScreen(cinema: cinema),
+                              ),
+                            );
+                          },
                         ),
                       );
                     }).toList(),

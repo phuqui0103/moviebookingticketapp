@@ -9,8 +9,25 @@ import '../Model/Seat.dart';
 import '../Model/Showtime.dart';
 import '../Model/Ticket.dart';
 import '../Model/Genre.dart';
+import '../Model/User.dart';
 
-final List<Genre> Genres = [
+final sampleUser = User(
+  id: "user123",
+  fullName: "Nguyễn Văn A",
+  phoneNumber: "0123456789",
+  email: "nguyenvana@gmail.com",
+  hashedPassword:
+      "hashedPassword123", // In real app, this should be properly hashed
+  birthDate: DateTime(1995, 5, 15),
+  gender: "Nam",
+  province: "Hồ Chí Minh",
+  district: "Quận 1",
+  status: "Active",
+  createdAt: DateTime(2024, 1, 1),
+  updatedAt: DateTime(2024, 3, 15),
+);
+
+final List<Genre> genres = [
   Genre(id: "0", name: "Tất cả"),
   Genre(id: "1", name: "Tâm lý"),
   Genre(id: "2", name: "Kịch tính"),

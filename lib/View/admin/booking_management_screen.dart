@@ -30,7 +30,6 @@ class _BookingManagementScreenState extends State<BookingManagementScreen> {
         children: [
           _buildProvinceSelector(),
           if (selectedProvinceId != null) _buildCinemaSelector(),
-          const SizedBox(height: 10),
           if (selectedCinemaId != null) _buildShowtimeSelector(),
           _buildDateSelector(),
           Expanded(

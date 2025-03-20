@@ -28,9 +28,15 @@ class PaymentScreen extends StatefulWidget {
   _PaymentScreenState createState() => _PaymentScreenState();
 }
 
-class _PaymentScreenState extends State<PaymentScreen> {
+class _PaymentScreenState extends State<PaymentScreen>
+    with SingleTickerProviderStateMixin {
   String selectedPaymentMethod = "MoMo";
   bool isAgreed = false;
+  bool isLoading = false;
+  String paymentStatus = "";
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+
   final TextEditingController cardNumberController = TextEditingController();
   final TextEditingController expiryController = TextEditingController();
   final TextEditingController cvvController = TextEditingController();
@@ -39,19 +45,261 @@ class _PaymentScreenState extends State<PaymentScreen> {
   String? expiryError;
   String? cvvError;
 
-  void confirmPayment() {
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: Duration(milliseconds: 500),
+      vsync: this,
+    );
+    _fadeAnimation =
+        Tween<double>(begin: 0.0, end: 1.0).animate(_animationController);
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    cardNumberController.dispose();
+    expiryController.dispose();
+    cvvController.dispose();
+    super.dispose();
+  }
+
+  bool _validateCardInfo() {
+    bool isValid = true;
+
+    // Validate card number (16 digits)
+    if (cardNumberController.text.isEmpty ||
+        !RegExp(r'^\d{16}$').hasMatch(cardNumberController.text)) {
+      setState(() => cardNumberError = "Số thẻ không hợp lệ");
+      isValid = false;
+    }
+
+    // Validate expiry date (MM/YY format)
+    if (expiryController.text.isEmpty ||
+        !RegExp(r'^(0[1-9]|1[0-2])\/([0-9]{2})$')
+            .hasMatch(expiryController.text)) {
+      setState(() => expiryError = "Ngày hết hạn không hợp lệ");
+      isValid = false;
+    }
+
+    // Validate CVV (3-4 digits)
+    if (cvvController.text.isEmpty ||
+        !RegExp(r'^\d{3,4}$').hasMatch(cvvController.text)) {
+      setState(() => cvvError = "CVV không hợp lệ");
+      isValid = false;
+    }
+
+    return isValid;
+  }
+
+  Future<void> _simulatePayment() async {
+    setState(() {
+      isLoading = true;
+      paymentStatus = "Đang xử lý thanh toán...";
+    });
+
+    // Giả lập kiểm tra số dư
+    await Future.delayed(Duration(seconds: 1));
+    setState(() => paymentStatus = "Đang kiểm tra số dư...");
+
+    // Giả lập xác thực thông tin
+    await Future.delayed(Duration(seconds: 1));
+    setState(() => paymentStatus = "Đang xác thực thông tin...");
+
+    // Giả lập xử lý giao dịch
+    await Future.delayed(Duration(seconds: 1));
+    setState(() => paymentStatus = "Đang xử lý giao dịch...");
+
+    // Giả lập hoàn tất
+    await Future.delayed(Duration(seconds: 1));
+    setState(() {
+      isLoading = false;
+      paymentStatus = "Thanh toán thành công!";
+    });
+  }
+
+  void confirmPayment() async {
     if (!isAgreed) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content:
-                Text("Bạn cần đồng ý với điều khoản trước khi thanh toán!")),
+          content: Text("Bạn cần đồng ý với điều khoản trước khi thanh toán!"),
+          backgroundColor: Colors.orangeAccent,
+        ),
       );
       return;
     }
-    _showBankPaymentDialog();
-  }
 
-  void _showBankPaymentDialog() {
+    if (selectedPaymentMethod == "Thẻ ngân hàng" && !_validateCardInfo()) {
+      return;
+    }
+
+    // Hiển thị dialog xác nhận với animation
+    bool? confirm = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.grey[900],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Row(
+          children: [
+            Icon(Icons.payment, color: Colors.orangeAccent),
+            SizedBox(width: 8),
+            Text(
+              "Xác nhận thanh toán",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.orangeAccent),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Thông tin giao dịch",
+                    style: TextStyle(
+                      color: Colors.orangeAccent,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    "Số tiền: ${widget.totalPrice.toStringAsFixed(0)}đ",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (selectedPaymentMethod == "Thẻ ngân hàng") ...[
+                    SizedBox(height: 8),
+                    Text(
+                      "Phương thức: Thẻ ngân hàng",
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                    Text(
+                      "Số thẻ: ${cardNumberController.text.substring(0, 4)} **** **** ${cardNumberController.text.substring(12)}",
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                  ] else ...[
+                    SizedBox(height: 8),
+                    Text(
+                      "Phương thức: MoMo",
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            SizedBox(height: 16),
+            Text(
+              "Bạn có chắc chắn muốn thanh toán?",
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              "Hủy",
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 16,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orangeAccent,
+              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: Text(
+              "Xác nhận",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    // Bắt đầu quá trình thanh toán với loading overlay
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => WillPopScope(
+        onWillPop: () async => false,
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.grey[900],
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(
+                  valueColor:
+                      AlwaysStoppedAnimation<Color>(Colors.orangeAccent),
+                  strokeWidth: 3,
+                ),
+                SizedBox(height: 16),
+                Text(
+                  paymentStatus,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // Thực hiện quá trình thanh toán
+    await _simulatePayment();
+
+    // Đóng loading overlay
+    Navigator.pop(context);
+
+    // Chuyển đến màn hình thành công
     Room? selectedRoom = rooms.firstWhere(
       (room) => room.id == widget.showtime.roomId,
       orElse: () => Room(
@@ -64,7 +312,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
       ),
     );
 
-    // Lấy tên rạp từ cinemaId trong showtime
     Cinema? selectedCinema = cinemas.firstWhere(
       (cinema) => cinema.id == selectedRoom.cinemaId,
       orElse: () => Cinema(
@@ -74,146 +321,26 @@ class _PaymentScreenState extends State<PaymentScreen> {
         address: '',
       ),
     );
-    setState(() {
-      cardNumberError = null;
-      expiryError = null;
-      cvvError = null;
-    });
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text("Nhập thông tin thẻ ngân hàng",
-              style: TextStyle(fontWeight: FontWeight.bold)),
-          content: SingleChildScrollView(
-            child: StatefulBuilder(
-              builder: (context, setDialogState) {
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Số thẻ
-                    TextFormField(
-                      controller: cardNumberController,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: "Số thẻ",
-                        prefixIcon: Icon(Icons.credit_card),
-                        border: OutlineInputBorder(),
-                        errorText: cardNumberError,
-                      ),
-                      onChanged: (value) {
-                        setDialogState(() {
-                          cardNumberError =
-                              value.isEmpty ? "Vui lòng nhập số thẻ" : null;
-                        });
-                      },
-                    ),
-                    SizedBox(height: 10),
 
-                    // Ngày hết hạn
-                    TextFormField(
-                      controller: expiryController,
-                      keyboardType: TextInputType.datetime,
-                      decoration: InputDecoration(
-                        labelText: "Ngày hết hạn (MM/YY)",
-                        prefixIcon: Icon(Icons.date_range),
-                        border: OutlineInputBorder(),
-                        errorText: expiryError,
-                      ),
-                      onChanged: (value) {
-                        setDialogState(() {
-                          expiryError = value.isEmpty
-                              ? "Vui lòng nhập ngày hết hạn"
-                              : null;
-                        });
-                      },
-                    ),
-                    SizedBox(height: 10),
-
-                    // CVV
-                    TextFormField(
-                      controller: cvvController,
-                      keyboardType: TextInputType.number,
-                      obscureText: true,
-                      decoration: InputDecoration(
-                        labelText: "CVV",
-                        prefixIcon: Icon(Icons.lock),
-                        border: OutlineInputBorder(),
-                        errorText: cvvError,
-                      ),
-                      onChanged: (value) {
-                        setDialogState(() {
-                          cvvError = value.isEmpty ? "Vui lòng nhập CVV" : null;
-                        });
-                      },
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text("Hủy"),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                //setState(() {
-                //  cardNumberError = cardNumberController.text.isEmpty
-                //      ? "Vui lòng nhập số thẻ"
-                //      : null;
-                //  expiryError = expiryController.text.isEmpty
-                //      ? "Vui lòng nhập ngày hết hạn"
-                //      : null;
-                //  cvvError =
-                //      cvvController.text.isEmpty ? "Vui lòng nhập CVV" : null;
-                //});
-//
-                //if (cardNumberError == null &&
-                //    expiryError == null &&
-                //    cvvError == null) {
-                //  Navigator.push(
-                //    context,
-                //    MaterialPageRoute(
-                //      builder: (context) => TicketScreen(
-                //        movieTitle: widget.movieTitle,
-                //        moviePoster: widget.moviePoster,
-                //        showtime: widget.showtime,
-                //        selectedSeats: widget.selectedSeats,
-                //        totalPrice: widget.totalPrice,
-                //        selectedFoods: widget.selectedFoods,
-                //      ),
-                //    ),
-                //  );
-                //}
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => PaymentSuccessScreen(
-                      movieTitle: widget.movieTitle,
-                      moviePoster: widget.moviePoster,
-                      showtime: widget.showtime,
-                      roomName: selectedRoom.name,
-                      cinemaName: selectedCinema.name,
-                      selectedSeats: widget.selectedSeats,
-                      totalPrice: widget.totalPrice,
-                      selectedFoods: widget.selectedFoods,
-                    ),
-                  ),
-                );
-              },
-              child: Text("Thanh Toán"),
-            ),
-          ],
-        );
-      },
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PaymentSuccessScreen(
+          movieTitle: widget.movieTitle,
+          moviePoster: widget.moviePoster,
+          showtime: widget.showtime,
+          roomName: selectedRoom.name,
+          cinemaName: selectedCinema.name,
+          selectedSeats: widget.selectedSeats,
+          totalPrice: widget.totalPrice,
+          selectedFoods: widget.selectedFoods,
+        ),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    // Lấy phòng chiếu từ roomId trong showtime
     Room? selectedRoom = rooms.firstWhere(
       (room) => room.id == widget.showtime.roomId,
       orElse: () => Room(
@@ -226,7 +353,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
       ),
     );
 
-    // Lấy tên rạp từ cinemaId trong showtime
     Cinema? selectedCinema = cinemas.firstWhere(
       (cinema) => cinema.id == selectedRoom.cinemaId,
       orElse: () => Cinema(
@@ -241,399 +367,334 @@ class _PaymentScreenState extends State<PaymentScreen> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        title: Text('Thanh Toán', style: TextStyle(color: Colors.white)),
+        title: Text('Thanh Toán',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            )),
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView(
-          children: [
-            /// 1. Thông tin đặt vé trong khung viền cam
-            Container(
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Thông tin đặt vé
+              _buildTicketInfo(selectedCinema, selectedRoom),
+              SizedBox(height: 20),
+
+              // Thông tin bắp nước nếu có
+              if (widget.selectedFoods.isNotEmpty) _buildFoodInfo(),
+              SizedBox(height: 20),
+
+              // Phương thức thanh toán
+              _buildPaymentMethods(),
+              SizedBox(height: 20),
+
+              // Điều khoản
+              _buildTerms(),
+              SizedBox(height: 20),
+
+              // Tổng tiền và nút thanh toán
+              _buildTotalAndPayButton(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTicketInfo(Cinema cinema, Room room) {
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.black,
+        border: Border.all(color: Colors.orangeAccent, width: 2),
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.orangeAccent.withOpacity(0.2),
+            blurRadius: 10,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.network(
+                  widget.moviePoster,
+                  width: 120,
+                  height: 160,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.movieTitle,
+                      style: TextStyle(
+                        color: Colors.orangeAccent,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    SizedBox(height: 12),
+                    _buildInfoRow(Icons.location_on, "Rạp", cinema.name),
+                    _buildInfoRow(Icons.meeting_room, "Phòng", room.name),
+                    _buildInfoRow(Icons.schedule, "Thời gian",
+                        widget.showtime.formattedTime),
+                    _buildInfoRow(Icons.calendar_month, "Ngày",
+                        widget.showtime.formattedDate),
+                    _buildInfoRow(Icons.event_seat, "Ghế",
+                        widget.selectedSeats.join(", ")),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFoodInfo() {
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.black,
+        border: Border.all(color: Colors.orangeAccent, width: 2),
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.orangeAccent.withOpacity(0.2),
+            blurRadius: 10,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Bắp nước đã chọn",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 12),
+          ...widget.selectedFoods.entries.map((entry) {
+            Food food = foodItems.firstWhere((item) => item.id == entry.key);
+            return Container(
+              margin: EdgeInsets.only(bottom: 12),
               padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.black,
-                border: Border.all(color: Colors.orangeAccent, width: 2),
+                color: Colors.grey[900],
                 borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.orangeAccent.withOpacity(0.5)),
               ),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-
-                /// Ảnh phim bên phải
                 children: [
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: Image.network(
-                      widget.moviePoster,
-                      width: 140, // Kích thước ảnh nhỏ gọn
-                      height: 180,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.asset(
+                      food.image,
+                      width: 60,
+                      height: 60,
                       fit: BoxFit.cover,
                     ),
                   ),
-                  SizedBox(width: 20),
-
-                  /// Phần thông tin bên trái
+                  SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        /// Tiêu đề phim
                         Text(
-                          widget.movieTitle,
+                          food.name,
                           style: TextStyle(
-                            color: Colors.orange,
-                            fontSize: 22,
+                            color: Colors.white,
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
                           ),
                         ),
-                        SizedBox(height: 10),
-
-                        /// Thông tin chi tiết
-                        _buildInfoRow(
-                            Icons.location_on, "Rạp", selectedCinema.name),
-                        _buildInfoRow(
-                            Icons.meeting_room, "Phòng", selectedRoom.name),
-                        _buildInfoRow(Icons.schedule, "Thời gian",
-                            widget.showtime.formattedTime),
-                        _buildInfoRow(Icons.calendar_month, "Ngày",
-                            widget.showtime.formattedDate),
-                        _buildInfoRow(Icons.event_seat, "Ghế",
-                            widget.selectedSeats.join(", ")),
+                        SizedBox(height: 4),
+                        Text(
+                          "${entry.value} x ${food.price.toStringAsFixed(0)}đ",
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 14,
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                ],
-              ),
-            ),
-            SizedBox(height: 20),
-            if (widget.selectedFoods.isNotEmpty)
-              Container(
-                padding: EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    /// Tiêu đề
-                    //Text(
-                    //  "Bắp nước đã chọn",
-                    //  style: TextStyle(
-                    //    color: Colors.orange,
-                    //    fontSize: 22,
-                    //    fontWeight: FontWeight.bold,
-                    //  ),
-                    //),
-                    //SizedBox(height: 10),
-
-                    /// Danh sách món ăn
-
-                    Text(
-                      "Bắp nước đã chọn",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-
-                    Column(
-                      children: widget.selectedFoods.entries.map((entry) {
-                        Food food = foodItems
-                            .firstWhere((item) => item.id == entry.key);
-                        int quantity = entry.value;
-                        double totalFoodPrice = quantity * food.price;
-
-                        return Container(
-                          margin: EdgeInsets.symmetric(vertical: 8),
-                          padding: EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[900],
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Row(
-                            children: [
-                              /// Hình ảnh món ăn
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
-                                child: Image.asset(
-                                  food.image,
-                                  width: 80,
-                                  height: 80,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                              SizedBox(width: 12),
-
-                              /// Thông tin món ăn
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      food.name,
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    SizedBox(height: 5),
-                                    Text(
-                                      "$quantity x ${food.price.toStringAsFixed(0)}đ",
-                                      style: TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-
-                              /// Tổng tiền từng món
-                              Text(
-                                "${totalFoodPrice.toStringAsFixed(0)}đ",
-                                style: TextStyle(
-                                  color: Colors.orangeAccent,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                    ),
-
-                    SizedBox(height: 10),
-
-                    /// Tổng tiền bắp nước
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.black,
-                        border:
-                            Border.all(color: Colors.orangeAccent, width: 2),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            "Tổng tiền bắp nước",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            "${widget.selectedFoods.entries.fold(0, (sum, entry) {
-                              Food food = foodItems
-                                  .firstWhere((item) => item.id == entry.key);
-                              return sum + (entry.value * food.price).toInt();
-                            }).toStringAsFixed(0)}đ",
-                            style: const TextStyle(
-                              color: Colors.orangeAccent,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-            SizedBox(height: 20),
-
-            /// 2. Chọn phương thức thanh toán
-            Container(
-              padding: EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.black,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  /// Tiêu đề
                   Text(
-                    "Chọn phương thức thanh toán",
+                    "${(entry.value * food.price).toStringAsFixed(0)}đ",
                     style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
+                      color: Colors.orangeAccent,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  SizedBox(height: 12),
-
-                  /// Phương thức thanh toán MoMo
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        selectedPaymentMethod = "MoMo";
-                      });
-                    },
-                    child: Container(
-                      padding: EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: selectedPaymentMethod == "MoMo"
-                            ? Colors.orangeAccent.withOpacity(0.2)
-                            : Colors.white10,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: selectedPaymentMethod == "MoMo"
-                              ? Colors.orangeAccent
-                              : Colors.white30,
-                          width: 1.5,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.account_balance_wallet,
-                              color: Colors.orangeAccent),
-                          SizedBox(width: 12),
-                          Expanded(
-                            child: Text("MoMo",
-                                style: TextStyle(
-                                    color: Colors.white, fontSize: 16)),
-                          ),
-                          Radio(
-                            value: "MoMo",
-                            groupValue: selectedPaymentMethod,
-                            onChanged: (value) {
-                              setState(() {
-                                selectedPaymentMethod = value.toString();
-                              });
-                            },
-                            activeColor: Colors.orangeAccent,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 12),
-
-                  /// Phương thức thanh toán Thẻ ngân hàng
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        selectedPaymentMethod = "Thẻ ngân hàng";
-                      });
-                    },
-                    child: Container(
-                      padding: EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: selectedPaymentMethod == "Thẻ ngân hàng"
-                            ? Colors.orangeAccent.withOpacity(0.2)
-                            : Colors.white10,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: selectedPaymentMethod == "Thẻ ngân hàng"
-                              ? Colors.orangeAccent
-                              : Colors.white30,
-                          width: 1.5,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.credit_card, color: Colors.orangeAccent),
-                          SizedBox(width: 12),
-                          Expanded(
-                            child: Text("Thẻ ngân hàng",
-                                style: TextStyle(
-                                    color: Colors.white, fontSize: 16)),
-                          ),
-                          Radio(
-                            value: "Thẻ ngân hàng",
-                            groupValue: selectedPaymentMethod,
-                            onChanged: (value) {
-                              setState(() {
-                                selectedPaymentMethod = value.toString();
-                              });
-                            },
-                            activeColor: Colors.orangeAccent,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
                 ],
               ),
+            );
+          }).toList(),
+          SizedBox(height: 12),
+          Container(
+            padding: EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.black,
+              border: Border.all(color: Colors.orangeAccent, width: 2),
+              borderRadius: BorderRadius.circular(10),
             ),
-
-            SizedBox(height: 20),
-
-            /// 3. Checkbox đồng ý điều khoản
-            Row(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Checkbox(
-                  value: isAgreed,
-                  onChanged: (value) {
-                    setState(() {
-                      isAgreed = value!;
-                    });
-                  },
-                  activeColor: Colors.orangeAccent,
+                Text(
+                  "Tổng tiền bắp nước",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                Expanded(
-                  child: Text(
-                    "Tôi đồng ý với điều khoản và điều kiện của dịch vụ",
-                    style: TextStyle(color: Colors.white70),
+                Text(
+                  "${widget.selectedFoods.entries.fold(0, (sum, entry) {
+                    Food food =
+                        foodItems.firstWhere((item) => item.id == entry.key);
+                    return sum + (entry.value * food.price).toInt();
+                  }).toStringAsFixed(0)}đ",
+                  style: TextStyle(
+                    color: Colors.orangeAccent,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
             ),
-            Spacer(),
+          ),
+        ],
+      ),
+    );
+  }
 
-            /// 4. Tổng tiền + Nút thanh toán
-            Container(
-              padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-              decoration: BoxDecoration(
-                color: Colors.white10,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _buildPaymentMethods() {
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.black,
+        border: Border.all(color: Colors.orangeAccent, width: 2),
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.orangeAccent.withOpacity(0.2),
+            blurRadius: 10,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Chọn phương thức thanh toán",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 16),
+          _buildPaymentMethodOption(
+            "MoMo",
+            Icons.account_balance_wallet,
+            "Thanh toán qua ví MoMo",
+          ),
+          SizedBox(height: 12),
+          _buildPaymentMethodOption(
+            "Thẻ ngân hàng",
+            Icons.credit_card,
+            "Thanh toán qua thẻ ngân hàng",
+          ),
+          if (selectedPaymentMethod == "Thẻ ngân hàng") ...[
+            SizedBox(height: 16),
+            _buildCardInputFields(),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentMethodOption(
+      String method, IconData icon, String description) {
+    return GestureDetector(
+      onTap: () => setState(() => selectedPaymentMethod = method),
+      child: Container(
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: selectedPaymentMethod == method
+              ? Colors.orangeAccent.withOpacity(0.2)
+              : Colors.white10,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selectedPaymentMethod == method
+                ? Colors.orangeAccent
+                : Colors.white30,
+            width: 1.5,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: Colors.orangeAccent, size: 24),
+            SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  /// Tổng tiền
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Tổng tiền",
-                          style:
-                              TextStyle(color: Colors.white70, fontSize: 16)),
-                      Text("${widget.totalPrice.toStringAsFixed(0)}đ",
-                          style: TextStyle(
-                              color: Colors.orangeAccent,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-
-                  /// Nút thanh toán
-                  ElevatedButton(
-                    onPressed: confirmPayment,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          isAgreed ? Colors.orangeAccent : Colors.grey,
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 12, horizontal: 20),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+                  Text(
+                    method,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
-                    child: Text(
-                      "Thanh Toán",
-                      style: TextStyle(fontSize: 18, color: Colors.black),
+                  ),
+                  Text(
+                    description,
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
                     ),
                   ),
                 ],
               ),
+            ),
+            Radio(
+              value: method,
+              groupValue: selectedPaymentMethod,
+              onChanged: (value) =>
+                  setState(() => selectedPaymentMethod = value.toString()),
+              activeColor: Colors.orangeAccent,
             ),
           ],
         ),
@@ -641,18 +702,240 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+  Widget _buildCardInputFields() {
+    return Column(
+      children: [
+        TextFormField(
+          controller: cardNumberController,
+          keyboardType: TextInputType.number,
+          style: TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            labelText: "Số thẻ",
+            labelStyle: TextStyle(color: Colors.white70),
+            prefixIcon: Icon(Icons.credit_card, color: Colors.orangeAccent),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Colors.orangeAccent),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide:
+                  BorderSide(color: Colors.orangeAccent.withOpacity(0.5)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Colors.orangeAccent),
+            ),
+            errorText: cardNumberError,
+            errorStyle: TextStyle(color: Colors.red),
+          ),
+          onChanged: (value) => setState(() => cardNumberError = null),
+        ),
+        SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: expiryController,
+                keyboardType: TextInputType.datetime,
+                style: TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: "Ngày hết hạn (MM/YY)",
+                  labelStyle: TextStyle(color: Colors.white70),
+                  prefixIcon:
+                      Icon(Icons.date_range, color: Colors.orangeAccent),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Colors.orangeAccent),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide:
+                        BorderSide(color: Colors.orangeAccent.withOpacity(0.5)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Colors.orangeAccent),
+                  ),
+                  errorText: expiryError,
+                  errorStyle: TextStyle(color: Colors.red),
+                ),
+                onChanged: (value) => setState(() => expiryError = null),
+              ),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: TextFormField(
+                controller: cvvController,
+                keyboardType: TextInputType.number,
+                obscureText: true,
+                style: TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: "CVV",
+                  labelStyle: TextStyle(color: Colors.white70),
+                  prefixIcon: Icon(Icons.lock, color: Colors.orangeAccent),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Colors.orangeAccent),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide:
+                        BorderSide(color: Colors.orangeAccent.withOpacity(0.5)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Colors.orangeAccent),
+                  ),
+                  errorText: cvvError,
+                  errorStyle: TextStyle(color: Colors.red),
+                ),
+                onChanged: (value) => setState(() => cvvError = null),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTerms() {
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.black,
+        border: Border.all(color: Colors.orangeAccent, width: 2),
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.orangeAccent.withOpacity(0.2),
+            blurRadius: 10,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
       child: Row(
         children: [
-          Icon(icon, color: Colors.orangeAccent, size: 20),
+          Checkbox(
+            value: isAgreed,
+            onChanged: (value) => setState(() => isAgreed = value!),
+            activeColor: Colors.orangeAccent,
+          ),
+          Expanded(
+            child: Text(
+              "Tôi đồng ý với điều khoản và điều kiện của dịch vụ",
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTotalAndPayButton() {
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.black,
+        border: Border.all(color: Colors.orangeAccent, width: 2),
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.orangeAccent.withOpacity(0.2),
+            blurRadius: 10,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Tổng tiền",
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 16,
+                ),
+              ),
+              Text(
+                "${widget.totalPrice.toStringAsFixed(0)}đ",
+                style: TextStyle(
+                  color: Colors.orangeAccent,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 16),
+          if (paymentStatus.isNotEmpty)
+            Padding(
+              padding: EdgeInsets.only(bottom: 12),
+              child: Text(
+                paymentStatus,
+                style: TextStyle(
+                  color: Colors.orangeAccent,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton(
+              onPressed: isLoading ? null : confirmPayment,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isAgreed ? Colors.orangeAccent : Colors.grey,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(25),
+                ),
+                elevation: 5,
+              ),
+              child: isLoading
+                  ? SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        color: Colors.black,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : Text(
+                      "Thanh Toán",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.orangeAccent, size: 18),
           SizedBox(width: 8),
           Expanded(
             child: Text(
-              value,
-              style: TextStyle(color: Colors.white70, fontSize: 16),
-              overflow: TextOverflow.ellipsis,
+              "$label: $value",
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 14,
+              ),
             ),
           ),
         ],

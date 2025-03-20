@@ -3,9 +3,11 @@ import 'package:movieticketbooking/Data/data.dart';
 import 'package:movieticketbooking/View/user/cinema_list_screen.dart';
 import 'package:movieticketbooking/View/user/home_screen.dart';
 import 'package:movieticketbooking/View/user/login_screen.dart';
+import 'package:movieticketbooking/View/user/profile_screen.dart';
 import 'package:movieticketbooking/View/user/movie_list_screen.dart';
 import 'package:movieticketbooking/View/user/RegisterScreen.dart';
 import 'package:movieticketbooking/View/user/my_ticket_list_screen.dart';
+import 'package:movieticketbooking/View/user/profile_screen.dart';
 import 'package:movieticketbooking/View/user/showtime_picker_screen.dart';
 
 class BottomNavBar extends StatefulWidget {
@@ -19,11 +21,13 @@ class _BottomNavBarState extends State<BottomNavBar> {
   final List<Widget> pages = [
     HomeScreen(),
     MovieListScreen(),
-    LoginScreen(),
     CinemaListScreen(),
     MyTicketListScreen(
       myTickets: myTickets,
-    )
+    ),
+    ProfileScreen(
+      user: sampleUser,
+    ),
   ];
 
   setBottomBarIndex(index) {
@@ -196,7 +200,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
                                   },
                                   child: Container(
                                     child: Image.asset(
-                                      'assets/icons/sale.png', // Đường dẫn đến hình ảnh của bạn
+                                      'assets/icons/theater.png', // Đường dẫn đến hình ảnh của bạn
                                       height: 35.0, // Chiều cao của hình ảnh
                                       width: 35.0, // Chiều rộng của hình ảnh
                                       color: currentIndex == 2
@@ -207,7 +211,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
                                   ),
                                 ),
                                 Text(
-                                  'Ưu đãi', // Nhãn phía dưới
+                                  'Rạp', // Nhãn phía dưới
                                   style: TextStyle(
                                     fontSize: 14,
                                     color: currentIndex == 2
@@ -228,7 +232,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
                                 },
                                 child: Container(
                                   child: Image.asset(
-                                    'assets/icons/theater.png', // Đường dẫn đến hình ảnh của bạn
+                                    'assets/icons/myticket.png', // Đường dẫn đến hình ảnh của bạn
                                     height: 35.0, // Chiều cao của hình ảnh
                                     width: 35.0, // Chiều rộng của hình ảnh
                                     color: currentIndex == 3
@@ -239,7 +243,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
                                 ),
                               ),
                               Text(
-                                'Rạp', // Nhãn phía dưới
+                                'Vé', // Nhãn phía dưới
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: currentIndex == 3
@@ -262,7 +266,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
                                 },
                                 child: Container(
                                   child: Image.asset(
-                                    'assets/icons/myticket.png', // Đường dẫn đến hình ảnh của bạn
+                                    'assets/icons/user.png', // Đường dẫn đến hình ảnh của bạn
                                     height: 35.0, // Chiều cao của hình ảnh
                                     width: 35.0, // Chiều rộng của hình ảnh
                                     color: currentIndex == 4
@@ -273,7 +277,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
                                 ),
                               ),
                               Text(
-                                'Vé', // Nhãn phía dưới
+                                'Tôi', // Nhãn phía dưới
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: currentIndex == 4

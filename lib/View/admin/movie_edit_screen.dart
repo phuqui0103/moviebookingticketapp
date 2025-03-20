@@ -238,7 +238,7 @@ class _MovieEditScreenState extends State<MovieEditScreen> {
                     ),
                     const SizedBox(height: 10),
                     MultiSelectChip(
-                      genres: Genres,
+                      genres: widget.movie!.genres,
                       selectedGenres: _selectedGenres,
                       onSelectionChanged: _selectGenres,
                     ),
@@ -303,9 +303,7 @@ class _MovieEditScreenState extends State<MovieEditScreen> {
                     releaseDate: _releaseDateController.text,
                     description: _descriptionController.text,
                     genres: _selectedGenres,
-                    rating: widget.isEdit
-                        ? widget.movie!.rating
-                        : 0, // Mặc định, không cần chỉnh sửa rating
+                    rating: 0, // Mặc định, không cần chỉnh sửa rating
                     isShowingNow:
                         _isShowingNow, // Lưu trạng thái phim đang chiếu
                     cast: _castController.text.split(", "),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart'; // Thêm thư viện CachedNetworkImage
 import '../../Data/data.dart';
 import '../../Model/Movie.dart';
+import '../../Model/Genre.dart';
 import 'movie_edit_screen.dart';
 
 class MovieManagementScreen extends StatefulWidget {
@@ -14,201 +15,357 @@ class MovieManagementScreen extends StatefulWidget {
 }
 
 class _MovieManagementScreenState extends State<MovieManagementScreen> {
-  String searchQuery = ""; // Chuỗi tìm kiếm phim
+  String searchQuery = "";
   final TextEditingController _searchController = TextEditingController();
-  int selectedTab =
-      0; // Chỉ số của tab được chọn (0: Phim đang chiếu, 1: Phim sắp chiếu)
+  int selectedTab = 0;
 
   @override
   Widget build(BuildContext context) {
-    // Lọc phim theo trạng thái
     List<Movie> showingNowMovies = _filterMovies(isShowingNow: true);
     List<Movie> comingSoonMovies = _filterMovies(isShowingNow: false);
 
     return Scaffold(
-      appBar: AppBar(
-        title: _buildSearchField(),
-        centerTitle: true,
-        backgroundColor: const Color(0xff252429),
-        elevation: 0,
-      ),
       backgroundColor: const Color(0xff252429),
+      appBar: _buildAppBar(),
       body: Column(
         children: [
-          _buildTabBar(), // TabBar tùy chỉnh
+          _buildTabBar(),
+          const SizedBox(height: 16),
           Expanded(
             child: selectedTab == 0
-                ? _buildMovieList(showingNowMovies) // Tab "Phim đang chiếu"
-                : _buildMovieList(comingSoonMovies), // Tab "Phim sắp chiếu"
+                ? _buildMovieList(showingNowMovies)
+                : _buildMovieList(comingSoonMovies),
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _navigateToEditScreen,
-        backgroundColor: Colors.orange,
-        child: const Icon(Icons.add, color: Colors.white),
+      floatingActionButton: _buildAddButton(),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      backgroundColor: const Color(0xff252429),
+      elevation: 0,
+      title: Container(
+        height: 45,
+        decoration: BoxDecoration(
+          color: Colors.black12,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.orange.withOpacity(0.3)),
+        ),
+        child: TextField(
+          controller: _searchController,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            hintText: "Tìm kiếm phim...",
+            hintStyle: const TextStyle(color: Colors.white54),
+            prefixIcon: const Icon(Icons.search, color: Colors.orange),
+            suffixIcon: searchQuery.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.clear, color: Colors.white54),
+                    onPressed: () {
+                      setState(() {
+                        searchQuery = '';
+                        _searchController.clear();
+                      });
+                    },
+                  )
+                : null,
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+          ),
+          onChanged: (value) => setState(() => searchQuery = value),
+        ),
       ),
     );
   }
 
-  // Tìm kiếm phim
-  Widget _buildSearchField() {
-    return TextField(
-      controller: _searchController,
-      onChanged: (value) => setState(() => searchQuery = value),
-      decoration: const InputDecoration(
-        hintText: "Tìm kiếm phim...",
-        hintStyle: TextStyle(color: Colors.white70),
-        border: InputBorder.none,
-        suffixIcon: Icon(Icons.search, color: Colors.white),
-      ),
-      style: const TextStyle(color: Colors.white, fontSize: 18),
-    );
-  }
-
-  // TabBar tùy chỉnh
   Widget _buildTabBar() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _buildTabButton("Phim đang chiếu", 0),
-        const SizedBox(width: 70),
-        _buildTabButton("Phim sắp chiếu", 1),
-      ],
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.black12,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          Expanded(child: _buildTabButton("Phim đang chiếu", 0)),
+          Expanded(child: _buildTabButton("Phim sắp chiếu", 1)),
+        ],
+      ),
     );
   }
 
-  // Tab Button
   Widget _buildTabButton(String title, int index) {
+    final isSelected = selectedTab == index;
     return GestureDetector(
       onTap: () => setState(() => selectedTab = index),
-      child: Column(
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              color: selectedTab == index ? Colors.orange : Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Container(
-            height: 3,
-            width: 120,
-            color: selectedTab == index ? Colors.orange : Colors.transparent,
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Danh sách phim
-  Widget _buildMovieList(List<Movie> movies) {
-    return movies.isEmpty
-        ? _buildNoMoviesMessage()
-        : ListView.builder(
-            itemCount: movies.length,
-            itemBuilder: (context, index) => _buildMovieCard(movies[index]),
-          );
-  }
-
-  // Thông báo nếu không có phim nào
-  Widget _buildNoMoviesMessage() {
-    return const Center(
-      child: Text(
-        "Không có phim nào!",
-        style: TextStyle(color: Colors.white, fontSize: 16),
-      ),
-    );
-  }
-
-  // Card hiển thị phim
-  Widget _buildMovieCard(Movie movie) {
-    return GestureDetector(
-      onTap: () => _navigateToEditScreen(movie: movie),
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12),
-        padding: const EdgeInsets.all(10.0),
+        padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.black,
-          borderRadius: BorderRadius.circular(12),
+          color: isSelected ? Colors.orange : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
         ),
-        child: Row(
+        child: Text(
+          title,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.white60,
+            fontSize: 14,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMovieList(List<Movie> movies) {
+    if (movies.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: movie.imagePath.isNotEmpty
-                  ? (movie.imagePath.startsWith('http') ||
-                          movie.imagePath.startsWith('https'))
-                      ? CachedNetworkImage(
-                          imageUrl: movie.imagePath,
-                          width: 80,
-                          height: 100,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) =>
-                              const CircularProgressIndicator(),
-                          errorWidget: (context, url, error) =>
-                              const Icon(Icons.error),
-                        )
-                      : Image.file(
-                          File(movie.imagePath),
-                          width: 80,
-                          height: 100,
-                          fit: BoxFit.cover,
-                        )
-                  : const Icon(Icons.image, size: 80, color: Colors.grey),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    movie.title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      const Icon(Icons.star, color: Colors.yellow, size: 16),
-                      const SizedBox(width: 4),
-                      Text(
-                        "${movie.rating}/10",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            Column(
-              children: [
-                // Nút xóa
-                IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () => _deleteMovie(movie.id),
-                ),
-                // Nút chỉnh sửa
-                IconButton(
-                  icon: const Icon(Icons.edit, color: Colors.orange),
-                  onPressed: () {
-                    // Chuyển hướng đến màn hình chỉnh sửa phim
-                    _navigateToEditScreen(movie: movie);
-                  },
-                ),
-              ],
+            Icon(Icons.movie_outlined,
+                size: 64, color: Colors.white.withOpacity(0.3)),
+            const SizedBox(height: 16),
+            Text(
+              "Không có phim nào!",
+              style:
+                  TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 16),
             ),
           ],
         ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: movies.length,
+      itemBuilder: (context, index) => _buildMovieCard(movies[index]),
+    );
+  }
+
+  Widget _buildMovieCard(Movie movie) {
+    // Lấy tên thể loại từ ID
+    List<String> genreNames = movie.genres
+        .map((genreId) => genres
+            .firstWhere(
+              (genre) => genre.id == genreId,
+              orElse: () => Genre(id: "genreId", name: "Không rõ"),
+            )
+            .name)
+        .toList();
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.black12,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.withOpacity(0.3)),
+      ),
+      child: InkWell(
+        onTap: () => _navigateToEditScreen(movie: movie),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              // Poster
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: SizedBox(
+                  width: 100,
+                  height: 140,
+                  child: movie.imagePath.isNotEmpty
+                      ? (movie.imagePath.startsWith('http'))
+                          ? CachedNetworkImage(
+                              imageUrl: movie.imagePath,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => Container(
+                                color: Colors.black26,
+                                child: const Center(
+                                  child: CircularProgressIndicator(
+                                    color: Colors.orange,
+                                  ),
+                                ),
+                              ),
+                              errorWidget: (context, url, error) =>
+                                  const Icon(Icons.error, color: Colors.orange),
+                            )
+                          : Image.file(
+                              File(movie.imagePath),
+                              fit: BoxFit.cover,
+                            )
+                      : Container(
+                          color: Colors.black26,
+                          child: const Icon(
+                            Icons.movie,
+                            size: 40,
+                            color: Colors.orange,
+                          ),
+                        ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              // Movie Info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      movie.title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8),
+                    // Thể loại
+                    Text(
+                      genreNames.join(" • "),
+                      style: const TextStyle(
+                        color: Colors.orange,
+                        fontSize: 14,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8),
+                    // Rating và Duration
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.star,
+                          color: Colors.orange,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          "${movie.rating}/10",
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        const Icon(
+                          Icons.access_time,
+                          color: Colors.white70,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          movie.duration,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    // Status Badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: movie.isShowingNow
+                            ? Colors.green.withOpacity(0.2)
+                            : Colors.blue.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(
+                          color: movie.isShowingNow
+                              ? Colors.green.withOpacity(0.5)
+                              : Colors.blue.withOpacity(0.5),
+                        ),
+                      ),
+                      child: Text(
+                        movie.isShowingNow ? "Đang chiếu" : "Sắp chiếu",
+                        style: TextStyle(
+                          color:
+                              movie.isShowingNow ? Colors.green : Colors.blue,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Action Buttons
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    onPressed: () => _navigateToEditScreen(movie: movie),
+                    icon: const Icon(
+                      Icons.edit_outlined,
+                      color: Colors.orange,
+                    ),
+                    tooltip: 'Chỉnh sửa',
+                  ),
+                  IconButton(
+                    onPressed: () => _showDeleteDialog(movie),
+                    icon: const Icon(
+                      Icons.delete_outline,
+                      color: Colors.red,
+                    ),
+                    tooltip: 'Xóa',
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAddButton() {
+    return FloatingActionButton.extended(
+      onPressed: () => _navigateToEditScreen(),
+      backgroundColor: Colors.orange,
+      icon: const Icon(Icons.add, color: Colors.white),
+      label: const Text(
+        "Thêm phim",
+        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  void _showDeleteDialog(Movie movie) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xff252429),
+        title: const Text(
+          'Xóa phim',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Text(
+          'Bạn có chắc muốn xóa phim "${movie.title}"?',
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Hủy', style: TextStyle(color: Colors.white70)),
+          ),
+          TextButton(
+            onPressed: () {
+              _deleteMovie(movie.id);
+              Navigator.pop(context);
+            },
+            child: const Text('Xóa', style: TextStyle(color: Colors.red)),
+          ),
+        ],
       ),
     );
   }

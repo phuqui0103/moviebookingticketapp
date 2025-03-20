@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:movieticketbooking/Components/bottom_nav_bar.dart';
 import 'package:movieticketbooking/View/user/movie_detail_screen.dart';
-import '../../Data/data.dart';
+import '../../Data/data.dart' as app_data;
 import '../../Model/Movie.dart';
 import '../../Model/Genre.dart';
 
@@ -12,10 +12,10 @@ class MovieListScreen extends StatefulWidget {
 
 class _MovieListScreenState extends State<MovieListScreen> {
   int selectedTab = 0;
-  String selectedGenre = "Tất cả";
+  Genre? selectedGenre;
   String searchQuery = "";
   final TextEditingController _searchController = TextEditingController();
-  List<String> genres = [];
+  List<Genre> genres = [];
 
   @override
   void initState() {
@@ -25,7 +25,7 @@ class _MovieListScreenState extends State<MovieListScreen> {
 
   void _loadGenres() {
     setState(() {
-      genres.addAll(Genres.map((genre) => genre.name));
+      genres = app_data.genres;
     });
   }
 
@@ -39,9 +39,9 @@ class _MovieListScreenState extends State<MovieListScreen> {
       body: Column(
         children: [
           _buildTabBar(),
-          const SizedBox(height: 10),
+          const SizedBox(height: 16),
           _buildGenreFilter(),
-          const SizedBox(height: 5),
+          const SizedBox(height: 16),
           Expanded(
             child: filteredMovies.isEmpty
                 ? _buildNoMoviesMessage()
@@ -72,24 +72,34 @@ class _MovieListScreenState extends State<MovieListScreen> {
     return TextField(
       controller: _searchController,
       onChanged: (value) => setState(() => searchQuery = value),
-      decoration: const InputDecoration(
+      decoration: InputDecoration(
         hintText: "Tìm kiếm phim...",
-        hintStyle: TextStyle(color: Colors.white70),
-        border: InputBorder.none,
-        suffixIcon: Icon(Icons.search, color: Colors.white),
+        hintStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(25),
+          borderSide: BorderSide.none,
+        ),
+        filled: true,
+        fillColor: Colors.white.withOpacity(0.1),
+        prefixIcon: const Icon(Icons.search, color: Colors.white70),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       ),
-      style: const TextStyle(color: Colors.white, fontSize: 18),
+      style: const TextStyle(color: Colors.white, fontSize: 16),
     );
   }
 
   Widget _buildTabBar() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _buildTabButton("Phim đang chiếu", 0),
-        const SizedBox(width: 70),
-        _buildTabButton("Phim sắp chiếu", 1),
-      ],
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _buildTabButton("Phim đang chiếu", 0),
+          const SizedBox(width: 80),
+          _buildTabButton("Phim sắp chiếu", 1),
+        ],
+      ),
     );
   }
 
@@ -101,16 +111,19 @@ class _MovieListScreenState extends State<MovieListScreen> {
           Text(
             title,
             style: TextStyle(
-              color: selectedTab == index ? Colors.orange : Colors.white,
+              color: selectedTab == index ? Colors.orange : Colors.white70,
               fontSize: 16,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Container(
             height: 3,
             width: 120,
-            color: selectedTab == index ? Colors.orange : Colors.transparent,
+            decoration: BoxDecoration(
+              color: selectedTab == index ? Colors.orange : Colors.transparent,
+              borderRadius: BorderRadius.circular(3),
+            ),
           ),
         ],
       ),
@@ -118,8 +131,9 @@ class _MovieListScreenState extends State<MovieListScreen> {
   }
 
   Widget _buildGenreFilter() {
-    return SizedBox(
-      height: 40,
+    return Container(
+      height: 45,
+      margin: const EdgeInsets.symmetric(horizontal: 16),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: genres.length,
@@ -128,21 +142,30 @@ class _MovieListScreenState extends State<MovieListScreen> {
     );
   }
 
-  Widget _buildGenreChip(String genre) {
+  Widget _buildGenreChip(Genre genre) {
     return GestureDetector(
       onTap: () => setState(() => selectedGenre = genre),
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 6),
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         decoration: BoxDecoration(
-          color: selectedGenre == genre ? Colors.orange : Colors.grey[800],
-          borderRadius: BorderRadius.circular(20),
+          color: selectedGenre?.id == genre.id
+              ? Colors.orange
+              : Colors.white.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(25),
+          border: Border.all(
+            color: selectedGenre?.id == genre.id
+                ? Colors.orange
+                : Colors.white.withOpacity(0.2),
+            width: 1,
+          ),
         ),
         child: Text(
-          genre,
+          genre.name,
           style: TextStyle(
-            color: selectedGenre == genre ? Colors.black : Colors.white,
+            color: selectedGenre?.id == genre.id ? Colors.black : Colors.white,
             fontSize: 14,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ),
@@ -171,24 +194,28 @@ class _MovieListScreenState extends State<MovieListScreen> {
             builder: (context) => MovieDetailScreen(movie: movie)),
       ),
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12),
-        padding: const EdgeInsets.all(10.0),
+        margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16),
+        padding: const EdgeInsets.all(12.0),
         decoration: BoxDecoration(
-          color: Colors.black,
-          borderRadius: BorderRadius.circular(12),
+          color: Colors.white.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.1),
+            width: 1,
+          ),
         ),
         child: Row(
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               child: Image.network(
                 movie.imagePath,
-                width: 80,
-                height: 100,
+                width: 90,
+                height: 120,
                 fit: BoxFit.cover,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -197,11 +224,13 @@ class _MovieListScreenState extends State<MovieListScreen> {
                     movie.title,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 20,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
                       buildTag(movie.releaseDate),
@@ -209,12 +238,12 @@ class _MovieListScreenState extends State<MovieListScreen> {
                       buildTag(movie.duration),
                     ],
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   buildTag(movie.genres.map((genre) => genre.name).join(" | ")),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
-                      const Icon(Icons.star, color: Colors.yellow, size: 16),
+                      const Icon(Icons.star, color: Colors.orange, size: 16),
                       const SizedBox(width: 4),
                       Text(
                         "${movie.rating}/10",
@@ -237,24 +266,31 @@ class _MovieListScreenState extends State<MovieListScreen> {
 
   Widget buildTag(String text) => Container(
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.white),
-          borderRadius: BorderRadius.circular(10),
-          color: Colors.black54,
+          color: Colors.white.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.2),
+            width: 1,
+          ),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         child: Text(
           text,
-          style: const TextStyle(color: Colors.white, fontSize: 14),
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.9),
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
         ),
       );
 
   List<Movie> _filterMovies() {
-    return movies.where((movie) {
+    return app_data.movies.where((movie) {
       bool matchesTab =
           selectedTab == 0 ? movie.isShowingNow : !movie.isShowingNow;
 
-      bool matchesGenre = selectedGenre == "Tất cả" ||
-          movie.genres.any((genre) => genre.name == selectedGenre);
+      bool matchesGenre = selectedGenre == null ||
+          movie.genres.any((genre) => genre.id == selectedGenre?.id);
 
       bool matchesSearch = searchQuery.isEmpty ||
           movie.title.toLowerCase().contains(searchQuery.toLowerCase());

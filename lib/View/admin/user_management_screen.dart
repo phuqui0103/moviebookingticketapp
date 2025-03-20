@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:movieticketbooking/Data/data.dart';
 import '../../Model/User.dart';
 
 class UserManagementScreen extends StatefulWidget {
@@ -9,6 +11,9 @@ class UserManagementScreen extends StatefulWidget {
 }
 
 class _UserManagementScreenState extends State<UserManagementScreen> {
+  String searchQuery = '';
+  String? selectedProvince;
+  String selectedStatus = 'Tất cả';
   final TextEditingController _searchController = TextEditingController();
   List<User> users = [];
   List<User> filteredUsers = [];
@@ -220,71 +225,372 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: const Color(0xff252429),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: TextField(
-              controller: _searchController,
+          _buildFilters(),
+          Expanded(child: _buildUsersList()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilters() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.black12,
+        border: Border(
+          bottom: BorderSide(color: Colors.orange.withOpacity(0.3)),
+        ),
+      ),
+      child: Column(
+        children: [
+          // Thanh tìm kiếm
+          TextField(
+            controller: _searchController,
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              hintText: 'Tìm kiếm theo tên, email, số điện thoại...',
+              hintStyle: const TextStyle(color: Colors.white54),
+              prefixIcon: const Icon(Icons.search, color: Colors.orange),
+              filled: true,
+              fillColor: Colors.black26,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+            ),
+            onChanged: (value) {
+              setState(() {
+                searchQuery = value;
+              });
+            },
+          ),
+          const SizedBox(height: 16),
+          // Bộ lọc tỉnh/thành và trạng thái
+          Row(
+            children: [
+              Expanded(
+                child: _buildProvinceDropdown(),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildStatusDropdown(),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProvinceDropdown() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.black26,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: selectedProvince,
+          isExpanded: true,
+          hint: const Text('Tất cả tỉnh/thành',
+              style: TextStyle(color: Colors.white70)),
+          dropdownColor: const Color(0xff252429),
+          style: const TextStyle(color: Colors.white),
+          items: [
+            const DropdownMenuItem(
+              value: null,
+              child: Text('Tất cả tỉnh/thành'),
+            ),
+            ...provinces.map((province) => DropdownMenuItem(
+                  value: province.name,
+                  child: Text(province.name),
+                )),
+          ],
+          onChanged: (value) {
+            setState(() {
+              selectedProvince = value;
+            });
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusDropdown() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.black26,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: selectedStatus,
+          isExpanded: true,
+          dropdownColor: const Color(0xff252429),
+          style: const TextStyle(color: Colors.white),
+          items: ['Tất cả', 'Active', 'Blocked', 'Deleted'].map((status) {
+            return DropdownMenuItem(
+              value: status,
+              child: Text(status),
+            );
+          }).toList(),
+          onChanged: (value) {
+            setState(() {
+              selectedStatus = value!;
+            });
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUsersList() {
+    // Lọc người dùng dựa trên các điều kiện
+    List<User> filteredUsers = users.where((user) {
+      bool matchesSearch = searchQuery.isEmpty ||
+          user.fullName.toLowerCase().contains(searchQuery.toLowerCase()) ||
+          user.email.toLowerCase().contains(searchQuery.toLowerCase()) ||
+          user.phoneNumber.contains(searchQuery);
+
+      bool matchesProvince =
+          selectedProvince == null || user.province == selectedProvince;
+
+      bool matchesStatus =
+          selectedStatus == 'Tất cả' || user.status == selectedStatus;
+
+      return matchesSearch && matchesProvince && matchesStatus;
+    }).toList();
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: filteredUsers.length,
+      itemBuilder: (context, index) {
+        return _buildUserCard(filteredUsers[index]);
+      },
+    );
+  }
+
+  Widget _buildUserCard(User user) {
+    Color statusColor;
+    switch (user.status) {
+      case 'Active':
+        statusColor = Colors.green;
+        break;
+      case 'Blocked':
+        statusColor = Colors.red;
+        break;
+      case 'Deleted':
+        statusColor = Colors.grey;
+        break;
+      default:
+        statusColor = Colors.orange;
+    }
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      color: Colors.black12,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.orange.withOpacity(0.3)),
+      ),
+      child: InkWell(
+        onTap: () => _showUserDetails(user),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      user.fullName,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: statusColor.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: statusColor),
+                    ),
+                    child: Text(
+                      user.status,
+                      style: TextStyle(color: statusColor, fontSize: 12),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(Icons.email, color: Colors.orange, size: 16),
+                  const SizedBox(width: 8),
+                  Text(
+                    user.email,
+                    style: const TextStyle(color: Colors.white70),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  const Icon(Icons.phone, color: Colors.orange, size: 16),
+                  const SizedBox(width: 8),
+                  Text(
+                    user.phoneNumber,
+                    style: const TextStyle(color: Colors.white70),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  const Icon(Icons.location_on, color: Colors.orange, size: 16),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${user.district}, ${user.province}',
+                    style: const TextStyle(color: Colors.white70),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showUserDetails(User user) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xff252429),
+        title: const Text(
+          'Chi tiết người dùng',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildDetailRow('Họ tên', user.fullName),
+              _buildDetailRow('Email', user.email),
+              _buildDetailRow('Số điện thoại', user.phoneNumber),
+              _buildDetailRow('Giới tính', user.gender),
+              _buildDetailRow(
+                  'Ngày sinh', DateFormat('dd/MM/yyyy').format(user.birthDate)),
+              _buildDetailRow('Địa chỉ', '${user.district}, ${user.province}'),
+              _buildDetailRow('Trạng thái', user.status),
+              _buildDetailRow('Ngày tạo',
+                  DateFormat('dd/MM/yyyy HH:mm').format(user.createdAt)),
+              if (user.updatedAt != null)
+                _buildDetailRow('Cập nhật lần cuối',
+                    DateFormat('dd/MM/yyyy HH:mm').format(user.updatedAt!)),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Đóng', style: TextStyle(color: Colors.white70)),
+          ),
+          TextButton(
+            onPressed: () => _showStatusChangeDialog(user),
+            child: const Text('Đổi trạng thái',
+                style: TextStyle(color: Colors.orange)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(color: Colors.white70, fontSize: 14),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(color: Colors.white, fontSize: 16),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showStatusChangeDialog(User user) {
+    String newStatus = user.status;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xff252429),
+        title: const Text(
+          'Đổi trạng thái người dùng',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            DropdownButtonFormField<String>(
+              value: newStatus,
+              dropdownColor: const Color(0xff252429),
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
-                hintText: "Tìm kiếm theo tên, email, số điện thoại...",
-                hintStyle: const TextStyle(color: Colors.white60),
-                prefixIcon: const Icon(Icons.search, color: Colors.orange),
-                filled: true,
-                fillColor: Colors.black,
-                border: OutlineInputBorder(
+                enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Colors.orange),
+                  borderSide: BorderSide(color: Colors.orange.withOpacity(0.3)),
                 ),
               ),
-              onChanged: _searchUser,
-            ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: filteredUsers.length,
-              itemBuilder: (context, index) {
-                User user = filteredUsers[index];
-                return Container(
-                  margin:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.orange, width: 2),
-                    borderRadius: BorderRadius.circular(12),
-                    color: Colors.black,
-                  ),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.only(left: 15),
-                    title: Text(user.fullName,
-                        style: const TextStyle(color: Colors.white)),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(user.email,
-                            style: const TextStyle(color: Colors.white70)),
-                        Text(user.phoneNumber,
-                            style: const TextStyle(color: Colors.white70)),
-                      ],
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit, color: Colors.orange),
-                          onPressed: () => _editUser(user),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () => _deleteUser(user.id),
-                        ),
-                      ],
-                    ),
-                  ),
+              items: ['Active', 'Blocked', 'Deleted'].map((status) {
+                return DropdownMenuItem(
+                  value: status,
+                  child: Text(status),
                 );
+              }).toList(),
+              onChanged: (value) {
+                newStatus = value!;
               },
             ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Hủy', style: TextStyle(color: Colors.white70)),
+          ),
+          TextButton(
+            onPressed: () {
+              // TODO: Cập nhật trạng thái người dùng
+              Navigator.pop(context);
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Đã cập nhật trạng thái người dùng'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            },
+            child: const Text('Lưu', style: TextStyle(color: Colors.orange)),
           ),
         ],
       ),

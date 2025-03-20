@@ -27,8 +27,8 @@ class MyApp extends StatelessWidget {
               fontSize: 18, color: const Color.fromARGB(255, 184, 49, 49)),
         ),
       ),
-      //home: BottomNavBar(),
-      home: AdminMainScreen(),
+      home: BottomNavBar(),
+      //home: AdminMainScreen(),
     );
   }
 }
