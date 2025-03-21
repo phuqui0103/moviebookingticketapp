@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:movieticketbooking/Components/bottom_nav_bar.dart';
 import 'package:movieticketbooking/View/admin/admin_main_screen.dart';
@@ -6,13 +7,21 @@ import 'package:movieticketbooking/View/user/showtime_picker_screen.dart';
 import 'package:movieticketbooking/View/user/home_screen.dart';
 import 'package:movieticketbooking/View/user/login_screen.dart';
 import 'package:movieticketbooking/View/user/RegisterScreen.dart';
+import 'package:movieticketbooking/View/splash_screen.dart';
+
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(MyApp());
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -27,7 +36,8 @@ class MyApp extends StatelessWidget {
               fontSize: 18, color: const Color.fromARGB(255, 184, 49, 49)),
         ),
       ),
-      home: BottomNavBar(),
+      home: const LoginScreen(),
+      //home: const SplashScreen(),
       //home: AdminMainScreen(),
     );
   }
