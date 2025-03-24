@@ -188,22 +188,22 @@ class _CinemaBookingScreenState extends State<CinemaBookingScreen> {
                             ),
                           ),
                           const SizedBox(width: 15),
-                          Expanded(
-                            child: TimePicker(
-                              availableShowtimes: availableShowtimes
-                                  .where((s) => s.movieId == movie.id)
-                                  .toList(),
-                              onTimeSelected: (Showtime showtime) {
-                                setState(() {
-                                  selectedTimeStates.clear();
-                                  selectedTimeStates[showtime.id] = true;
-                                  selectedShowtime = showtime;
-                                });
-                              },
-                              height: 30,
-                              selectedTimeStates: selectedTimeStates,
-                            ),
-                          ),
+                          //Expanded(
+                          //child: TimePicker(
+                          //  availableShowtimes: availableShowtimes
+                          //      .where((s) => s.movieId == movie.id)
+                          //      .toList(),
+                          //  onTimeSelected: (Showtime showtime) {
+                          //    setState(() {
+                          //      selectedTimeStates.clear();
+                          //      selectedTimeStates[showtime.id] = true;
+                          //      selectedShowtime = showtime;
+                          //    });
+                          //  },
+                          //  height: 30,
+                          //  selectedTimeStates: selectedTimeStates,
+                          //),
+                          //),
                         ],
                       ),
                     ],

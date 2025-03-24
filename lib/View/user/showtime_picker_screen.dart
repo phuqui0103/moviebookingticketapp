@@ -284,10 +284,6 @@ class _ShowtimePickerScreenState extends State<ShowtimePickerScreen>
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const Icon(
-                Icons.arrow_drop_down,
-                color: Colors.white,
-              ),
             ],
           ),
         ),
@@ -344,7 +340,6 @@ class _ShowtimePickerScreenState extends State<ShowtimePickerScreen>
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const SizedBox(height: 20),
                               _buildDatePicker(),
                             ],
                           ),
@@ -353,34 +348,69 @@ class _ShowtimePickerScreenState extends State<ShowtimePickerScreen>
                       const SizedBox(height: 20),
                       GestureDetector(
                         onTap: () async {
-                          final selectedProvinceObj = await Navigator.push(
+                          final selectedProvinceObj =
+                              await Navigator.push<Province?>(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => ProvinceListScreen()),
+                              builder: (context) => ProvinceListScreen(),
+                            ),
                           );
 
-                          if (selectedProvinceObj is Province && mounted) {
-                            _fetchCinemasByProvince(selectedProvinceObj);
+                          if (mounted) {
+                            setState(() {
+                              selectedProvince =
+                                  selectedProvinceObj; // Có thể là null nếu chọn "Tất cả"
+                              selectedCinema = null;
+                              selectedShowtime = null;
+                              selectedTimeStates.clear();
+                            });
+                            _fetchCinemasAndShowtimes(forceRefresh: true);
                           }
                         },
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 10),
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 20),
+                          padding: const EdgeInsets.all(15),
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(15),
+                            border: Border.all(
+                              color: Colors.orange.withOpacity(0.3),
+                              width: 1,
+                            ),
+                          ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                  "Chọn rạp - ${selectedProvince?.name ?? 'Tất cả tỉnh'}",
-                                  style: const TextStyle(
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.location_city,
+                                    color: Colors.orange,
+                                    size: 24,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    selectedProvince != null
+                                        ? selectedProvince!.name
+                                        : 'Tất cả tỉnh',
+                                    style: const TextStyle(
                                       color: Colors.white,
-                                      fontSize: 18.0,
-                                      fontWeight: FontWeight.bold)),
-                              const Icon(Icons.arrow_forward_ios,
-                                  color: Colors.white, size: 20),
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const Icon(
+                                Icons.arrow_forward_ios,
+                                color: Colors.white54,
+                                size: 16,
+                              ),
                             ],
                           ),
                         ),
                       ),
+                      const SizedBox(height: 20),
                       if (availableCinemas.isNotEmpty)
                         Column(
                           children: availableCinemas.map((cinema) {
@@ -437,9 +467,8 @@ class _ShowtimePickerScreenState extends State<ShowtimePickerScreen>
                               });
                             },
                             height: 50,
-                            selectedTimeStates: selectedTimeStates,
-                            rooms:
-                                roomData, // Truyền dữ liệu phòng vào TimePicker
+                            selectedTimeStates:
+                                selectedTimeStates, // Truyền dữ liệu phòng vào TimePicker
                           ),
                         )
                       else

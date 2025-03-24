@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../Model/Province.dart';
+import '../Model/Cinema.dart';
 
 class ProvinceService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -108,5 +109,34 @@ class ProvinceService {
         return Province.fromJson(doc.data());
       }).toList();
     });
+  }
+
+  Stream<List<Cinema>> getAllCinemas() {
+    return _firestore.collection('cinemas').snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        return Cinema(
+          id: doc.id,
+          name: data['name'] ?? '',
+          address: data['address'] ?? '',
+          provinceId: data['provinceId'] ?? '',
+        );
+      }).toList();
+    });
+  }
+
+  Stream<List<Cinema>> getCinemasByProvince(String provinceId) {
+    return _firestore
+        .collection('cinemas')
+        .where('provinceId', isEqualTo: provinceId)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => Cinema(
+                  id: doc.id,
+                  name: doc['name'],
+                  provinceId: doc['provinceId'],
+                  address: doc['address'],
+                ))
+            .toList());
   }
 }

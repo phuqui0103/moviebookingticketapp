@@ -8,15 +8,6 @@ import 'package:intl/intl.dart';
 class ShowtimeService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Cache maps for rooms and cinemas
-  final Map<String, Room> _roomCache = {};
-  final Map<String, Cinema> _cinemaCache = {};
-
-  // Caching timeout (5 minutes)
-  final Duration _cacheDuration = const Duration(minutes: 5);
-  final Map<String, DateTime> _roomCacheTimestamps = {};
-  final Map<String, DateTime> _cinemaCacheTimestamps = {};
-
   // Tạo lịch chiếu mới
   Future<void> createShowtime(Showtime showtime) async {
     try {
@@ -260,86 +251,33 @@ class ShowtimeService {
     }
   }
 
-  // Lấy thông tin cinema theo ID với caching
-  Future<Cinema> getCinemaById(String cinemaId) async {
-    // Check if cinema is in cache and if cache is still valid
-    if (_cinemaCache.containsKey(cinemaId)) {
-      final cacheTime = _cinemaCacheTimestamps[cinemaId];
-      if (cacheTime != null &&
-          DateTime.now().difference(cacheTime) < _cacheDuration) {
-        return _cinemaCache[cinemaId]!;
-      }
-    }
-
-    try {
-      final doc = await _firestore.collection('cinemas').doc(cinemaId).get();
-
-      if (!doc.exists) {
-        throw Exception('Cinema không tồn tại');
-      }
-
-      final cinema = Cinema.fromJson(doc.data() as Map<String, dynamic>);
-
-      // Store in cache
-      _cinemaCache[cinemaId] = cinema;
-      _cinemaCacheTimestamps[cinemaId] = DateTime.now();
-
-      return cinema;
-    } catch (e) {
-      print('Lỗi khi lấy thông tin cinema: $e');
-
-      // If there was an error but we have a cached version, return it even if expired
-      if (_cinemaCache.containsKey(cinemaId)) {
-        return _cinemaCache[cinemaId]!;
-      }
-
-      throw Exception('Không thể lấy thông tin cinema');
-    }
-  }
-
-  // Lấy thông tin room theo ID với caching
+  // Lấy thông tin phòng chiếu theo ID
   Future<Room> getRoomById(String roomId) async {
-    // Check if room is in cache and if cache is still valid
-    if (_roomCache.containsKey(roomId)) {
-      final cacheTime = _roomCacheTimestamps[roomId];
-      if (cacheTime != null &&
-          DateTime.now().difference(cacheTime) < _cacheDuration) {
-        return _roomCache[roomId]!;
-      }
+    final doc = await _firestore.collection('rooms').doc(roomId).get();
+    final data = doc.data();
+    if (data == null) {
+      throw Exception('Không tìm thấy phòng chiếu');
     }
 
-    try {
-      final doc = await _firestore.collection('rooms').doc(roomId).get();
+    List<dynamic> seatLayoutJson = data['seatLayout'] ?? [];
+    List<Seat> seatLayout = seatLayoutJson.map((seat) {
+      return Seat(
+        id: seat['id'] ?? '',
+        row: seat['row'] ?? '',
+        column: seat['column'] ?? 0,
+        isVip: seat['isVip'] ?? false,
+        isBooked: seat['isBooked'] ?? false,
+      );
+    }).toList();
 
-      if (!doc.exists) {
-        throw Exception('Room không tồn tại');
-      }
-
-      final room = Room.fromJson(doc.data() as Map<String, dynamic>);
-
-      // Store in cache
-      _roomCache[roomId] = room;
-      _roomCacheTimestamps[roomId] = DateTime.now();
-
-      return room;
-    } catch (e) {
-      print('Lỗi khi lấy thông tin room: $e');
-
-      // If there was an error but we have a cached version, return it even if expired
-      if (_roomCache.containsKey(roomId)) {
-        return _roomCache[roomId]!;
-      }
-
-      throw Exception('Không thể lấy thông tin room');
-    }
-  }
-
-  // Clear caches method - call this when data might have changed
-  void clearCaches() {
-    _roomCache.clear();
-    _cinemaCache.clear();
-    _roomCacheTimestamps.clear();
-    _cinemaCacheTimestamps.clear();
+    return Room(
+      id: doc.id,
+      cinemaId: data['cinemaId'] ?? '',
+      name: data['name'] ?? '',
+      rows: data['rows'] ?? 0,
+      cols: data['cols'] ?? 0,
+      seatLayout: seatLayout,
+    );
   }
 
   // Lấy danh sách rạp phim theo tỉnh thành
@@ -361,5 +299,21 @@ class ShowtimeService {
         );
       }).toList();
     });
+  }
+
+  // Lấy thông tin rạp phim theo ID
+  Future<Cinema> getCinemaById(String cinemaId) async {
+    final doc = await _firestore.collection('cinemas').doc(cinemaId).get();
+    final data = doc.data();
+    if (data == null) {
+      throw Exception('Không tìm thấy rạp phim');
+    }
+
+    return Cinema(
+      id: doc.id,
+      name: data['name'] ?? '',
+      provinceId: data['provinceId'] ?? '',
+      address: data['address'] ?? '',
+    );
   }
 }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../Model/Showtime.dart';
-import '../Model/Room.dart';
 import 'package:intl/intl.dart';
 
 class TimePicker extends StatefulWidget {
@@ -8,7 +7,6 @@ class TimePicker extends StatefulWidget {
   final Function(Showtime) onTimeSelected;
   final double height;
   final Map<String, bool> selectedTimeStates;
-  final Map<String, Room>? rooms;
 
   const TimePicker({
     Key? key,
@@ -16,7 +14,6 @@ class TimePicker extends StatefulWidget {
     required this.onTimeSelected,
     required this.height,
     required this.selectedTimeStates,
-    this.rooms,
   }) : super(key: key);
 
   @override
@@ -40,7 +37,7 @@ class _TimePickerState extends State<TimePicker> {
         padding: EdgeInsets.zero,
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 3,
-          childAspectRatio: 2,
+          childAspectRatio: 2.5,
           crossAxisSpacing: 10,
           mainAxisSpacing: 10,
         ),
@@ -58,11 +55,6 @@ class _TimePickerState extends State<TimePicker> {
 
   Widget _buildTimeButton(Showtime showtime) {
     final isSelected = widget.selectedTimeStates[showtime.id] ?? false;
-    final roomName =
-        widget.rooms != null && widget.rooms!.containsKey(showtime.roomId)
-            ? widget.rooms![showtime.roomId]!.name
-            : 'Room ${showtime.roomId.substring(0, 4)}';
-
     return GestureDetector(
       onTap: () => widget.onTimeSelected(showtime),
       child: Container(
@@ -71,7 +63,9 @@ class _TimePickerState extends State<TimePicker> {
           color: isSelected ? Colors.orange : Colors.black.withOpacity(0.3),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isSelected ? Colors.orange : Colors.orange.withOpacity(0.3),
+            color: isSelected
+                ? const Color.fromARGB(255, 185, 177, 164)
+                : const Color.fromARGB(255, 255, 255, 255),
             width: 1,
           ),
           boxShadow: isSelected
@@ -84,28 +78,15 @@ class _TimePickerState extends State<TimePicker> {
                 ]
               : null,
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              DateFormat('HH:mm').format(showtime.startTime),
-              style: TextStyle(
-                color: isSelected ? Colors.white : Colors.white70,
-                fontSize: 14,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
+        child: Center(
+          child: Text(
+            DateFormat('HH:mm').format(showtime.startTime),
+            style: TextStyle(
+              color: isSelected ? Colors.white : Colors.white70,
+              fontSize: 16,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             ),
-            const SizedBox(height: 2),
-            Text(
-              roomName,
-              style: TextStyle(
-                color: isSelected ? Colors.white : Colors.white60,
-                fontSize: 12,
-                fontWeight: FontWeight.normal,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
+          ),
         ),
       ),
     );
