@@ -5,6 +5,8 @@ import 'package:cached_network_image/cached_network_image.dart'; // Thêm thư v
 import '../../Data/data.dart';
 import '../../Model/Movie.dart';
 import '../../Model/Genre.dart';
+import '../../Services/movie_service.dart';
+import '../../Services/genre_service.dart';
 import 'movie_edit_screen.dart';
 
 class MovieManagementScreen extends StatefulWidget {
@@ -15,12 +17,344 @@ class MovieManagementScreen extends StatefulWidget {
 }
 
 class _MovieManagementScreenState extends State<MovieManagementScreen> {
+  final MovieService _movieService = MovieService();
+  final GenreService _genreService = GenreService();
   String searchQuery = "";
   final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _genreNameController = TextEditingController();
   int selectedTab = 0;
+  List<Movie> allMovies = [];
+  List<Genre> allGenres = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMovies();
+    _loadGenres();
+  }
+
+  void _loadMovies() {
+    _movieService.getMovies().listen(
+      (movies) {
+        setState(() {
+          allMovies = movies;
+          _isLoading = false;
+        });
+      },
+      onError: (error) {
+        print('Error loading movies: $error');
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Đã có lỗi xảy ra khi tải danh sách phim'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      },
+    );
+  }
+
+  void _loadGenres() {
+    _genreService.getAllGenres().listen(
+      (genres) {
+        setState(() {
+          allGenres = genres;
+        });
+      },
+      onError: (error) {
+        print('Error loading genres: $error');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Đã có lỗi xảy ra khi tải danh sách thể loại'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      },
+    );
+  }
+
+  void _showAddGenreDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xff252429),
+        title: const Text(
+          'Thêm thể loại mới',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: TextField(
+          controller: _genreNameController,
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(
+            hintText: 'Nhập tên thể loại',
+            hintStyle: TextStyle(color: Colors.white54),
+            enabledBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: Colors.orange),
+            ),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: Colors.orange),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _genreNameController.clear();
+            },
+            child: const Text('Hủy', style: TextStyle(color: Colors.white70)),
+          ),
+          TextButton(
+            onPressed: () async {
+              if (_genreNameController.text.trim().isNotEmpty) {
+                try {
+                  final newGenre = Genre(
+                    id: '', // ID sẽ được Firestore tự động tạo
+                    name: _genreNameController.text.trim(),
+                  );
+                  await _genreService.createGenre(newGenre);
+                  Navigator.pop(context);
+                  _genreNameController.clear();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Đã thêm thể loại "${newGenre.name}"'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content:
+                          Text('Không thể thêm thể loại. Vui lòng thử lại.'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Thêm', style: TextStyle(color: Colors.orange)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showGenresDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xff252429),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Quản lý thể loại',
+              style: TextStyle(color: Colors.white),
+            ),
+            IconButton(
+              icon: const Icon(Icons.add, color: Colors.orange),
+              onPressed: () {
+                Navigator.pop(context);
+                _showAddGenreDialog();
+              },
+              tooltip: 'Thêm thể loại mới',
+            ),
+          ],
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: StreamBuilder<List<Genre>>(
+            stream: _genreService.getAllGenres(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return const Text(
+                  'Đã có lỗi xảy ra',
+                  style: TextStyle(color: Colors.red),
+                );
+              }
+
+              if (!snapshot.hasData) {
+                return const Center(
+                  child: CircularProgressIndicator(color: Colors.orange),
+                );
+              }
+
+              final genres = snapshot.data!;
+              if (genres.isEmpty) {
+                return const Center(
+                  child: Text(
+                    'Chưa có thể loại nào',
+                    style: TextStyle(color: Colors.white70),
+                  ),
+                );
+              }
+
+              return ListView.builder(
+                shrinkWrap: true,
+                itemCount: genres.length,
+                itemBuilder: (context, index) {
+                  final genre = genres[index];
+                  return ListTile(
+                    title: Text(
+                      genre.name,
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Nút chỉnh sửa
+                        IconButton(
+                          icon: const Icon(Icons.edit_outlined,
+                              color: Colors.orange),
+                          onPressed: () {
+                            _showEditGenreDialog(genre);
+                          },
+                        ),
+                        // Nút xóa
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline,
+                              color: Colors.red),
+                          onPressed: () => _showDeleteGenreDialog(genre),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Đóng', style: TextStyle(color: Colors.white70)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditGenreDialog(Genre genre) {
+    final editController = TextEditingController(text: genre.name);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xff252429),
+        title: const Text(
+          'Chỉnh sửa thể loại',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: TextField(
+          controller: editController,
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(
+            hintText: 'Nhập tên thể loại mới',
+            hintStyle: TextStyle(color: Colors.white54),
+            enabledBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: Colors.orange),
+            ),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: Colors.orange),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Hủy', style: TextStyle(color: Colors.white70)),
+          ),
+          TextButton(
+            onPressed: () async {
+              if (editController.text.trim().isNotEmpty) {
+                try {
+                  final updatedGenre = Genre(
+                    id: genre.id,
+                    name: editController.text.trim(),
+                  );
+                  await _genreService.updateGenre(updatedGenre);
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                          'Đã cập nhật thể loại thành "${updatedGenre.name}"'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                          'Không thể cập nhật thể loại. Vui lòng thử lại.'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Lưu', style: TextStyle(color: Colors.orange)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteGenreDialog(Genre genre) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xff252429),
+        title: const Text(
+          'Xác nhận xóa',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Text(
+          'Bạn có chắc muốn xóa thể loại "${genre.name}"?',
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Hủy', style: TextStyle(color: Colors.white70)),
+          ),
+          TextButton(
+            onPressed: () async {
+              try {
+                await _genreService.deleteGenre(genre.id);
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Đã xóa thể loại "${genre.name}"'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Không thể xóa thể loại. Vui lòng thử lại.'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            child: const Text('Xóa', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: const Color(0xff252429),
+        body: Center(
+          child: CircularProgressIndicator(color: Colors.orange),
+        ),
+      );
+    }
+
     List<Movie> showingNowMovies = _filterMovies(isShowingNow: true);
     List<Movie> comingSoonMovies = _filterMovies(isShowingNow: false);
 
@@ -38,7 +372,20 @@ class _MovieManagementScreenState extends State<MovieManagementScreen> {
           ),
         ],
       ),
-      floatingActionButton: _buildAddButton(),
+      floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'addMovie',
+        onPressed: () => _navigateToEditScreen(),
+        backgroundColor: Colors.orange,
+        elevation: 4,
+        icon: const Icon(Icons.add, color: Colors.white),
+        label: const Text(
+          "Thêm phim",
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
     );
   }
 
@@ -46,36 +393,80 @@ class _MovieManagementScreenState extends State<MovieManagementScreen> {
     return AppBar(
       backgroundColor: const Color(0xff252429),
       elevation: 0,
-      title: Container(
-        height: 45,
-        decoration: BoxDecoration(
-          color: Colors.black12,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.orange.withOpacity(0.3)),
-        ),
-        child: TextField(
-          controller: _searchController,
-          style: const TextStyle(color: Colors.white),
-          decoration: InputDecoration(
-            hintText: "Tìm kiếm phim...",
-            hintStyle: const TextStyle(color: Colors.white54),
-            prefixIcon: const Icon(Icons.search, color: Colors.orange),
-            suffixIcon: searchQuery.isNotEmpty
-                ? IconButton(
-                    icon: const Icon(Icons.clear, color: Colors.white54),
-                    onPressed: () {
-                      setState(() {
-                        searchQuery = '';
-                        _searchController.clear();
-                      });
-                    },
-                  )
-                : null,
-            border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+      title: Row(
+        children: [
+          // Ô tìm kiếm
+          Expanded(
+            child: Container(
+              height: 45,
+              decoration: BoxDecoration(
+                color: Colors.black12,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.orange.withOpacity(0.3)),
+              ),
+              child: TextField(
+                controller: _searchController,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: "Tìm kiếm phim...",
+                  hintStyle: const TextStyle(color: Colors.white54),
+                  prefixIcon: const Icon(Icons.search, color: Colors.orange),
+                  suffixIcon: searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear, color: Colors.white54),
+                          onPressed: () {
+                            setState(() {
+                              searchQuery = '';
+                              _searchController.clear();
+                            });
+                          },
+                        )
+                      : null,
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                ),
+                onChanged: (value) => setState(() => searchQuery = value),
+              ),
+            ),
           ),
-          onChanged: (value) => setState(() => searchQuery = value),
-        ),
+          // Nút quản lý thể loại
+          const SizedBox(width: 16),
+          Container(
+            height: 45,
+            decoration: BoxDecoration(
+              color: Colors.orange,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: _showGenresDialog,
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: const [
+                      Icon(
+                        Icons.category_outlined,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        "Thể loại",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -148,16 +539,6 @@ class _MovieManagementScreenState extends State<MovieManagementScreen> {
   }
 
   Widget _buildMovieCard(Movie movie) {
-    // Lấy tên thể loại từ ID
-    List<String> genreNames = movie.genres
-        .map((genreId) => genres
-            .firstWhere(
-              (genre) => genre.id == genreId,
-              orElse: () => Genre(id: "genreId", name: "Không rõ"),
-            )
-            .name)
-        .toList();
-
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -197,6 +578,8 @@ class _MovieManagementScreenState extends State<MovieManagementScreen> {
                           : Image.file(
                               File(movie.imagePath),
                               fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  const Icon(Icons.error, color: Colors.orange),
                             )
                       : Container(
                           color: Colors.black26,
@@ -222,17 +605,6 @@ class _MovieManagementScreenState extends State<MovieManagementScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                       maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 8),
-                    // Thể loại
-                    Text(
-                      genreNames.join(" • "),
-                      style: const TextStyle(
-                        color: Colors.orange,
-                        fontSize: 14,
-                      ),
-                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 8),
@@ -328,18 +700,6 @@ class _MovieManagementScreenState extends State<MovieManagementScreen> {
     );
   }
 
-  Widget _buildAddButton() {
-    return FloatingActionButton.extended(
-      onPressed: () => _navigateToEditScreen(),
-      backgroundColor: Colors.orange,
-      icon: const Icon(Icons.add, color: Colors.white),
-      label: const Text(
-        "Thêm phim",
-        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-      ),
-    );
-  }
-
   void _showDeleteDialog(Movie movie) {
     showDialog(
       context: context,
@@ -359,9 +719,24 @@ class _MovieManagementScreenState extends State<MovieManagementScreen> {
             child: const Text('Hủy', style: TextStyle(color: Colors.white70)),
           ),
           TextButton(
-            onPressed: () {
-              _deleteMovie(movie.id);
+            onPressed: () async {
               Navigator.pop(context);
+              try {
+                await _movieService.deleteMovie(movie.id);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Đã xóa phim "${movie.title}"'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Không thể xóa phim. Vui lòng thử lại sau.'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
             },
             child: const Text('Xóa', style: TextStyle(color: Colors.red)),
           ),
@@ -370,41 +745,14 @@ class _MovieManagementScreenState extends State<MovieManagementScreen> {
     );
   }
 
-  // Hàm lọc phim theo trạng thái
   List<Movie> _filterMovies({required bool isShowingNow}) {
-    return movies.where((movie) {
+    return allMovies.where((movie) {
       bool matchesSearch = searchQuery.isEmpty ||
           movie.title.toLowerCase().contains(searchQuery.toLowerCase());
       return matchesSearch && movie.isShowingNow == isShowingNow;
     }).toList();
   }
 
-  void _refreshMovies() {
-    setState(() {
-      // Reset search query
-      searchQuery = "";
-      _searchController.clear();
-    });
-
-    // Hiển thị thông báo thành công
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Cập nhật thành công!'),
-        backgroundColor: Colors.green,
-        duration: Duration(seconds: 2),
-      ),
-    );
-  }
-
-  // Cập nhật hàm xóa phim
-  void _deleteMovie(String id) {
-    setState(() {
-      movies.removeWhere((movie) => movie.id == id);
-    });
-    _refreshMovies(); // Refresh sau khi xóa
-  }
-
-  // Cập nhật hàm điều hướng đến MovieEditScreen
   void _navigateToEditScreen({Movie? movie}) async {
     final result = await Navigator.push(
       context,
@@ -416,19 +764,44 @@ class _MovieManagementScreenState extends State<MovieManagementScreen> {
       ),
     );
 
-    // Cập nhật UI khi có kết quả trả về
-    if (result != null) {
-      setState(() {
-        // Nếu đang ở tab không có phim vừa thêm/sửa, chuyển sang tab có phim đó
-        if (result is Movie) {
+    if (result != null && result is Movie) {
+      try {
+        if (movie == null) {
+          // Thêm phim mới
+          await _movieService.addMovie(result);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Đã thêm phim "${result.title}"'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else {
+          // Cập nhật phim
+          await _movieService.updateMovie(result);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Đã cập nhật phim "${result.title}"'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+
+        // Cập nhật UI nếu cần
+        setState(() {
           if (result.isShowingNow && selectedTab != 0) {
             selectedTab = 0;
           } else if (!result.isShowingNow && selectedTab != 1) {
             selectedTab = 1;
           }
-        }
-      });
-      _refreshMovies(); // Refresh sau khi thêm/sửa
+        });
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Đã có lỗi xảy ra. Vui lòng thử lại sau.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 }

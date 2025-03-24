@@ -38,6 +38,8 @@ class _SidebarMenuState extends State<SidebarMenu> {
                       Icons.bar_chart_rounded, "Thống kê doanh thu", 3),
                   _buildMenuItem(
                       Icons.people_alt_rounded, "Quản lý người dùng", 4),
+                  _buildMenuItem(
+                      Icons.cloud_upload_rounded, "Import Dữ Liệu", 5),
                 ],
               ),
             ),

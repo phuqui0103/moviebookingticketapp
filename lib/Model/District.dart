@@ -22,4 +22,14 @@ class District {
       'provinceId': provinceId,
     };
   }
+
+  // Phương thức chuyển đổi từ JSON sang District
+  factory District.fromJson(Map<String, dynamic> json) {
+    return District.fromMap(json);
+  }
+
+  // Phương thức chuyển đổi từ District sang JSON
+  Map<String, dynamic> toJson() {
+    return toMap();
+  }
 }

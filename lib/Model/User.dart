@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class User {
   String id;
   String fullName;
@@ -35,13 +37,13 @@ class User {
       "phoneNumber": phoneNumber,
       "email": email,
       "hashedPassword": hashedPassword, // Mật khẩu phải mã hóa trước khi lưu
-      "birthDate": birthDate.toIso8601String(),
+      "birthDate": Timestamp.fromDate(birthDate),
       "gender": gender,
       "province": province,
       "district": district,
       "status": status,
-      "createdAt": createdAt.toIso8601String(),
-      "updatedAt": updatedAt?.toIso8601String(),
+      "createdAt": Timestamp.fromDate(createdAt),
+      "updatedAt": updatedAt != null ? Timestamp.fromDate(updatedAt!) : null,
     };
   }
 
@@ -53,14 +55,57 @@ class User {
       phoneNumber: json["phoneNumber"],
       email: json["email"],
       hashedPassword: json["hashedPassword"],
-      birthDate: DateTime.parse(json["birthDate"]),
+      birthDate: _convertToDateTime(json["birthDate"]),
       gender: json["gender"],
       province: json["province"],
       district: json["district"],
       status: json["status"] ?? "Active",
-      createdAt: DateTime.parse(json["createdAt"]),
-      updatedAt:
-          json["updatedAt"] != null ? DateTime.parse(json["updatedAt"]) : null,
+      createdAt: _convertToDateTime(json["createdAt"]),
+      updatedAt: json["updatedAt"] != null
+          ? _convertToDateTime(json["updatedAt"])
+          : null,
     );
+  }
+
+  // Helper để chuyển đổi các giá trị thời gian từ Firestore
+  static DateTime _convertToDateTime(dynamic value) {
+    if (value is Timestamp) {
+      return value.toDate();
+    } else if (value is DateTime) {
+      return value;
+    } else if (value is String) {
+      return DateTime.parse(value);
+    }
+    throw Exception('Kiểu dữ liệu không được hỗ trợ: ${value.runtimeType}');
+  }
+
+  // Phương thức tiện ích để cập nhật dữ liệu trong Firestore
+  static Map<String, dynamic> updateData({
+    String? fullName,
+    String? phoneNumber,
+    String? email,
+    String? hashedPassword,
+    DateTime? birthDate,
+    String? gender,
+    String? province,
+    String? district,
+    String? status,
+  }) {
+    final Map<String, dynamic> data = {};
+
+    if (fullName != null) data['fullName'] = fullName;
+    if (phoneNumber != null) data['phoneNumber'] = phoneNumber;
+    if (email != null) data['email'] = email;
+    if (hashedPassword != null) data['hashedPassword'] = hashedPassword;
+    if (birthDate != null) data['birthDate'] = Timestamp.fromDate(birthDate);
+    if (gender != null) data['gender'] = gender;
+    if (province != null) data['province'] = province;
+    if (district != null) data['district'] = district;
+    if (status != null) data['status'] = status;
+
+    // Tự động thêm thời gian cập nhật
+    data['updatedAt'] = Timestamp.fromDate(DateTime.now());
+
+    return data;
   }
 }

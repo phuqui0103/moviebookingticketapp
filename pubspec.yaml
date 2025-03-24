@@ -13,7 +13,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   loop_page_view: ^1.2.5
   carousel_slider: ^5.0.0
-  cached_network_image: ^3.4.1
+  cached_network_image: ^3.3.1
   video_player: ^2.9.3
   url_launcher: ^6.3.1
   intl: ^0.20.0
@@ -21,15 +21,16 @@ dependencies:
   provider: ^6.1.2
   fl_chart: ^0.67.0
   image_picker: ^1.1.2
-  firebase_core: ^2.24.2
-  firebase_auth: ^4.15.3
-  cloud_firestore: ^4.13.6
-  firebase_storage: ^12.4.4
-  firebase_messaging: ^15.2.4
-  firebase_analytics: ^11.4.4
+  firebase_core: ^2.27.1
+  firebase_auth: ^4.17.9
+  cloud_firestore: ^4.15.9
+  firebase_storage: ^11.6.10
+  firebase_messaging: ^14.7.19
+  firebase_analytics: ^10.8.10
+  firebase_app_check: ^0.2.1+18
   mailer: ^6.1.0
-  sendgrid_mailer: ^0.1.0
-  flutter_inappwebview: ^5.8.0
+  http: ^1.2.0
+  crypto: ^3.0.3
 
 dev_dependencies:
   flutter_test:

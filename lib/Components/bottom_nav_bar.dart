@@ -5,7 +5,7 @@ import 'package:movieticketbooking/View/user/home_screen.dart';
 import 'package:movieticketbooking/View/user/login_screen.dart';
 import 'package:movieticketbooking/View/user/profile_screen.dart';
 import 'package:movieticketbooking/View/user/movie_list_screen.dart';
-import 'package:movieticketbooking/View/user/RegisterScreen.dart';
+import 'package:movieticketbooking/View/user/register_screen.dart';
 import 'package:movieticketbooking/View/user/my_ticket_list_screen.dart';
 import 'package:movieticketbooking/View/user/profile_screen.dart';
 import 'package:movieticketbooking/View/user/showtime_picker_screen.dart';

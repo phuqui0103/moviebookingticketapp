@@ -15,7 +15,7 @@ class Cinema {
     return Cinema(
       id: json['id'],
       name: json['name'],
-      provinceId: json['provice'],
+      provinceId: json['provinceId'],
       address: json['address'],
     );
   }
@@ -24,7 +24,7 @@ class Cinema {
     return {
       'id': id,
       'name': name,
-      'provice': provinceId,
+      'provinceId': provinceId,
       'address': address,
     };
   }

@@ -16,6 +16,16 @@ class _DatePickerState extends State<DatePicker> {
       List.generate(7, (index) => DateTime.now().add(Duration(days: index)));
 
   @override
+  void initState() {
+    super.initState();
+    // Gọi callback với ngày đầu tiên khi widget được khởi tạo
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget
+          .onDateSelected(DateFormat('yyyy-MM-dd').format(days[selectedIndex]));
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return SizedBox(
       height: 80,

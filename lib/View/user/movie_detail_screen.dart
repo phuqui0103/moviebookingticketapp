@@ -4,6 +4,7 @@ import 'package:movieticketbooking/Model/Showtime.dart';
 import 'package:movieticketbooking/View/user/showtime_picker_screen.dart';
 import '../../Model/Movie.dart';
 import 'trailer_screen.dart';
+import '../../Components/custom_image_widget.dart';
 
 class MovieDetailScreen extends StatefulWidget {
   final Movie movie;
@@ -58,15 +59,15 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
+                    Colors.black.withOpacity(0.8),
                     Colors.black.withOpacity(0.7),
-                    Colors.black.withOpacity(0.9),
                   ],
                 ).createShader(bounds);
               },
               blendMode: BlendMode.darken,
-              child: Image.network(
-                widget.movie.imagePath,
-                fit: BoxFit.cover,
+              child: CustomImageWidget(
+                imagePath: widget.movie.imagePath,
+                isBackground: true,
               ),
             ),
           ),
@@ -97,9 +98,11 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child: Image.network(
-                          widget.movie.imagePath,
-                          fit: BoxFit.cover,
+                        child: CustomImageWidget(
+                          imagePath: widget.movie.imagePath,
+                          width: 190,
+                          height: 280,
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                     ),

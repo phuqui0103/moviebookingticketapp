@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:io';
 import '../Model/Movie.dart';
 
 class BackgroundWidget extends StatelessWidget {
@@ -42,12 +44,7 @@ class BackgroundWidget extends StatelessWidget {
               ).createShader(bounds);
             },
             blendMode: BlendMode.darken,
-            child: Image.network(
-              movie.imagePath,
-              fit: BoxFit.cover,
-              width: double.infinity,
-              height: double.infinity,
-            ),
+            child: _buildBackgroundImage(movie.imagePath),
           ),
         ),
         // Gradient Overlay
@@ -87,4 +84,76 @@ class BackgroundWidget extends StatelessWidget {
       ],
     );
   }
+
+  Widget _buildBackgroundImage(String imagePath) {
+    if (imagePath.isEmpty) {
+      return _buildPlaceholder();
+    }
+
+    try {
+      if (imagePath.startsWith('http')) {
+        return CachedNetworkImage(
+          imageUrl: imagePath,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+          placeholder: (context, url) => _buildLoadingPlaceholder(),
+          errorWidget: (context, url, error) => _buildErrorPlaceholder(),
+        );
+      } else if (imagePath.startsWith('file://')) {
+        return Image.file(
+          File(imagePath.replaceAll('file://', '')),
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+          errorBuilder: (context, error, stackTrace) =>
+              _buildErrorPlaceholder(),
+        );
+      } else {
+        return Image.file(
+          File(imagePath),
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+          errorBuilder: (context, error, stackTrace) =>
+              _buildErrorPlaceholder(),
+        );
+      }
+    } catch (e) {
+      print('Error loading background image: $e');
+      return _buildErrorPlaceholder();
+    }
+  }
+
+  Widget _buildPlaceholder() => Container(
+        color: Colors.black87,
+        child: Center(
+          child: Icon(
+            Icons.movie_outlined,
+            color: Colors.orange.withOpacity(0.3),
+            size: 64,
+          ),
+        ),
+      );
+
+  Widget _buildLoadingPlaceholder() => Container(
+        color: Colors.black87,
+        child: const Center(
+          child: CircularProgressIndicator(
+            color: Colors.orange,
+            strokeWidth: 2,
+          ),
+        ),
+      );
+
+  Widget _buildErrorPlaceholder() => Container(
+        color: Colors.black87,
+        child: Center(
+          child: Icon(
+            Icons.error_outline,
+            color: Colors.orange.withOpacity(0.3),
+            size: 64,
+          ),
+        ),
+      );
 }

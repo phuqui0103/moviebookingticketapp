@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:movieticketbooking/Components/bottom_nav_bar.dart';
 import 'package:movieticketbooking/View/user/login_screen.dart';
 import 'package:movieticketbooking/Components/loading_animation.dart';
 
@@ -14,6 +15,7 @@ class _SplashScreenState extends State<SplashScreen>
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
+  late Animation<double> _slideAnimation;
 
   @override
   void initState() {
@@ -37,6 +39,13 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
 
+    _slideAnimation = Tween<double>(begin: 50.0, end: 0.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeOut,
+      ),
+    );
+
     _controller.forward();
 
     // Chuyển đến màn hình login sau 3 giây
@@ -44,7 +53,7 @@ class _SplashScreenState extends State<SplashScreen>
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => LoginScreen()),
+          MaterialPageRoute(builder: (context) => BottomNavBar()),
         );
       }
     });
@@ -138,8 +147,7 @@ class _SplashScreenState extends State<SplashScreen>
                 SizedBox(height: 20),
                 // Loading animation
                 LoadingAnimation(
-                  text: 'Đang tải...',
-                  size: 60,
+                  message: 'Đang tải...',
                 ),
               ],
             ),

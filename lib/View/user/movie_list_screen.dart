@@ -4,6 +4,10 @@ import 'package:movieticketbooking/View/user/movie_detail_screen.dart';
 import '../../Data/data.dart' as app_data;
 import '../../Model/Movie.dart';
 import '../../Model/Genre.dart';
+import '../../Services/movie_service.dart';
+import '../../Services/genre_service.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:io';
 
 class MovieListScreen extends StatefulWidget {
   @override
@@ -16,16 +20,35 @@ class _MovieListScreenState extends State<MovieListScreen> {
   String searchQuery = "";
   final TextEditingController _searchController = TextEditingController();
   List<Genre> genres = [];
+  List<Movie> movies = [];
+  bool isLoading = true;
+  final MovieService _movieService = MovieService();
+  final GenreService _genreService = GenreService();
 
   @override
   void initState() {
     super.initState();
-    _loadGenres();
+    _loadData();
   }
 
-  void _loadGenres() {
+  void _loadData() async {
     setState(() {
-      genres = app_data.genres;
+      isLoading = true;
+    });
+
+    // Lắng nghe stream thể loại phim
+    _genreService.getAllGenres().listen((genreList) {
+      setState(() {
+        genres = genreList;
+      });
+    });
+
+    // Lắng nghe stream danh sách phim
+    _movieService.getMovies().listen((movieList) {
+      setState(() {
+        movies = movieList;
+        isLoading = false;
+      });
     });
   }
 
@@ -36,19 +59,21 @@ class _MovieListScreenState extends State<MovieListScreen> {
     return Scaffold(
       appBar: _buildAppBar(),
       backgroundColor: const Color(0xff252429),
-      body: Column(
-        children: [
-          _buildTabBar(),
-          const SizedBox(height: 16),
-          _buildGenreFilter(),
-          const SizedBox(height: 16),
-          Expanded(
-            child: filteredMovies.isEmpty
-                ? _buildNoMoviesMessage()
-                : _buildMovieList(filteredMovies),
-          ),
-        ],
-      ),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator(color: Colors.orange))
+          : Column(
+              children: [
+                _buildTabBar(),
+                const SizedBox(height: 16),
+                _buildGenreFilter(),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: filteredMovies.isEmpty
+                      ? _buildNoMoviesMessage()
+                      : _buildMovieList(filteredMovies),
+                ),
+              ],
+            ),
     );
   }
 
@@ -136,8 +161,46 @@ class _MovieListScreenState extends State<MovieListScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: genres.length,
-        itemBuilder: (context, index) => _buildGenreChip(genres[index]),
+        itemCount: genres.length + 1, // +1 cho tùy chọn "Tất cả"
+        itemBuilder: (context, index) {
+          if (index == 0) {
+            // Tùy chọn "Tất cả" ở vị trí đầu tiên
+            return _buildAllGenreChip();
+          } else {
+            // Các thể loại khác
+            return _buildGenreChip(genres[index - 1]);
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildAllGenreChip() {
+    return GestureDetector(
+      onTap: () => setState(() => selectedGenre = null),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 6),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        decoration: BoxDecoration(
+          color: selectedGenre == null
+              ? Colors.orange
+              : Colors.white.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(25),
+          border: Border.all(
+            color: selectedGenre == null
+                ? Colors.orange
+                : Colors.white.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
+        child: Text(
+          "Tất cả",
+          style: TextStyle(
+            color: selectedGenre == null ? Colors.black : Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
       ),
     );
   }
@@ -208,12 +271,7 @@ class _MovieListScreenState extends State<MovieListScreen> {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                movie.imagePath,
-                width: 90,
-                height: 120,
-                fit: BoxFit.cover,
-              ),
+              child: _buildMovieImage(movie.imagePath),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -264,6 +322,62 @@ class _MovieListScreenState extends State<MovieListScreen> {
     );
   }
 
+  Widget _buildMovieImage(String imagePath) {
+    // Kiểm tra xem imagePath có phải là URL hay không
+    bool isNetworkImage =
+        imagePath.startsWith('http://') || imagePath.startsWith('https://');
+
+    if (isNetworkImage) {
+      return CachedNetworkImage(
+        imageUrl: imagePath,
+        width: 90,
+        height: 120,
+        fit: BoxFit.cover,
+        placeholder: (context, url) => Container(
+          color: Colors.grey[800],
+          child: const Center(
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                color: Colors.orange,
+                strokeWidth: 2.0,
+              ),
+            ),
+          ),
+        ),
+        errorWidget: (context, url, error) => Container(
+          color: Colors.grey[800],
+          child: const Icon(Icons.image_not_supported, color: Colors.white),
+        ),
+      );
+    } else {
+      // Xử lý ảnh local
+      try {
+        return Image.file(
+          File(imagePath),
+          width: 90,
+          height: 120,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => Container(
+            width: 90,
+            height: 120,
+            color: Colors.grey[800],
+            child: const Icon(Icons.image_not_supported, color: Colors.white),
+          ),
+        );
+      } catch (e) {
+        // Fallback nếu không thể load file
+        return Container(
+          width: 90,
+          height: 120,
+          color: Colors.grey[800],
+          child: const Icon(Icons.image_not_supported, color: Colors.white),
+        );
+      }
+    }
+  }
+
   Widget buildTag(String text) => Container(
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.1),
@@ -285,7 +399,9 @@ class _MovieListScreenState extends State<MovieListScreen> {
       );
 
   List<Movie> _filterMovies() {
-    return app_data.movies.where((movie) {
+    if (movies.isEmpty) return [];
+
+    return movies.where((movie) {
       bool matchesTab =
           selectedTab == 0 ? movie.isShowingNow : !movie.isShowingNow;
 

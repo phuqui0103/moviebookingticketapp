@@ -61,11 +61,21 @@ final List<Movie> movies = [
     director: "Trần Thanh Huy",
     comments: [
       Comment(
-          userName: "An Nguyễn", content: "Phim quá xuất sắc!", rating: 9.0),
+        id: "comment_1_1",
+        userId: "user123",
+        movieId: "movie_1",
+        userName: "An Nguyễn",
+        content: "Phim quá xuất sắc!",
+        rating: 9.0,
+      ),
       Comment(
-          userName: "Minh Trần",
-          content: "Tình tiết hấp dẫn và cảm động.",
-          rating: 8.5),
+        id: "comment_1_2",
+        userId: "user124",
+        movieId: "movie_1",
+        userName: "Minh Trần",
+        content: "Tình tiết hấp dẫn và cảm động.",
+        rating: 8.5,
+      ),
     ],
   ),
   Movie(
@@ -90,13 +100,21 @@ final List<Movie> movies = [
     director: "Nguyễn Quang Dũng",
     comments: [
       Comment(
-          userName: "Linh Lê",
-          content: "Phim rất lãng mạn và đáng yêu!",
-          rating: 8.0),
+        id: "comment_2_1",
+        userId: "user125",
+        movieId: "movie_2",
+        userName: "Linh Lê",
+        content: "Phim rất lãng mạn và đáng yêu!",
+        rating: 8.0,
+      ),
       Comment(
-          userName: "Tú Phạm",
-          content: "Câu chuyện cảm động, diễn viên diễn tốt.",
-          rating: 8.2),
+        id: "comment_2_2",
+        userId: "user126",
+        movieId: "movie_2",
+        userName: "Tú Phạm",
+        content: "Câu chuyện cảm động, diễn viên diễn tốt.",
+        rating: 8.2,
+      ),
     ],
   ),
   Movie(
@@ -121,9 +139,13 @@ final List<Movie> movies = [
     director: "Phạm Hồng Thắng",
     comments: [
       Comment(
-          userName: "Bảo Anh",
-          content: "Phim tài liệu rất chân thực!",
-          rating: 7.8),
+        id: "comment_3_1",
+        userId: "user127",
+        movieId: "movie_3",
+        userName: "Bảo Anh",
+        content: "Phim tài liệu rất chân thực!",
+        rating: 7.8,
+      ),
     ],
   ),
   Movie(
@@ -147,11 +169,21 @@ final List<Movie> movies = [
     director: "Lý Hải",
     comments: [
       Comment(
-          userName: "Đức Phan", content: "Phim hành động quá đã!", rating: 8.5),
+        id: "comment_4_1",
+        userId: "user128",
+        movieId: "movie_4",
+        userName: "Đức Phan",
+        content: "Phim hành động quá đã!",
+        rating: 8.5,
+      ),
       Comment(
-          userName: "Hải Nam",
-          content: "Tình tiết vui nhộn, giải trí tốt.",
-          rating: 8.0),
+        id: "comment_4_2",
+        userId: "user129",
+        movieId: "movie_4",
+        userName: "Hải Nam",
+        content: "Tình tiết vui nhộn, giải trí tốt.",
+        rating: 8.0,
+      ),
     ],
   ),
 ];

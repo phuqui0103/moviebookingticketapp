@@ -3,6 +3,7 @@ import 'package:movieticketbooking/View/user/login_screen.dart';
 import 'package:movieticketbooking/Components/loading_animation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:movieticketbooking/Services/auth_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -38,39 +39,51 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? otpError;
   String? _verificationId;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final AuthService _authService = AuthService();
 
-  void _register(BuildContext context) {
-    nameError = null;
-    phoneError = null;
-    emailError = null;
-    passwordError = null;
-    birthDateError = null;
-    confirmPasswordError = null;
-    otpError = null;
+  void _register(BuildContext context) async {
+    // Reset errors
+    setState(() {
+      nameError = null;
+      phoneError = null;
+      emailError = null;
+      passwordError = null;
+      birthDateError = null;
+      confirmPasswordError = null;
+      otpError = null;
+    });
 
+    // Validate inputs
     if (nameController.text.isEmpty) {
-      nameError = 'Vui lòng nhập họ tên';
+      setState(() => nameError = 'Vui lòng nhập họ tên');
+      return;
     }
     if (phoneController.text.isEmpty ||
         !RegExp(r'^[0-9]{10}$').hasMatch(phoneController.text)) {
-      phoneError = 'Vui lòng nhập số điện thoại hợp lệ';
+      setState(() => phoneError = 'Vui lòng nhập số điện thoại hợp lệ');
+      return;
     }
     if (emailController.text.isEmpty ||
         !RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
             .hasMatch(emailController.text)) {
-      emailError = 'Vui lòng nhập email hợp lệ';
+      setState(() => emailError = 'Vui lòng nhập email hợp lệ');
+      return;
     }
     if (passwordController.text.isEmpty) {
-      passwordError = 'Vui lòng nhập mật khẩu';
+      setState(() => passwordError = 'Vui lòng nhập mật khẩu');
+      return;
     }
     if (confirmPasswordController.text.isEmpty) {
-      confirmPasswordError = 'Vui lòng nhập lại mật khẩu';
+      setState(() => confirmPasswordError = 'Vui lòng nhập lại mật khẩu');
+      return;
     }
     if (passwordController.text != confirmPasswordController.text) {
-      confirmPasswordError = 'Mật khẩu không khớp';
+      setState(() => confirmPasswordError = 'Mật khẩu không khớp');
+      return;
     }
     if (birthDateController.text.isEmpty) {
-      birthDateError = 'Vui lòng chọn ngày sinh';
+      setState(() => birthDateError = 'Vui lòng chọn ngày sinh');
+      return;
     }
     if (!_isAgreed) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -82,82 +95,41 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
-    if (nameError != null ||
-        phoneError != null ||
-        emailError != null ||
-        passwordError != null ||
-        birthDateError != null ||
-        confirmPasswordError != null) {
-      setState(() {});
-      return;
-    }
+    setState(() => _isLoading = true);
 
-    // Hiển thị dialog xác nhận gửi email
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        backgroundColor: Color(0xff2A2A2A),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
-        ),
-        title: Text(
-          'Xác nhận email',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Chúng tôi sẽ gửi mã xác nhận đến email:',
-              style: TextStyle(color: Colors.white70),
-            ),
-            SizedBox(height: 10),
-            Text(
-              emailController.text,
-              style: TextStyle(
-                color: Colors.orange,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: 10),
-            Text(
-              'Bạn có muốn tiếp tục?',
-              style: TextStyle(color: Colors.white70),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            child: Text(
-              'Hủy',
-              style: TextStyle(color: Colors.white70),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _verifyEmail();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            child: Text('Gửi mã'),
-          ),
-        ],
-      ),
-    );
+    try {
+      // Parse birth date
+      final parts = birthDateController.text.split('/');
+      final birthDate = DateTime(
+        int.parse(parts[2]), // year
+        int.parse(parts[1]), // month
+        int.parse(parts[0]), // day
+      );
+
+      final result = await _authService.register(
+        fullName: nameController.text,
+        phoneNumber: phoneController.text,
+        email: emailController.text,
+        password: passwordController.text,
+        birthDate: birthDate,
+        gender: gender ?? 'Khác',
+        province: province ?? 'Chưa chọn',
+        district: district ?? 'Chưa chọn',
+      );
+
+      setState(() => _isLoading = false);
+
+      if (result['success']) {
+        _showEmailVerificationDialog();
+      } else {
+        setState(() => emailError = result['message']);
+      }
+    } catch (e) {
+      setState(() {
+        emailError = 'Đã xảy ra lỗi: ${e.toString()}';
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -169,37 +141,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
     if (picked != null) {
       birthDateController.text = "${picked.day}/${picked.month}/${picked.year}";
-    }
-  }
-
-  Future<void> _verifyEmail() async {
-    setState(() {
-      _isLoading = true;
-      emailError = null;
-    });
-
-    try {
-      // Tạo tài khoản với email và mật khẩu
-      UserCredential userCredential =
-          await _auth.createUserWithEmailAndPassword(
-        email: emailController.text,
-        password: passwordController.text,
-      );
-
-      // Gửi email xác thực
-      await userCredential.user!.sendEmailVerification();
-
-      setState(() {
-        _isLoading = false;
-      });
-
-      // Hiển thị dialog nhập mã xác thực
-      _showEmailVerificationDialog();
-    } catch (e) {
-      setState(() {
-        emailError = 'Lỗi: ${e.toString()}';
-        _isLoading = false;
-      });
     }
   }
 
@@ -272,79 +213,105 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
 
     try {
-      // Kiểm tra trạng thái xác thực email
-      await _auth.currentUser!.reload();
-      if (_auth.currentUser!.emailVerified) {
-        // Lưu thông tin người dùng vào Firestore
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(_auth.currentUser!.uid)
-            .set({
-          'name': nameController.text,
-          'phone': phoneController.text,
-          'email': emailController.text,
-          'birthDate': birthDateController.text,
-          'gender': gender,
-          'province': province,
-          'district': district,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
+      // Đăng nhập lại để đảm bảo có user hiện tại
+      await _auth.signInWithEmailAndPassword(
+        email: emailController.text,
+        password: passwordController.text,
+      );
 
-        setState(() {
-          _isLoading = false;
-        });
-        _showSuccessDialog();
+      // Reload user để lấy trạng thái mới nhất
+      await _auth.currentUser?.reload();
+      final currentUser = _auth.currentUser;
+
+      if (currentUser == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Không tìm thấy thông tin người dùng'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      if (!currentUser.emailVerified) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'Email chưa được xác thực. Vui lòng kiểm tra email và nhấp vào liên kết xác thực.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // Sử dụng AuthService để cập nhật trạng thái
+      final result = await _authService.verifyEmailAndUpdateStatus();
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (result['success']) {
+        // Hiển thị thông báo thành công và chuyển đến trang đăng nhập
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            backgroundColor: Color(0xff2A2A2A),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            title: Text(
+              'Xác thực thành công',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            content: Text(
+              'Email của bạn đã được xác thực. Bạn có thể đăng nhập vào hệ thống.',
+              style: TextStyle(color: Colors.white70),
+              textAlign: TextAlign.center,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginScreen()),
+                    (route) => false,
+                  );
+                },
+                child: Text(
+                  'Đăng nhập',
+                  style: TextStyle(color: Colors.orange),
+                ),
+              ),
+            ],
+          ),
+        );
       } else {
-        setState(() {
-          emailError = 'Vui lòng xác nhận email trước khi tiếp tục';
-          _isLoading = false;
-        });
+        // Hiển thị thông báo lỗi
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message']),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } catch (e) {
       setState(() {
-        emailError = 'Lỗi: ${e.toString()}';
         _isLoading = false;
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Đã có lỗi xảy ra: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
-  }
-
-  void _showSuccessDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        backgroundColor: Color(0xff2A2A2A),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
-        ),
-        title: Text(
-          'Đăng ký thành công',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        content: Text(
-          'Tài khoản của bạn đã được tạo thành công!',
-          style: TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => LoginScreen()),
-              );
-            },
-            child: Text(
-              'Đóng',
-              style: TextStyle(color: Colors.orange),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -1110,9 +1077,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
           if (_isLoading)
             Container(
               color: Colors.black.withOpacity(0.5),
-              child: LoadingAnimation(
-                text: 'Đang xử lý...',
-                size: 100,
+              child: const Center(
+                child: LoadingAnimation(
+                  message: 'Đang xử lý...',
+                ),
               ),
             ),
         ],
