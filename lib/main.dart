@@ -1,7 +1,10 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:movieticketbooking/View/admin/admin_main_screen.dart';
+import 'package:movieticketbooking/View/admin/data_import_screen.dart';
 import 'package:movieticketbooking/View/splash_screen.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:movieticketbooking/View/user/register_screen.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -37,6 +40,9 @@ class MyApp extends StatelessWidget {
         ),
       ),
       home: const SplashScreen(),
+      //home: AdminMainScreen(),
+      //home: DataImportScreen(),
+      //home: const RegisterScreen(),
     );
   }
 }

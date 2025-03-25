@@ -24,6 +24,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? gender;
   String? province;
   String? district;
+  List<String> provinces = [];
+  List<String> districts = [];
   bool _obscureText = true;
   bool _isAgreed = false;
   bool _obscurePassword = true;
@@ -37,9 +39,63 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? birthDateError;
   String? confirmPasswordError;
   String? otpError;
-  String? _verificationId;
+  String? _verificationId; // hoặc "vi" nếu bạn muốn tiếng Việt
+
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final AuthService _authService = AuthService();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProvinces();
+  }
+
+  Future<void> _loadProvinces() async {
+    try {
+      final snapshot = await _firestore.collection('provinces').get();
+      setState(() {
+        provinces =
+            snapshot.docs.map((doc) => doc.data()['name'] as String).toList();
+      });
+    } catch (e) {
+      print('Error loading provinces: $e');
+    }
+  }
+
+  Future<void> _loadDistricts(String selectedProvince) async {
+    try {
+      // First, get the province ID from the selected province name
+      final provinceSnapshot = await _firestore
+          .collection('provinces')
+          .where('name', isEqualTo: selectedProvince)
+          .get();
+
+      if (provinceSnapshot.docs.isEmpty) {
+        print('Province not found: $selectedProvince');
+        return;
+      }
+
+      final provinceId = provinceSnapshot.docs.first.id;
+      print('Loading districts for province ID: $provinceId');
+
+      // Then get districts using the province ID
+      final snapshot = await _firestore
+          .collection('districts')
+          .where('provinceId', isEqualTo: provinceId)
+          .get();
+
+      print('Found ${snapshot.docs.length} districts');
+
+      setState(() {
+        districts =
+            snapshot.docs.map((doc) => doc.data()['name'] as String).toList();
+        district = null; // Reset district when province changes
+      });
+    } catch (e) {
+      print('Error loading districts: $e');
+    }
+  }
 
   void _register(BuildContext context) async {
     // Reset errors
@@ -807,14 +863,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     hint: Text('Giới tính',
                                         style:
                                             TextStyle(color: Colors.white38)),
-                                    items: <String>['Nam', 'Nữ', 'Khác']
+                                    items: <String>['Nam', 'Nữ']
                                         .map<DropdownMenuItem<String>>(
                                             (String value) {
                                       return DropdownMenuItem<String>(
                                         value: value,
                                         child: Text(value,
-                                            style:
-                                                TextStyle(color: Colors.white)),
+                                            style: TextStyle(
+                                                color: Colors.orange)),
                                       );
                                     }).toList(),
                                     onChanged: (String? newValue) {
@@ -870,19 +926,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   value: province,
                                   hint: Text('Tỉnh',
                                       style: TextStyle(color: Colors.white38)),
-                                  items: <String>['Tỉnh 1', 'Tỉnh 2', 'Tỉnh 3']
+                                  items: provinces
                                       .map<DropdownMenuItem<String>>(
                                           (String value) {
                                     return DropdownMenuItem<String>(
                                       value: value,
                                       child: Text(value,
                                           style:
-                                              TextStyle(color: Colors.white)),
+                                              TextStyle(color: Colors.orange)),
                                     );
                                   }).toList(),
                                   onChanged: (String? newValue) {
                                     setState(() {
                                       province = newValue;
+                                      if (newValue != null) {
+                                        _loadDistricts(newValue);
+                                      }
                                     });
                                   },
                                   decoration: InputDecoration(
@@ -914,14 +973,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   value: district,
                                   hint: Text('Quận/Huyện',
                                       style: TextStyle(color: Colors.white38)),
-                                  items: <String>['Quận 1', 'Quận 2', 'Quận 3']
+                                  items: districts
                                       .map<DropdownMenuItem<String>>(
                                           (String value) {
                                     return DropdownMenuItem<String>(
                                       value: value,
                                       child: Text(value,
                                           style:
-                                              TextStyle(color: Colors.white)),
+                                              TextStyle(color: Colors.orange)),
                                     );
                                   }).toList(),
                                   onChanged: (String? newValue) {

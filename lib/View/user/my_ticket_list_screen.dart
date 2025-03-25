@@ -90,9 +90,9 @@ class _MyTicketListScreenState extends State<MyTicketListScreen>
             ],
           ),
         ),
-        child: filteredTickets.isEmpty
-            ? _buildEmptyState()
-            : _buildTicketList(filteredTickets),
+        //child: filteredTickets.isEmpty
+        //    ? _buildEmptyState()
+        //    : _buildTicketList(filteredTickets),
       ),
     );
   }
@@ -111,131 +111,131 @@ class _MyTicketListScreenState extends State<MyTicketListScreen>
   }
 
   /// Hiển thị danh sách vé
-  Widget _buildTicketList(List<Ticket> tickets) {
-    return ListView.builder(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: tickets.length,
-      itemBuilder: (context, index) => _buildTicketItem(tickets[index]),
-    );
-  }
+  //Widget _buildTicketList(List<Ticket> tickets) {
+  //  return ListView.builder(
+  //    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+  //    itemCount: tickets.length,
+  //    itemBuilder: (context, index) => _buildTicketItem(tickets[index]),
+  //  );
+  //}
 
   /// Widget hiển thị 1 vé
-  Widget _buildTicketItem(Ticket ticket) {
-    // Lấy tên phim và poster
-    Movie? movie = movies.firstWhere(
-      (movie) => movie.id == ticket.showtime.movieId,
-      orElse: () => Movie(
-        id: "",
-        title: "Không xác định",
-        imagePath: "",
-        trailerUrl: '',
-        genres: [],
-        duration: '',
-        rating: 0,
-        isShowingNow: false,
-        description: '',
-        reviewCount: 0,
-        cast: [],
-        releaseDate: '',
-        director: '',
-        comments: [],
-      ),
-    );
-
-    return GestureDetector(
-      onTap: () {
-        // Khi nhấn vào vé, điều hướng đến màn hình chi tiết vé
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => TicketDetailScreen(
-              movieTitle: movie.title ?? "",
-              moviePoster: movie.imagePath ?? "",
-              showtime: ticket.showtime,
-              selectedSeats: ticket.selectedSeats,
-              totalPrice: ticket.totalPrice,
-              selectedFoods: ticket.selectedFoods,
-            ),
-          ),
-        );
-      },
-      child: Container(
-        margin: EdgeInsets.only(bottom: 16),
-        padding: EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: Colors.white.withOpacity(0.1),
-            width: 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                movie.imagePath ?? "",
-                width: 90,
-                height: 120,
-                fit: BoxFit.cover,
-              ),
-            ),
-            SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    movie.title ?? "",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  SizedBox(height: 8),
-                  _buildInfoRow(
-                    Icons.schedule,
-                    "${ticket.showtime.formattedDate} - ${ticket.showtime.formattedTime}",
-                  ),
-                  SizedBox(height: 4),
-                  _buildInfoRow(
-                    Icons.event_seat,
-                    "Ghế: ${ticket.selectedSeats.join(", ")}",
-                  ),
-                  SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "${ticket.totalPrice.toStringAsFixed(0)}đ",
-                        style: TextStyle(
-                          color: Colors.orange,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: EdgeInsets.all(8),
-              child: Icon(
-                Icons.arrow_forward_ios,
-                color: Colors.white54,
-                size: 16,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  //Widget _buildTicketItem(Ticket ticket) {
+  //  // Lấy tên phim và poster
+  //  Movie? movie = movies.firstWhere(
+  //    (movie) => movie.id == ticket.showtime.movieId,
+  //    orElse: () => Movie(
+  //      id: "",
+  //      title: "Không xác định",
+  //      imagePath: "",
+  //      trailerUrl: '',
+  //      genres: [],
+  //      duration: '',
+  //      rating: 0,
+  //      isShowingNow: false,
+  //      description: '',
+  //      reviewCount: 0,
+  //      cast: [],
+  //      releaseDate: '',
+  //      director: '',
+  //      comments: [],
+  //    ),
+  //  );
+//
+  //  return GestureDetector(
+  //    onTap: () {
+  //      // Khi nhấn vào vé, điều hướng đến màn hình chi tiết vé
+  //      Navigator.push(
+  //        context,
+  //        MaterialPageRoute(
+  //          builder: (context) => TicketDetailScreen(
+  //            movieTitle: movie.title ?? "",
+  //            moviePoster: movie.imagePath ?? "",
+  //            showtime: ticket.showtime,
+  //            selectedSeats: ticket.selectedSeats,
+  //            totalPrice: ticket.totalPrice,
+  //            selectedFoods: ticket.selectedFoods,
+  //          ),
+  //        ),
+  //      );
+  //    },
+  //    child: Container(
+  //      margin: EdgeInsets.only(bottom: 16),
+  //      padding: EdgeInsets.all(12),
+  //      decoration: BoxDecoration(
+  //        color: Colors.white.withOpacity(0.05),
+  //        borderRadius: BorderRadius.circular(16),
+  //        border: Border.all(
+  //          color: Colors.white.withOpacity(0.1),
+  //          width: 1,
+  //        ),
+  //      ),
+  //      child: Row(
+  //        children: [
+  //          ClipRRect(
+  //            borderRadius: BorderRadius.circular(12),
+  //            child: Image.network(
+  //              movie.imagePath ?? "",
+  //              width: 90,
+  //              height: 120,
+  //              fit: BoxFit.cover,
+  //            ),
+  //          ),
+  //          SizedBox(width: 16),
+  //          Expanded(
+  //            child: Column(
+  //              crossAxisAlignment: CrossAxisAlignment.start,
+  //              children: [
+  //                Text(
+  //                  movie.title ?? "",
+  //                  style: TextStyle(
+  //                    color: Colors.white,
+  //                    fontSize: 18,
+  //                    fontWeight: FontWeight.bold,
+  //                  ),
+  //                  maxLines: 2,
+  //                  overflow: TextOverflow.ellipsis,
+  //                ),
+  //                SizedBox(height: 8),
+  //                _buildInfoRow(
+  //                  Icons.schedule,
+  //                  "${ticket.showtime.formattedDate} - ${ticket.showtime.formattedTime}",
+  //                ),
+  //                SizedBox(height: 4),
+  //                _buildInfoRow(
+  //                  Icons.event_seat,
+  //                  "Ghế: ${ticket.selectedSeats.join(", ")}",
+  //                ),
+  //                SizedBox(height: 8),
+  //                Row(
+  //                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //                  children: [
+  //                    Text(
+  //                      "${ticket.totalPrice.toStringAsFixed(0)}đ",
+  //                      style: TextStyle(
+  //                        color: Colors.orange,
+  //                        fontSize: 18,
+  //                        fontWeight: FontWeight.bold,
+  //                      ),
+  //                    ),
+  //                  ],
+  //                ),
+  //              ],
+  //            ),
+  //          ),
+  //          Container(
+  //            padding: EdgeInsets.all(8),
+  //            child: Icon(
+  //              Icons.arrow_forward_ios,
+  //              color: Colors.white54,
+  //              size: 16,
+  //            ),
+  //          ),
+  //        ],
+  //      ),
+  //    ),
+  //  );
+  //}
 
   /// Widget dòng thông tin (icon + nội dung)
   Widget _buildInfoRow(IconData icon, String text) {

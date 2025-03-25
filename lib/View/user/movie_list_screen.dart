@@ -303,13 +303,28 @@ class _MovieListScreenState extends State<MovieListScreen> {
                     children: [
                       const Icon(Icons.star, color: Colors.orange, size: 16),
                       const SizedBox(width: 4),
-                      Text(
-                        "${movie.rating}/10",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
+                      FutureBuilder<Map<String, dynamic>>(
+                        future: Movie.calculateRating(movie.id),
+                        builder: (context, snapshot) {
+                          if (snapshot.hasData) {
+                            return Text(
+                              "${(snapshot.data!['rating'] as num).toStringAsFixed(1)}/10",
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            );
+                          }
+                          return const Text(
+                            "0.0/10",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),

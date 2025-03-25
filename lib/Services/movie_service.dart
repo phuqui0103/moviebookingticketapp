@@ -21,14 +21,12 @@ class MovieService {
             trailerUrl: '',
             duration: 'N/A',
             genres: [], // Empty list of genres
-            rating: 0,
             isShowingNow: false,
             description: '',
             cast: [],
             reviewCount: 0,
             releaseDate: '',
             director: '',
-            comments: [],
           );
         }
       }).toList();

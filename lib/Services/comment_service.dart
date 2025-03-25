@@ -67,7 +67,7 @@ class CommentService {
     return _firestore
         .collection('comments')
         .where('movieId', isEqualTo: movieId)
-        .orderBy('createdAt', descending: true)
+        .orderBy('timestamp', descending: true)
         .snapshots()
         .map((snapshot) {
       return snapshot.docs.map((doc) {
@@ -81,7 +81,7 @@ class CommentService {
     return _firestore
         .collection('comments')
         .where('userId', isEqualTo: userId)
-        .orderBy('createdAt', descending: true)
+        .orderBy('timestamp', descending: true)
         .snapshots()
         .map((snapshot) {
       return snapshot.docs.map((doc) {
@@ -94,7 +94,7 @@ class CommentService {
   Stream<List<Comment>> getLatestComments({int limit = 10}) {
     return _firestore
         .collection('comments')
-        .orderBy('createdAt', descending: true)
+        .orderBy('timestamp', descending: true)
         .limit(limit)
         .snapshots()
         .map((snapshot) {

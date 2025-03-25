@@ -4,7 +4,7 @@ import '../Model/Movie.dart';
 import '../View/user/movie_detail_screen.dart';
 import 'dart:io';
 
-class MovieCardWidget extends StatelessWidget {
+class MovieCardWidget extends StatefulWidget {
   final Movie movie;
 
   const MovieCardWidget({
@@ -13,13 +13,35 @@ class MovieCardWidget extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  State<MovieCardWidget> createState() => _MovieCardWidgetState();
+}
+
+class _MovieCardWidgetState extends State<MovieCardWidget> {
+  double _rating = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRating();
+  }
+
+  Future<void> _loadRating() async {
+    final ratingData = await Movie.calculateRating(widget.movie.id);
+    if (mounted) {
+      setState(() {
+        _rating = ratingData['rating'];
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) => GestureDetector(
         onTap: () {
           // Điều hướng đến trang MovieDetailScreen
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => MovieDetailScreen(movie: movie),
+              builder: (context) => MovieDetailScreen(movie: widget.movie),
             ),
           );
         },
@@ -33,17 +55,17 @@ class MovieCardWidget extends StatelessWidget {
                 BoxShadow(
                   color: Colors.black.withOpacity(0.2),
                   blurRadius: 8,
-                  offset: Offset(0, 4),
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
             padding: const EdgeInsets.all(3),
             child: Column(
               children: [
-                Expanded(child: buildImage(movie: movie)),
+                Expanded(child: buildImage(movie: widget.movie)),
                 const SizedBox(height: 8),
                 Text(
-                  movie.title,
+                  widget.movie.title,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
@@ -52,11 +74,11 @@ class MovieCardWidget extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                buildReleaseDateAndDuration(movie: movie),
+                buildReleaseDateAndDuration(movie: widget.movie),
                 const SizedBox(height: 8),
-                buildGenre(movie: movie),
+                buildGenre(movie: widget.movie),
                 const SizedBox(height: 8),
-                buildRating(movie: movie),
+                buildRating(),
               ],
             ),
           ),
@@ -174,9 +196,26 @@ class MovieCardWidget extends StatelessWidget {
   Widget buildGenre({required Movie movie}) =>
       buildTag(movie.genres.map((genre) => genre.name).join(" | "));
 
-  Widget buildRating({required Movie movie}) => buildTagWithIcon(
-        text: movie.rating.toStringAsFixed(1) + "/10",
-        icon: Icons.star,
+  Widget buildRating() => Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          ...List.generate(5, (index) {
+            return Icon(
+              index < (_rating / 2).round() ? Icons.star : Icons.star_border,
+              color: Colors.orangeAccent,
+              size: 16,
+            );
+          }),
+          const SizedBox(width: 8),
+          Text(
+            _rating.toStringAsFixed(1),
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.orangeAccent,
+            ),
+          ),
+        ],
       );
 
   Widget buildTag(String text) => Container(
