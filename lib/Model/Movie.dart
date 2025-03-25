@@ -1,5 +1,6 @@
 import 'Comment.dart';
 import 'Genre.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Movie {
   final String id;
@@ -8,14 +9,12 @@ class Movie {
   final String trailerUrl;
   final String duration;
   final List<Genre> genres;
-  final double rating;
   final bool isShowingNow;
   final String description;
   final List<String> cast;
   final int reviewCount;
   final String releaseDate;
   final String director;
-  final List<Comment> comments;
 
   const Movie({
     required this.id,
@@ -24,15 +23,60 @@ class Movie {
     required this.trailerUrl,
     required this.duration,
     required this.genres,
-    required this.rating,
     required this.isShowingNow,
     required this.description,
     required this.cast,
     required this.reviewCount,
     required this.releaseDate,
     required this.director,
-    required this.comments,
   });
+
+  /// Tính toán rating của movie dựa trên trung bình rating của các comment
+  static Future<Map<String, dynamic>> calculateRating(String movieId) async {
+    try {
+      final comments = await FirebaseFirestore.instance
+          .collection('comments')
+          .where('movieId', isEqualTo: movieId)
+          .get();
+
+      if (comments.docs.isEmpty) {
+        return {
+          'rating': 10.0,
+          'reviewCount': 0,
+        };
+      }
+
+      final totalRating = comments.docs.fold<double>(
+        0,
+        (sum, doc) => sum + (doc.data()['rating'] as num).toDouble(),
+      );
+
+      final averageRating = totalRating / comments.docs.length;
+
+      return {
+        'rating': averageRating,
+        'reviewCount': comments.docs.length,
+      };
+    } catch (e) {
+      print('Error calculating movie rating: $e');
+      return {
+        'rating': 0.0,
+        'reviewCount': 0,
+      };
+    }
+  }
+
+  /// Cập nhật reviewCount của movie trong Firestore
+  Future<void> updateReviewCount() async {
+    try {
+      final ratingData = await Movie.calculateRating(id);
+      await FirebaseFirestore.instance.collection('movies').doc(id).update({
+        'reviewCount': ratingData['reviewCount'],
+      });
+    } catch (e) {
+      print('Error updating movie review count: $e');
+    }
+  }
 
   /// Chuyển từ JSON sang `Movie`
   factory Movie.fromJson(Map<String, dynamic> json) {
@@ -45,16 +89,12 @@ class Movie {
       genres: (json['genres'] as List? ?? [])
           .map((genre) => Genre.fromJson(genre))
           .toList(),
-      rating: (json['rating'] ?? 0).toDouble(),
       isShowingNow: json['isShowingNow'] ?? false,
       description: json['description'] ?? "Chưa có mô tả",
       cast: List<String>.from(json['cast'] ?? []),
       reviewCount: json['reviewCount'] ?? 0,
       releaseDate: json['releaseDate'] ?? "Chưa xác định",
       director: json['director'] ?? "Không rõ",
-      comments: (json['comments'] as List? ?? [])
-          .map((comment) => Comment.fromJson(comment))
-          .toList(),
     );
   }
 
@@ -66,14 +106,12 @@ class Movie {
         'trailerUrl': trailerUrl,
         'duration': duration,
         'genres': genres.map((genre) => genre.toJson()).toList(),
-        'rating': rating,
         'isShowingNow': isShowingNow,
         'description': description,
         'cast': cast,
         'reviewCount': reviewCount,
         'releaseDate': releaseDate,
         'director': director,
-        'comments': comments.map((comment) => comment.toJson()).toList(),
       };
 
   /// Cập nhật một phần dữ liệu của `Movie`
@@ -84,14 +122,12 @@ class Movie {
     String? trailerUrl,
     String? duration,
     List<Genre>? genres,
-    double? rating,
     bool? isShowingNow,
     String? description,
     List<String>? cast,
     int? reviewCount,
     String? releaseDate,
     String? director,
-    List<Comment>? comments,
   }) {
     return Movie(
       id: id ?? this.id,
@@ -100,14 +136,12 @@ class Movie {
       trailerUrl: trailerUrl ?? this.trailerUrl,
       duration: duration ?? this.duration,
       genres: genres ?? this.genres,
-      rating: rating ?? this.rating,
       isShowingNow: isShowingNow ?? this.isShowingNow,
       description: description ?? this.description,
       cast: cast ?? this.cast,
       reviewCount: reviewCount ?? this.reviewCount,
       releaseDate: releaseDate ?? this.releaseDate,
       director: director ?? this.director,
-      comments: comments ?? this.comments,
     );
   }
 }

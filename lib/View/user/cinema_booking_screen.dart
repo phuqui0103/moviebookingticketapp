@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../Components/bottom_nav_bar.dart';
 import '../../Components/date_picker.dart';
 import '../../Components/time_picker.dart';
-import '../../Data/data.dart';
 import '../../Model/Movie.dart';
 import '../../Model/Room.dart';
 import '../../Model/Showtime.dart';
 import '../../Model/Cinema.dart';
+import '../../Services/showtime_service.dart';
+import '../../Services/movie_service.dart';
 import 'seat_selection_screen.dart';
 
 class CinemaBookingScreen extends StatefulWidget {
@@ -25,6 +27,15 @@ class _CinemaBookingScreenState extends State<CinemaBookingScreen> {
   List<Showtime> availableShowtimes = [];
   List<Movie> moviesShowing = [];
   Map<String, bool> selectedTimeStates = {};
+  final ShowtimeService _showtimeService = ShowtimeService();
+  final MovieService _movieService = MovieService();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  // Tạo danh sách ngày cho 7 ngày tiếp theo
+  List<DateTime> get dateList {
+    final now = DateTime.now();
+    return List.generate(7, (index) => now.add(Duration(days: index)));
+  }
 
   @override
   void initState() {
@@ -32,35 +43,108 @@ class _CinemaBookingScreenState extends State<CinemaBookingScreen> {
     _fetchShowtimesAndMovies();
   }
 
-  void _fetchShowtimesAndMovies() {
-    setState(() {
-      availableShowtimes = _getFilteredShowtimes(selectedDate);
-      moviesShowing = availableShowtimes
-          .map((showtime) =>
-              movies.firstWhere((movie) => movie.id == showtime.movieId))
-          .toSet()
-          .toList();
-    });
+  Future<void> _fetchShowtimesAndMovies() async {
+    try {
+      // Lấy danh sách suất chiếu cho ngày được chọn
+      final showtimes = await _showtimeService.getShowtimesByDate(selectedDate);
+
+      // Lọc suất chiếu theo rạp
+      final filteredShowtimes = await Future.wait(
+        showtimes.map((showtime) async {
+          final roomDoc =
+              await _firestore.collection('rooms').doc(showtime.roomId).get();
+          final roomData = roomDoc.data();
+          return roomData != null && roomData['cinemaId'] == widget.cinema.id
+              ? showtime
+              : null;
+        }),
+      );
+
+      // Lọc bỏ các suất chiếu null
+      final validShowtimes = filteredShowtimes.whereType<Showtime>().toList();
+
+      // Lấy danh sách phim từ các suất chiếu
+      final movieIds = validShowtimes.map((s) => s.movieId).toSet();
+      final movies = await Future.wait(
+        movieIds.map((id) => _movieService.getMovieById(id)),
+      );
+
+      setState(() {
+        availableShowtimes = validShowtimes;
+        moviesShowing = movies.whereType<Movie>().toList();
+      });
+    } catch (e) {
+      print('Error fetching showtimes and movies: $e');
+      // Có thể thêm thông báo lỗi cho người dùng ở đây
+    }
   }
 
-  List<Showtime> _getFilteredShowtimes(DateTime date) {
-    return showtimes
-        .where((s) =>
-            rooms.any((room) =>
-                room.id == s.roomId && room.cinemaId == widget.cinema.id) &&
-            s.startTime.year == date.year &&
-            s.startTime.month == date.month &&
-            s.startTime.day == date.day)
-        .toList();
-  }
-
-  void _onDateSelected(String formattedDate) {
+  void _onDateSelected(DateTime date) {
     setState(() {
-      selectedDate = DateFormat('yyyy-MM-dd').parse(formattedDate);
-      _fetchShowtimesAndMovies();
+      selectedDate = date;
       selectedShowtime = null;
       selectedTimeStates.clear();
     });
+    _fetchShowtimesAndMovies();
+  }
+
+  Widget _buildDatePicker() {
+    return Container(
+      height: 100,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: dateList.length,
+        itemBuilder: (context, index) {
+          final date = dateList[index];
+          final isSelected = DateFormat('yyyy-MM-dd').format(date) ==
+              DateFormat('yyyy-MM-dd').format(selectedDate);
+
+          return GestureDetector(
+            onTap: () => _onDateSelected(date),
+            child: Container(
+              width: 70,
+              margin: EdgeInsets.symmetric(horizontal: 5),
+              decoration: BoxDecoration(
+                color: isSelected ? Colors.orange : Colors.black38,
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(
+                  color: isSelected ? Colors.orangeAccent : Colors.grey,
+                  width: 2,
+                ),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    DateFormat('EEE').format(date),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 5),
+                  Text(
+                    DateFormat('dd').format(date),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 5),
+                  Text(
+                    DateFormat('MM').format(date),
+                    style: TextStyle(
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 
   @override
@@ -111,7 +195,7 @@ class _CinemaBookingScreenState extends State<CinemaBookingScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    DatePicker(onDateSelected: _onDateSelected),
+                    _buildDatePicker(),
                   ],
                 ),
               ),
@@ -188,22 +272,22 @@ class _CinemaBookingScreenState extends State<CinemaBookingScreen> {
                             ),
                           ),
                           const SizedBox(width: 15),
-                          //Expanded(
-                          //child: TimePicker(
-                          //  availableShowtimes: availableShowtimes
-                          //      .where((s) => s.movieId == movie.id)
-                          //      .toList(),
-                          //  onTimeSelected: (Showtime showtime) {
-                          //    setState(() {
-                          //      selectedTimeStates.clear();
-                          //      selectedTimeStates[showtime.id] = true;
-                          //      selectedShowtime = showtime;
-                          //    });
-                          //  },
-                          //  height: 30,
-                          //  selectedTimeStates: selectedTimeStates,
-                          //),
-                          //),
+                          Expanded(
+                            child: TimePicker(
+                              availableShowtimes: availableShowtimes
+                                  .where((s) => s.movieId == movie.id)
+                                  .toList(),
+                              onTimeSelected: (Showtime showtime) {
+                                setState(() {
+                                  selectedTimeStates.clear();
+                                  selectedTimeStates[showtime.id] = true;
+                                  selectedShowtime = showtime;
+                                });
+                              },
+                              height: 30,
+                              selectedTimeStates: selectedTimeStates,
+                            ),
+                          ),
                         ],
                       ),
                     ],

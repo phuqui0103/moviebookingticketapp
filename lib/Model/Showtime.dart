@@ -9,6 +9,7 @@ class Showtime {
   final String roomId;
   final DateTime startTime;
   final List<String> bookedSeats;
+  final int availableSeats;
 
   Showtime({
     required this.id,
@@ -17,6 +18,7 @@ class Showtime {
     required this.roomId,
     required this.startTime,
     required this.bookedSeats,
+    this.availableSeats = 0,
   });
 
   // Getter để định dạng ngày giờ theo "dd/MM/yyyy HH:mm"
@@ -34,7 +36,7 @@ class Showtime {
   }
 
   // Tính số ghế còn trống
-  int get availableSeats {
+  int get remainingSeats {
     // Chỉ trả về số ghế đã đặt, giá trị âm không cần dùng với UI
     return bookedSeats.length;
   }
@@ -65,17 +67,6 @@ class Showtime {
     }
   }
 
-  factory Showtime.fromJson(Map<String, dynamic> json) {
-    return Showtime(
-      id: json['id'],
-      movieId: json['movieId'],
-      cinemaId: json['cinemaId'],
-      roomId: json['roomId'],
-      startTime: DateTime.parse(json['startTime']),
-      bookedSeats: List<String>.from(json['bookedSeats'] ?? []),
-    );
-  }
-
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -84,6 +75,48 @@ class Showtime {
       'roomId': roomId,
       'startTime': startTime.toIso8601String(),
       'bookedSeats': bookedSeats,
+      'availableSeats': availableSeats,
     };
+  }
+
+  factory Showtime.fromJson(Map<String, dynamic> json) {
+    DateTime parseStartTime(dynamic startTime) {
+      if (startTime is Timestamp) {
+        return startTime.toDate();
+      } else if (startTime is String) {
+        return DateTime.parse(startTime);
+      }
+      throw FormatException('Invalid startTime format');
+    }
+
+    return Showtime(
+      id: json['id'] ?? '',
+      movieId: json['movieId'] ?? '',
+      cinemaId: json['cinemaId'] ?? '',
+      roomId: json['roomId'] ?? '',
+      startTime: parseStartTime(json['startTime']),
+      bookedSeats: List<String>.from(json['bookedSeats'] ?? []),
+      availableSeats: json['availableSeats'] ?? 0,
+    );
+  }
+
+  Showtime copyWith({
+    String? id,
+    String? movieId,
+    String? cinemaId,
+    String? roomId,
+    DateTime? startTime,
+    List<String>? bookedSeats,
+    int? availableSeats,
+  }) {
+    return Showtime(
+      id: id ?? this.id,
+      movieId: movieId ?? this.movieId,
+      cinemaId: cinemaId ?? this.cinemaId,
+      roomId: roomId ?? this.roomId,
+      startTime: startTime ?? this.startTime,
+      bookedSeats: bookedSeats ?? this.bookedSeats,
+      availableSeats: availableSeats ?? this.availableSeats,
+    );
   }
 }

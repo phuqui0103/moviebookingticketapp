@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:movieticketbooking/View/admin/booking_management_screen.dart';
+import 'package:movieticketbooking/View/admin/data_import_screen.dart';
 import 'package:movieticketbooking/View/admin/movie_management_screen.dart';
 import 'package:movieticketbooking/View/admin/revenue_statistics_screen.dart';
 import 'package:movieticketbooking/View/admin/showtime_management_screen.dart';
@@ -20,7 +21,7 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
     "Quản lý suất chiếu",
     "Quản lý đặt vé",
     "Thống kê doanh thu",
-    "Quản lý người dùng"
+    "Quản lý người dùng M",
   ];
 
   final List<Widget> _screens = [
@@ -28,7 +29,7 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
     ShowtimeManagementScreen(),
     BookingManagementScreen(),
     RevenueStatisticsScreen(),
-    UserManagementScreen()
+    UserManagementScreen(),
   ];
 
   @override

@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// 🔹 Model bình luận của người dùng
 class Comment {
   final String id; // ID của bình luận
   final String userId; // ID của người dùng
@@ -8,6 +7,7 @@ class Comment {
   final String userName; // Tên người dùng
   final String content; // Nội dung bình luận
   final double rating; // Điểm đánh giá của người dùng
+  final DateTime timestamp; // Thời gian bình luận
 
   const Comment({
     required this.id,
@@ -16,6 +16,7 @@ class Comment {
     required this.userName,
     required this.content,
     required this.rating,
+    required this.timestamp,
   });
 
   /// Chuyển đổi từ JSON sang Comment object
@@ -27,6 +28,7 @@ class Comment {
       userName: json['userName'] as String,
       content: json['content'] as String,
       rating: (json['rating'] as num).toDouble(),
+      timestamp: (json['timestamp'] as Timestamp).toDate(),
     );
   }
 
@@ -38,5 +40,6 @@ class Comment {
         'userName': userName,
         'content': content,
         'rating': rating,
+        'timestamp': Timestamp.fromDate(timestamp),
       };
 }

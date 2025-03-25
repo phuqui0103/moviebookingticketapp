@@ -27,7 +27,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _loadMovies() {
     _movieService.getNowShowingMovies().listen(
-      (movies) {
+      (movies) async {
+        // Cập nhật rating cho từng phim
+        for (var movie in movies) {
+          final ratingData = await Movie.calculateRating(movie.id);
+          await movie.updateReviewCount();
+        }
+
         setState(() {
           _showingMovies = movies;
           _isLoading = false;

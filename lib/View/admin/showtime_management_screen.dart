@@ -713,14 +713,12 @@ class _ShowtimeManagementScreenState extends State<ShowtimeManagementScreen> {
         trailerUrl: '',
         duration: '',
         genres: [],
-        rating: 0,
         isShowingNow: true,
         description: '',
         cast: [],
         reviewCount: 0,
         releaseDate: '',
         director: '',
-        comments: [],
       );
     }
 
@@ -1253,14 +1251,12 @@ class _ShowtimeManagementScreenState extends State<ShowtimeManagementScreen> {
         trailerUrl: '',
         duration: '',
         genres: [],
-        rating: 0,
         isShowingNow: true,
         description: '',
         cast: [],
         reviewCount: 0,
         releaseDate: '',
         director: '',
-        comments: [],
       );
     }
 
@@ -1375,7 +1371,7 @@ class _ShowtimeManagementScreenState extends State<ShowtimeManagementScreen> {
               try {
                 // Cập nhật giờ chiếu
                 Map<String, dynamic> updateData = {
-                  'startTime': selectedTime,
+                  'startTime': Timestamp.fromDate(selectedTime!),
                 };
 
                 await _showtimeService.updateShowtime(showtime.id, updateData);
@@ -1417,14 +1413,12 @@ class _ShowtimeManagementScreenState extends State<ShowtimeManagementScreen> {
         trailerUrl: '',
         duration: '',
         genres: [],
-        rating: 0,
         isShowingNow: true,
         description: '',
         cast: [],
         reviewCount: 0,
         releaseDate: '',
         director: '',
-        comments: [],
       );
     }
 

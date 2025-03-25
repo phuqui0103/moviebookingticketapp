@@ -155,17 +155,36 @@ class ShowtimeService {
   }
 
   // Lấy danh sách lịch chiếu theo ngày
-  Stream<List<Showtime>> getShowtimesByDate(DateTime date) {
-    String dateString = date.toIso8601String().split('T')[0];
-    return _firestore
-        .collection('showtimes')
-        .where('date', isEqualTo: dateString)
-        .snapshots()
-        .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        return Showtime.fromJson(doc.data());
-      }).toList();
-    });
+  Future<List<Showtime>> getShowtimesByDate(DateTime date) async {
+    try {
+      final startOfDay = DateTime(date.year, date.month, date.day);
+      final endOfDay = startOfDay.add(const Duration(days: 1));
+
+      final showtimesSnapshot = await _firestore
+          .collection('showtimes')
+          .where('startTime',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+          .where('startTime', isLessThan: Timestamp.fromDate(endOfDay))
+          .get();
+
+      return await Future.wait(showtimesSnapshot.docs.map((doc) async {
+        final data = doc.data();
+        final roomDoc =
+            await _firestore.collection('rooms').doc(data['roomId']).get();
+        final roomData = roomDoc.data();
+        return Showtime(
+          id: doc.id,
+          movieId: data['movieId'] as String,
+          cinemaId: roomData?['cinemaId'] as String,
+          roomId: data['roomId'] as String,
+          startTime: (data['startTime'] as Timestamp).toDate(),
+          bookedSeats: List<String>.from(data['bookedSeats'] ?? []),
+        );
+      }));
+    } catch (e) {
+      print('Error getting showtimes: $e');
+      return [];
+    }
   }
 
   // Lấy danh sách suất chiếu theo ID phim và ngày
@@ -315,5 +334,45 @@ class ShowtimeService {
       provinceId: data['provinceId'] ?? '',
       address: data['address'] ?? '',
     );
+  }
+
+  Future<List<Showtime>> getShowtimesByDateAndCinema(
+      DateTime date, String cinemaId) async {
+    try {
+      // Lấy tất cả các phòng của rạp
+      final roomsSnapshot = await _firestore
+          .collection('rooms')
+          .where('cinemaId', isEqualTo: cinemaId)
+          .get();
+
+      final roomIds = roomsSnapshot.docs.map((doc) => doc.id).toList();
+
+      // Lấy các suất chiếu cho ngày được chọn và các phòng của rạp
+      final startOfDay = DateTime(date.year, date.month, date.day);
+      final endOfDay = startOfDay.add(const Duration(days: 1));
+
+      final showtimesSnapshot = await _firestore
+          .collection('showtimes')
+          .where('roomId', whereIn: roomIds)
+          .where('startTime',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+          .where('startTime', isLessThan: Timestamp.fromDate(endOfDay))
+          .get();
+
+      return showtimesSnapshot.docs.map((doc) {
+        final data = doc.data();
+        return Showtime(
+          id: doc.id,
+          movieId: data['movieId'] as String,
+          cinemaId: cinemaId,
+          roomId: data['roomId'] as String,
+          startTime: (data['startTime'] as Timestamp).toDate(),
+          bookedSeats: List<String>.from(data['bookedSeats'] ?? []),
+        );
+      }).toList();
+    } catch (e) {
+      print('Error getting showtimes: $e');
+      return [];
+    }
   }
 }

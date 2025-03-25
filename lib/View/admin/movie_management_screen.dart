@@ -617,12 +617,26 @@ class _MovieManagementScreenState extends State<MovieManagementScreen> {
                           size: 16,
                         ),
                         const SizedBox(width: 4),
-                        Text(
-                          "${movie.rating}/10",
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 14,
-                          ),
+                        FutureBuilder<Map<String, dynamic>>(
+                          future: Movie.calculateRating(movie.id),
+                          builder: (context, snapshot) {
+                            if (snapshot.hasData) {
+                              return Text(
+                                "${snapshot.data!['rating']}/10",
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14,
+                                ),
+                              );
+                            }
+                            return const Text(
+                              "0.0/10",
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 14,
+                              ),
+                            );
+                          },
                         ),
                         const SizedBox(width: 16),
                         const Icon(

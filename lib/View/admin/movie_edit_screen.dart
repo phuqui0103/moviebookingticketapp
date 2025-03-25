@@ -168,7 +168,6 @@ class _MovieEditScreenState extends State<MovieEditScreen> {
                 trailerUrl: _trailerUrlController.text,
                 duration: _durationController.text,
                 genres: _selectedGenres,
-                rating: widget.movie?.rating ?? 10,
                 isShowingNow: _isShowingNow,
                 description: _descriptionController.text,
                 cast: _castController.text
@@ -179,7 +178,6 @@ class _MovieEditScreenState extends State<MovieEditScreen> {
                 reviewCount: widget.movie?.reviewCount ?? 0,
                 releaseDate: _releaseDateController.text,
                 director: _directorController.text,
-                comments: widget.movie?.comments ?? [],
               );
 
               Navigator.pop(context, movie);

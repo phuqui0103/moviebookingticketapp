@@ -116,6 +116,13 @@ class AuthService {
         password: password,
       );
 
+      if (userCredential.user == null) {
+        return {
+          'success': false,
+          'message': 'Không thể tạo tài khoản',
+        };
+      }
+
       // Gửi email xác thực
       await userCredential.user!.sendEmailVerification();
 
@@ -134,8 +141,23 @@ class AuthService {
         createdAt: DateTime.now(),
       );
 
+      // Chuyển đổi user thành JSON và đảm bảo các trường có kiểu dữ liệu đúng
+      final userData = {
+        'id': user.id,
+        'fullName': user.fullName,
+        'phoneNumber': user.phoneNumber,
+        'email': user.email,
+        'hashedPassword': user.hashedPassword,
+        'birthDate': Timestamp.fromDate(user.birthDate),
+        'gender': user.gender,
+        'province': user.province,
+        'district': user.district,
+        'status': user.status,
+        'createdAt': Timestamp.fromDate(user.createdAt),
+      };
+
       // Lưu user vào Firestore
-      await _firestore.collection('users').doc(user.id).set(user.toJson());
+      await _firestore.collection('users').doc(user.id).set(userData);
 
       return {
         'success': true,
@@ -144,6 +166,50 @@ class AuthService {
         'user': user,
       };
     } catch (e) {
+      print('Registration error: $e');
+
+      // Xử lý các lỗi cụ thể
+      if (e is firebase_auth.FirebaseAuthException) {
+        switch (e.code) {
+          case 'too-many-requests':
+            return {
+              'success': false,
+              'message':
+                  'Quá nhiều lần thử đăng ký. Vui lòng thử lại sau ít phút.',
+            };
+          case 'email-already-in-use':
+            return {
+              'success': false,
+              'message': 'Email đã được sử dụng.',
+            };
+          case 'invalid-email':
+            return {
+              'success': false,
+              'message': 'Email không hợp lệ.',
+            };
+          case 'weak-password':
+            return {
+              'success': false,
+              'message': 'Mật khẩu quá yếu.',
+            };
+          default:
+            return {
+              'success': false,
+              'message': 'Lỗi đăng ký: ${e.message}',
+            };
+        }
+      } else if (e is TypeError) {
+        return {
+          'success': false,
+          'message': 'Lỗi chuyển đổi kiểu dữ liệu. Vui lòng thử lại.',
+        };
+      } else if (e.toString().contains('PigeonUserDetails')) {
+        return {
+          'success': false,
+          'message': 'Lỗi xử lý thông tin người dùng. Vui lòng thử lại.',
+        };
+      }
+
       return {
         'success': false,
         'message': 'Đã có lỗi xảy ra: $e',
