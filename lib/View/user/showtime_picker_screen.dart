@@ -35,7 +35,6 @@ class _ShowtimePickerScreenState extends State<ShowtimePickerScreen>
   List<DateTime> dateList = [];
 
   final ShowtimeService _showtimeService = ShowtimeService();
-  final ProvinceService _provinceService = ProvinceService();
 
   // Thêm biến để quản lý stream subscription
   StreamSubscription? _showtimesSubscription;

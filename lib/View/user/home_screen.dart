@@ -4,9 +4,6 @@ import '../../../Components/movie_card_widget.dart';
 import '../../Components/backgroud_widget.dart';
 import '../../Model/Movie.dart';
 import '../../Services/movie_service.dart';
-import 'login_screen.dart';
-import 'movie_list_screen.dart';
-import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);

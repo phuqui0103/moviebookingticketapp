@@ -1,6 +1,5 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:movieticketbooking/Model/Ticket.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../Components/bottom_nav_bar.dart';
 import '../../Data/data.dart';
