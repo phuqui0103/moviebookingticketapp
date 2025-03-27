@@ -12,6 +12,9 @@ import '../../Services/province_service.dart';
 import 'seat_selection_screen.dart';
 import 'province_list_screen.dart';
 import '../../Components/custom_image_widget.dart';
+import 'package:provider/provider.dart';
+import '../../Providers/user_provider.dart';
+import 'login_screen.dart';
 
 class ShowtimePickerScreen extends StatefulWidget {
   final Movie movie;
@@ -517,16 +520,30 @@ class _ShowtimePickerScreenState extends State<ShowtimePickerScreen>
                   child: GestureDetector(
                     onTap: selectedShowtime != null
                         ? () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => SeatSelectionScreen(
-                                  showtime: selectedShowtime!,
-                                  movieTitle: widget.movie.title,
-                                  moviePoster: widget.movie.imagePath,
+                            final userProvider = Provider.of<UserProvider>(
+                                context,
+                                listen: false);
+                            if (userProvider.currentUser == null) {
+                              // Nếu chưa đăng nhập, chuyển đến trang đăng nhập
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const LoginScreen(),
                                 ),
-                              ),
-                            );
+                              );
+                            } else {
+                              // Nếu đã đăng nhập, chuyển đến trang chọn ghế
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => SeatSelectionScreen(
+                                    showtime: selectedShowtime!,
+                                    movieTitle: widget.movie.title,
+                                    moviePoster: widget.movie.imagePath,
+                                  ),
+                                ),
+                              );
+                            }
                           }
                         : null,
                     child: Container(

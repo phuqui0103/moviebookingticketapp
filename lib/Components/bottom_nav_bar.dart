@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../Providers/user_provider.dart';
 import 'package:movieticketbooking/View/user/cinema_list_screen.dart';
 import 'package:movieticketbooking/View/user/home_screen.dart';
 import 'package:movieticketbooking/View/user/login_screen.dart';
@@ -21,45 +23,17 @@ class _BottomNavBarState extends State<BottomNavBar> {
   int currentIndex = 0;
   bool isBottomNavBarVisible = true;
   bool isLoading = true;
-  User? currentUser;
   List<Ticket> userTickets = [];
-  final UserService _userService = UserService();
   final TicketService _ticketService = TicketService();
 
   @override
   void initState() {
     super.initState();
-    _loadUserData();
-  }
-
-  Future<void> _loadUserData() async {
-    try {
-      // Lấy thông tin người dùng hiện tại
-      _userService.getCurrentUser().listen((user) {
-        setState(() {
-          currentUser = user;
-          isLoading = false;
-        });
-
-        // Lấy danh sách vé của người dùng
-        if (user != null) {
-          _ticketService.getTicketsByUser(user.id).listen((tickets) {
-            setState(() {
-              userTickets = tickets;
-            });
-          });
-        }
-      });
-    } catch (e) {
-      print('Error loading user data: $e');
-      setState(() {
-        isLoading = false;
-      });
-    }
   }
 
   setBottomBarIndex(index) {
-    if (index == 4 && currentUser == null) {
+    final userProvider = context.read<UserProvider>();
+    if (index == 4 && userProvider.currentUser == null) {
       // Nếu nhấn vào tab Profile và chưa đăng nhập
       Navigator.push(
         context,
@@ -76,7 +50,8 @@ class _BottomNavBarState extends State<BottomNavBar> {
   }
 
   void _showPurchaseOptions() {
-    if (currentUser == null) {
+    final userProvider = context.read<UserProvider>();
+    if (userProvider.currentUser == null) {
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -144,7 +119,8 @@ class _BottomNavBarState extends State<BottomNavBar> {
 
   @override
   Widget build(BuildContext context) {
-    final Size size = MediaQuery.of(context).size;
+    final userProvider = context.watch<UserProvider>();
+    final currentUser = userProvider.currentUser;
 
     if (currentIndex == 1 ||
         currentIndex == 2 ||
@@ -165,12 +141,16 @@ class _BottomNavBarState extends State<BottomNavBar> {
               HomeScreen(),
               MovieListScreen(),
               CinemaListScreen(),
-              MyTicketListScreen(myTickets: userTickets),
-              currentUser != null
-                  ? ProfileScreen(user: currentUser!)
-                  : Center(
-                      child: CircularProgressIndicator(
-                          color: Colors.orangeAccent)),
+              if (currentUser != null)
+                MyTicketListScreen(userId: currentUser.id)
+              else
+                Center(child: Text('Vui lòng đăng nhập để xem vé của bạn')),
+              if (currentUser != null)
+                ProfileScreen(user: currentUser)
+              else
+                Center(
+                    child:
+                        CircularProgressIndicator(color: Colors.orangeAccent)),
             ],
           ),
           Positioned(
@@ -179,13 +159,13 @@ class _BottomNavBarState extends State<BottomNavBar> {
             child: Visibility(
               visible: isBottomNavBarVisible,
               child: Container(
-                width: size.width,
+                width: MediaQuery.of(context).size.width,
                 height: 80,
                 child: Stack(
                   clipBehavior: Clip.none,
                   children: [
                     CustomPaint(
-                      size: Size(size.width, 80),
+                      size: Size(MediaQuery.of(context).size.width, 80),
                       painter: BNBCustomPainter(),
                     ),
                     Center(
@@ -205,7 +185,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
                       ),
                     ),
                     Container(
-                      width: size.width,
+                      width: MediaQuery.of(context).size.width,
                       height: 80,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,

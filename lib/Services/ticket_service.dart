@@ -1,16 +1,30 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:movieticketbooking/Model/Ticket.dart';
+import 'package:movieticketbooking/Services/showtime_service.dart';
 
 class TicketService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final CollectionReference _ticketsCollection =
+      FirebaseFirestore.instance.collection('tickets');
+  final ShowtimeService _showtimeService = ShowtimeService();
 
-  // Tạo vé mới
+  // Tạo vé mới và cập nhật ghế đã đặt
   Future<void> createTicket(Ticket ticket) async {
     try {
-      await _firestore
-          .collection('tickets')
-          .doc(ticket.id)
-          .set(ticket.toJson());
+      // Bắt đầu transaction để đảm bảo tính nhất quán của dữ liệu
+      await _firestore.runTransaction((transaction) async {
+        // 1. Cập nhật danh sách ghế đã đặt trong showtime
+        await _showtimeService.updateBookedSeats(
+          ticket.showtime.id,
+          ticket.selectedSeats,
+        );
+
+        // 2. Tạo vé mới
+        await transaction.set(
+          _ticketsCollection.doc(ticket.id),
+          ticket.toJson(),
+        );
+      });
     } catch (e) {
       print('Error creating ticket: $e');
       throw e;
@@ -62,43 +76,15 @@ class TicketService {
   }
 
   // Lấy danh sách vé theo người dùng
-  Stream<List<Ticket>> getTicketsByUser(String userId) {
-    return _firestore
-        .collection('tickets')
+  Stream<List<Ticket>> getTicketsByUserId(String userId) {
+    return _ticketsCollection
         .where('userId', isEqualTo: userId)
-        .orderBy('createdAt', descending: true)
+        .orderBy('showtime.startTime', descending: true)
         .snapshots()
         .map((snapshot) {
       return snapshot.docs.map((doc) {
-        return Ticket.fromJson(doc.data());
-      }).toList();
-    });
-  }
-
-  // Lấy danh sách vé theo lịch chiếu
-  Stream<List<Ticket>> getTicketsByShowtime(String showtimeId) {
-    return _firestore
-        .collection('tickets')
-        .where('showtimeId', isEqualTo: showtimeId)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        return Ticket.fromJson(doc.data());
-      }).toList();
-    });
-  }
-
-  // Lấy danh sách vé theo trạng thái
-  Stream<List<Ticket>> getTicketsByStatus(String status) {
-    return _firestore
-        .collection('tickets')
-        .where('status', isEqualTo: status)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        return Ticket.fromJson(doc.data());
+        return Ticket.fromJson(
+            {'id': doc.id, ...doc.data() as Map<String, dynamic>});
       }).toList();
     });
   }

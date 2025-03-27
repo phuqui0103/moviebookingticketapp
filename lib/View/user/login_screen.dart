@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:movieticketbooking/Components/bottom_nav_bar.dart';
-import 'package:movieticketbooking/View/admin/admin_main_screen.dart';
-import 'package:movieticketbooking/View/user/register_screen.dart';
-import 'package:movieticketbooking/View/user/forgot_password_screen.dart';
-import 'package:movieticketbooking/main.dart';
-import 'package:movieticketbooking/Components/loading_animation.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
+import '../../Components/bottom_nav_bar.dart';
+import '../../View/admin/admin_main_screen.dart';
+import '../../View/user/register_screen.dart';
+import '../../View/user/forgot_password_screen.dart';
+import '../../main.dart';
+import '../../Components/loading_animation.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide User;
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:movieticketbooking/Services/user_service.dart';
+import '../../Services/user_service.dart';
+import '../../Providers/user_provider.dart';
+import '../../Model/User.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -52,13 +55,6 @@ class _LoginScreenState extends State<LoginScreen> {
         emailError = 'Vui lòng nhập email/số điện thoại';
       });
       return;
-    } else if (!RegExp(r'^[0-9]{10}$').hasMatch(emailController.text) &&
-        !RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
-            .hasMatch(emailController.text)) {
-      setState(() {
-        emailError = 'Vui lòng nhập thông tin hợp lệ';
-      });
-      return;
     }
 
     if (passwordController.text.isEmpty) {
@@ -71,6 +67,21 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
+      // Kiểm tra tài khoản admin
+      if (emailController.text.toLowerCase() == 'admin@cinema.com' &&
+          passwordController.text == 'admin') {
+        setState(() => _isLoading = false);
+        if (!mounted) return;
+
+        // Chuyển đến trang admin
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => AdminMainScreen()),
+        );
+        return;
+      }
+
+      // Logic đăng nhập cho người dùng thông thường
       final result = await _userService.login(
         emailOrPhone: emailController.text,
         password: passwordController.text,
@@ -80,10 +91,23 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (result['success']) {
         if (!mounted) return;
-        Navigator.pushAndRemoveUntil(
+        final userCredential = await _auth.signInWithEmailAndPassword(
+          email: emailController.text,
+          password: passwordController.text,
+        );
+
+        final userDoc = await _firestore
+            .collection('users')
+            .doc(userCredential.user!.uid)
+            .get();
+        final userData = userDoc.data() as Map<String, dynamic>;
+        final user =
+            User.fromJson({...userData, 'id': userCredential.user!.uid});
+
+        context.read<UserProvider>().setUser(user);
+        Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => BottomNavBar()),
-          (route) => false,
         );
       } else {
         if (result['field'] == 'emailOrPhone') {

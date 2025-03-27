@@ -9,6 +9,7 @@ import '../../Model/Ticket.dart';
 import '../../Services/room_service.dart';
 import '../../Services/cinema_service.dart';
 import '../../Services/food_service.dart';
+import '../../Components/custom_image_widget.dart';
 
 class TicketDetailScreen extends StatefulWidget {
   final Ticket ticket;
@@ -105,15 +106,23 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
         children: [
           /// Hình nền poster
           Positioned.fill(
-            child: Image.network(
-              widget.moviePoster,
-              fit: BoxFit.cover,
+            child: ShaderMask(
+              shaderCallback: (bounds) {
+                return LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withOpacity(0.4),
+                    Colors.black.withOpacity(0.95),
+                  ],
+                ).createShader(bounds);
+              },
+              blendMode: BlendMode.darken,
+              child: CustomImageWidget(
+                imagePath: widget.moviePoster,
+                isBackground: true,
+              ),
             ),
-          ),
-
-          /// Hiệu ứng mờ cho hình nền
-          Positioned.fill(
-            child: Container(color: Colors.black.withOpacity(0.6)),
           ),
 
           /// Nội dung chính

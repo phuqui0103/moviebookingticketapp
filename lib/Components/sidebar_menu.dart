@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:movieticketbooking/View/user/login_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class SidebarMenu extends StatefulWidget {
   final Function(int) onMenuSelected;
@@ -15,6 +17,42 @@ class SidebarMenu extends StatefulWidget {
 }
 
 class _SidebarMenuState extends State<SidebarMenu> {
+  void _showLogoutDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xff1a1a1a),
+        title: const Text(
+          'Xác nhận đăng xuất',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: const Text(
+          'Bạn có chắc chắn muốn đăng xuất?',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Hủy', style: TextStyle(color: Colors.white70)),
+          ),
+          TextButton(
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
+              if (context.mounted) {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  (route) => false,
+                );
+              }
+            },
+            child: const Text('Đăng xuất', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Drawer(
@@ -179,9 +217,7 @@ class _SidebarMenuState extends State<SidebarMenu> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {
-            // TODO: Implement logout
-          },
+          onTap: _showLogoutDialog,
           borderRadius: BorderRadius.circular(10),
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 12),

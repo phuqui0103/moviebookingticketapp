@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../Model/Food.dart';
 import '../../Services/food_service.dart';
+import '../../Components/custom_image_widget.dart';
 import 'payment_screen.dart';
 
 class FoodSelectionScreen extends StatefulWidget {
@@ -97,16 +98,11 @@ class _FoodSelectionScreenState extends State<FoodSelectionScreen> {
       child: Row(
         children: [
           // Hình ảnh
-          Container(
+          CustomImageWidget(
+            imagePath: item.image,
             width: 80,
             height: 80,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              image: DecorationImage(
-                image: NetworkImage(item.image),
-                fit: BoxFit.cover,
-              ),
-            ),
+            borderRadius: BorderRadius.circular(8),
           ),
           const SizedBox(width: 12),
 

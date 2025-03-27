@@ -4,6 +4,7 @@ import '../../Components/bottom_nav_bar.dart';
 import '../../Model/Ticket.dart';
 import 'ticket_detail_screen.dart';
 import '../../Services/ticket_service.dart';
+import '../../Components/custom_image_widget.dart';
 
 class PaymentSuccessScreen extends StatefulWidget {
   final String movieTitle;
@@ -14,6 +15,7 @@ class PaymentSuccessScreen extends StatefulWidget {
   final List<String> selectedSeats;
   final double totalPrice;
   final Map<String, int> selectedFoods;
+  final String userId;
 
   const PaymentSuccessScreen({
     Key? key,
@@ -25,6 +27,7 @@ class PaymentSuccessScreen extends StatefulWidget {
     required this.roomName,
     required this.cinemaName,
     required this.selectedFoods,
+    required this.userId,
   }) : super(key: key);
 
   @override
@@ -77,16 +80,6 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
     return Scaffold(
       backgroundColor: Colors.black,
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.black,
-              Colors.grey[900]!,
-            ],
-          ),
-        ),
         child: SafeArea(
           child: SingleChildScrollView(
             child: Padding(
@@ -139,11 +132,11 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
                         children: [
                           ClipRRect(
                             borderRadius: BorderRadius.circular(12),
-                            child: Image.network(
-                              widget.moviePoster,
+                            child: CustomImageWidget(
+                              imagePath: widget.moviePoster,
                               width: 120,
                               height: 180,
-                              fit: BoxFit.cover,
+                              borderRadius: BorderRadius.circular(12),
                             ),
                           ),
                           SizedBox(width: 16),
@@ -369,6 +362,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
 
       _newTicket = Ticket(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
+        userId: widget.userId,
         showtime: widget.showtime,
         selectedSeats: widget.selectedSeats,
         selectedFoods: widget.selectedFoods,

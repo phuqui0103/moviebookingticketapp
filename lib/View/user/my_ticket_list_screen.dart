@@ -6,12 +6,12 @@ import '../../Model/Ticket.dart';
 import 'ticket_detail_screen.dart'; // Chứa danh sách phim & phòng chiếu
 import '../../Services/ticket_service.dart';
 import '../../Services/movie_service.dart';
+import '../../Components/custom_image_widget.dart';
 
 class MyTicketListScreen extends StatefulWidget {
-  final List<Ticket> myTickets;
+  final String userId;
 
-  const MyTicketListScreen({Key? key, required this.myTickets})
-      : super(key: key);
+  const MyTicketListScreen({Key? key, required this.userId}) : super(key: key);
 
   @override
   _MyTicketListScreenState createState() => _MyTicketListScreenState();
@@ -185,11 +185,11 @@ class _MyTicketListScreenState extends State<MyTicketListScreen>
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                movie.imagePath ?? "",
+              child: CustomImageWidget(
+                imagePath: movie.imagePath ?? "",
                 width: 90,
                 height: 120,
-                fit: BoxFit.cover,
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
             SizedBox(width: 16),
@@ -305,43 +305,35 @@ class _MyTicketListScreenState extends State<MyTicketListScreen>
 
   Future<void> _loadData() async {
     try {
-      // Load tickets
-      final ticketStream = _ticketService.getAllTickets();
-      ticketStream.listen((tickets) async {
-        // Cập nhật trạng thái vé dựa trên thời gian chiếu
-        for (var ticket in tickets) {
-          if (!ticket.isUsed &&
-              ticket.showtime.startTime.isBefore(DateTime.now())) {
-            // Nếu thời gian chiếu đã qua và vé chưa được đánh dấu là đã sử dụng
-            await _ticketService.updateTicket(ticket.id, {'isUsed': true});
-          }
-        }
+      // Lấy danh sách phim
+      final movieStream = _movieService.getMovies();
+      movieStream.listen((movieList) {
         setState(() {
-          myTickets = tickets;
+          movies = movieList;
         });
       });
 
-      // Load movies
-      final movieStream = _movieService.getMovies();
-      movieStream.listen((movies) {
+      // Lấy danh sách vé theo userId
+      final ticketStream = _ticketService.getTicketsByUserId(widget.userId);
+      ticketStream.listen((ticketList) {
         setState(() {
-          this.movies = movies;
+          myTickets = ticketList;
           isLoading = false;
         });
       }, onError: (error) {
-        print('Error loading movies: $error');
+        print('Error loading tickets: $error');
         setState(() {
           isLoading = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Có lỗi xảy ra khi tải dữ liệu phim'),
+            content: Text('Có lỗi xảy ra khi tải danh sách vé'),
             backgroundColor: Colors.red,
           ),
         );
       });
     } catch (e) {
-      print('Error loading data: $e');
+      print('Error in _loadData: $e');
       setState(() {
         isLoading = false;
       });

@@ -6,6 +6,8 @@ import 'package:movieticketbooking/View/splash_screen.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:movieticketbooking/View/user/register_screen.dart';
 import 'firebase_options.dart';
+import 'package:provider/provider.dart';
+import 'Providers/user_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,7 +21,14 @@ void main() async {
     appleProvider: AppleProvider.appAttest,
   );
 
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => UserProvider()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {

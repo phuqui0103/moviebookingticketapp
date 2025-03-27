@@ -7,7 +7,9 @@ import '../../Services/room_service.dart';
 import '../../Services/cinema_service.dart';
 import '../../Services/food_service.dart';
 import 'payment_success_screen.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import '../../Providers/user_provider.dart';
+import '../../Components/custom_image_widget.dart';
 
 class PaymentScreen extends StatefulWidget {
   final String movieTitle;
@@ -313,6 +315,7 @@ class _PaymentScreenState extends State<PaymentScreen>
 
     // Chuyển đến màn hình thành công
     if (selectedRoom != null && selectedCinema != null) {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -320,11 +323,12 @@ class _PaymentScreenState extends State<PaymentScreen>
             movieTitle: widget.movieTitle,
             moviePoster: widget.moviePoster,
             showtime: widget.showtime,
-            roomName: selectedRoom!.name,
-            cinemaName: selectedCinema!.name,
             selectedSeats: widget.selectedSeats,
             totalPrice: widget.totalPrice,
             selectedFoods: widget.selectedFoods,
+            userId: userProvider.currentUser!.id,
+            roomName: selectedRoom!.name,
+            cinemaName: selectedCinema!.name,
           ),
         ),
       );
@@ -412,14 +416,11 @@ class _PaymentScreenState extends State<PaymentScreen>
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ClipRRect(
+              CustomImageWidget(
+                imagePath: widget.moviePoster,
+                width: 130,
+                height: 190,
                 borderRadius: BorderRadius.circular(10),
-                child: Image.network(
-                  widget.moviePoster,
-                  width: 120,
-                  height: 160,
-                  fit: BoxFit.cover,
-                ),
               ),
               SizedBox(width: 16),
               Expanded(
@@ -492,7 +493,8 @@ class _PaymentScreenState extends State<PaymentScreen>
                 id: entry.key,
                 name: "Không xác định",
                 price: 0,
-                image: "assets/images/food/placeholder.png",
+                image:
+                    "https://png.pngtree.com/png-clipart/20231023/original/pngtree-watercolor-popcorn-cinema-png-image_13398697.png",
                 description: "",
               ),
             );
@@ -506,22 +508,11 @@ class _PaymentScreenState extends State<PaymentScreen>
               ),
               child: Row(
                 children: [
-                  ClipRRect(
+                  CustomImageWidget(
+                    imagePath: food.image,
+                    width: 60,
+                    height: 60,
                     borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      food.image,
-                      width: 60,
-                      height: 60,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          width: 60,
-                          height: 60,
-                          color: Colors.grey[800],
-                          child: Icon(Icons.error, color: Colors.white),
-                        );
-                      },
-                    ),
                   ),
                   SizedBox(width: 12),
                   Expanded(

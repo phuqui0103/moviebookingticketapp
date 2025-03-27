@@ -392,6 +392,7 @@ class _MovieManagementScreenState extends State<MovieManagementScreen> {
     return AppBar(
       backgroundColor: const Color(0xff252429),
       elevation: 0,
+      automaticallyImplyLeading: false,
       title: Row(
         children: [
           // Ô tìm kiếm
@@ -621,7 +622,7 @@ class _MovieManagementScreenState extends State<MovieManagementScreen> {
                           builder: (context, snapshot) {
                             if (snapshot.hasData) {
                               return Text(
-                                "${snapshot.data!['rating']}/10",
+                                "${(snapshot.data!['rating'] as num).toStringAsFixed(1)}/10",
                                 style: const TextStyle(
                                   color: Colors.white70,
                                   fontSize: 14,

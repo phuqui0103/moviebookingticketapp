@@ -4,7 +4,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../Model/Room.dart';
 import '../../Model/Showtime.dart';
 import '../../Model/Seat.dart';
+import '../../Utils/seat_selection_validator.dart';
+import '../../Components/custom_image_widget.dart';
 import 'food_selection_screen.dart';
+import 'dart:io';
 
 class SeatSelectionScreen extends StatefulWidget {
   final Showtime showtime;
@@ -83,40 +86,14 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
 
   List<String> selectedSeats = [];
 
-  //Logic kiểm tra ghế có liền kề khi chọn hay không
   void toggleSeat(String seatId) {
     setState(() {
       if (selectedSeats.contains(seatId)) {
         selectedSeats.remove(seatId);
       } else {
-        if (selectedSeats.isNotEmpty) {
-          bool isAdjacent = selectedSeats.any((selectedSeat) {
-            return isSeatAdjacent(selectedSeat, seatId);
-          });
-
-          if (!isAdjacent) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text("Vui lòng chọn các ghế liền kề nhau!"),
-                duration: Duration(seconds: 2),
-              ),
-            );
-            return;
-          }
-        }
         selectedSeats.add(seatId);
       }
     });
-  }
-
-  bool isSeatAdjacent(String seat1, String seat2) {
-    int row1 = seat1.codeUnitAt(0) - 65;
-    int col1 = int.parse(seat1.substring(1));
-    int row2 = seat2.codeUnitAt(0) - 65;
-    int col2 = int.parse(seat2.substring(1));
-
-    return (row1 == row2 && (col1 - col2).abs() == 1) ||
-        (col1 == col2 && (row1 - row2).abs() == 1);
   }
 
   @override
@@ -139,7 +116,9 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
           Container(
             decoration: BoxDecoration(
               image: DecorationImage(
-                image: NetworkImage(widget.moviePoster),
+                image: widget.moviePoster.startsWith('http')
+                    ? NetworkImage(widget.moviePoster)
+                    : FileImage(File(widget.moviePoster)) as ImageProvider,
                 fit: BoxFit.cover,
                 colorFilter: ColorFilter.mode(
                   Colors.black.withOpacity(0.8),
@@ -316,6 +295,60 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                   return;
                 }
 
+                // Kiểm tra tính hợp lệ của ghế đã chọn
+                Map<String, List<String>> errors =
+                    SeatSelectionValidator.validateSeats(
+                  selectedSeats,
+                  widget.showtime.bookedSeats,
+                  selectedRoom.cols,
+                );
+
+                if (errors.isNotEmpty) {
+                  // Hiển thị dialog với tất cả các lỗi
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: Text('Lỗi chọn ghế'),
+                        content: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ...errors.entries.map((entry) {
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (entry.key != 'general')
+                                      Text(
+                                        'Hàng ${entry.key}:',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                    ...entry.value.map((error) => Padding(
+                                          padding: const EdgeInsets.only(
+                                              left: 8.0, bottom: 4.0),
+                                          child: Text('• $error'),
+                                        )),
+                                  ],
+                                );
+                              }),
+                            ],
+                          ),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: Text('Đóng'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                  return;
+                }
+
+                // Nếu không có lỗi, chuyển sang màn hình tiếp theo
                 Navigator.push(
                   context,
                   MaterialPageRoute(

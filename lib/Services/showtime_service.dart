@@ -386,4 +386,40 @@ class ShowtimeService {
       return [];
     }
   }
+
+  // Cập nhật danh sách ghế đã đặt
+  Future<void> updateBookedSeats(
+      String showtimeId, List<String> selectedSeats) async {
+    try {
+      // Lấy showtime hiện tại
+      DocumentSnapshot showtimeDoc =
+          await _firestore.collection('showtimes').doc(showtimeId).get();
+
+      if (!showtimeDoc.exists) {
+        throw Exception('Không tìm thấy suất chiếu');
+      }
+
+      Map<String, dynamic> data = showtimeDoc.data() as Map<String, dynamic>;
+      List<String> currentBookedSeats =
+          List<String>.from(data['bookedSeats'] ?? []);
+
+      // Kiểm tra xem có ghế nào đã được đặt chưa
+      for (String seat in selectedSeats) {
+        if (currentBookedSeats.contains(seat)) {
+          throw Exception('Ghế $seat đã được đặt');
+        }
+      }
+
+      // Thêm các ghế mới vào danh sách
+      currentBookedSeats.addAll(selectedSeats);
+
+      // Cập nhật lại showtime với danh sách ghế mới
+      await _firestore.collection('showtimes').doc(showtimeId).update({
+        'bookedSeats': currentBookedSeats,
+      });
+    } catch (e) {
+      print('Error updating booked seats: $e');
+      throw e;
+    }
+  }
 }

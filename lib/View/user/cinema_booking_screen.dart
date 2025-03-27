@@ -11,6 +11,9 @@ import '../../Model/Cinema.dart';
 import '../../Services/showtime_service.dart';
 import '../../Services/movie_service.dart';
 import 'seat_selection_screen.dart';
+import 'package:provider/provider.dart';
+import '../../Providers/user_provider.dart';
+import 'login_screen.dart';
 
 class CinemaBookingScreen extends StatefulWidget {
   final Cinema cinema;
@@ -348,20 +351,33 @@ class _CinemaBookingScreenState extends State<CinemaBookingScreen> {
                 child: GestureDetector(
                   onTap: selectedShowtime != null
                       ? () {
-                          final selectedMovie = moviesShowing.firstWhere(
-                            (movie) => movie.id == selectedShowtime!.movieId,
-                          );
-
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => SeatSelectionScreen(
-                                showtime: selectedShowtime!,
-                                movieTitle: selectedMovie.title,
-                                moviePoster: selectedMovie.imagePath,
+                          final userProvider =
+                              Provider.of<UserProvider>(context, listen: false);
+                          if (userProvider.currentUser == null) {
+                            // Nếu chưa đăng nhập, chuyển đến trang đăng nhập
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => LoginScreen(),
                               ),
-                            ),
-                          );
+                            );
+                          } else {
+                            // Nếu đã đăng nhập, chuyển đến trang chọn ghế
+                            final selectedMovie = moviesShowing.firstWhere(
+                              (movie) => movie.id == selectedShowtime!.movieId,
+                            );
+
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => SeatSelectionScreen(
+                                  showtime: selectedShowtime!,
+                                  movieTitle: selectedMovie.title,
+                                  moviePoster: selectedMovie.imagePath,
+                                ),
+                              ),
+                            );
+                          }
                         }
                       : null,
                   child: Container(

@@ -34,16 +34,16 @@ class User {
     try {
       print('Chuyển đổi User thành JSON');
       final json = {
-        "id": id.toString(),
-        "fullName": fullName.toString(),
-        "phoneNumber": phoneNumber.toString(),
-        "email": email.toString(),
-        "hashedPassword": hashedPassword.toString(),
+        "id": id,
+        "fullName": fullName,
+        "phoneNumber": phoneNumber,
+        "email": email,
+        "hashedPassword": hashedPassword, // Mật khẩu phải mã hóa trước khi lưu
         "birthDate": Timestamp.fromDate(birthDate),
-        "gender": gender.toString(),
-        "province": province.toString(),
-        "district": district.toString(),
-        "status": status.toString(),
+        "gender": gender,
+        "province": province,
+        "district": district,
+        "status": status,
         "createdAt": Timestamp.fromDate(createdAt),
         "updatedAt": updatedAt != null ? Timestamp.fromDate(updatedAt!) : null,
       };
@@ -54,16 +54,16 @@ class User {
       print('Stack trace: $stackTrace');
       // Trả về một JSON an toàn
       return {
-        "id": id.toString(),
-        "fullName": fullName.toString(),
-        "phoneNumber": phoneNumber.toString(),
-        "email": email.toString(),
-        "hashedPassword": hashedPassword.toString(),
+        "id": id,
+        "fullName": fullName,
+        "phoneNumber": phoneNumber,
+        "email": email,
+        "hashedPassword": hashedPassword,
         "birthDate": Timestamp.fromDate(DateTime.now()),
-        "gender": gender.toString(),
-        "province": province.toString(),
-        "district": district.toString(),
-        "status": status.toString(),
+        "gender": gender,
+        "province": province,
+        "district": district,
+        "status": status,
         "createdAt": Timestamp.fromDate(DateTime.now()),
         "updatedAt": null,
       };

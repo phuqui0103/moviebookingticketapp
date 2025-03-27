@@ -1,113 +1,89 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'dart:io';
 
 class CustomImageWidget extends StatelessWidget {
   final String imagePath;
   final double? width;
   final double? height;
-  final BoxFit fit;
   final BorderRadius? borderRadius;
   final bool isBackground;
+  final BoxFit fit;
 
   const CustomImageWidget({
     Key? key,
     required this.imagePath,
     this.width,
     this.height,
-    this.fit = BoxFit.cover,
     this.borderRadius,
     this.isBackground = false,
+    this.fit = BoxFit.cover,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    if (imagePath.isEmpty) {
-      return _buildPlaceholder();
-    }
+    bool isNetworkImage =
+        imagePath.startsWith('http://') || imagePath.startsWith('https://');
 
-    try {
-      if (imagePath.startsWith('http')) {
-        return CachedNetworkImage(
-          imageUrl: imagePath,
+    Widget imageWidget;
+    if (isNetworkImage) {
+      imageWidget = CachedNetworkImage(
+        imageUrl: imagePath,
+        width: width,
+        height: height,
+        fit: fit,
+        placeholder: (context, url) => Container(
+          color: Colors.black12,
+          child: const Center(
+            child: CircularProgressIndicator(
+              color: Colors.orange,
+              strokeWidth: 2,
+            ),
+          ),
+        ),
+        errorWidget: (context, url, error) => Container(
+          color: Colors.black12,
+          child: const Icon(Icons.error, color: Colors.orange),
+        ),
+      );
+    } else if (imagePath.isNotEmpty) {
+      try {
+        imageWidget = Image.file(
+          File(imagePath),
           width: width,
           height: height,
           fit: fit,
-          placeholder: (context, url) => _buildLoadingPlaceholder(),
-          errorWidget: (context, url, error) => _buildErrorPlaceholder(),
-        );
-      } else if (imagePath.startsWith('file://')) {
-        return ClipRRect(
-          borderRadius: borderRadius ?? BorderRadius.zero,
-          child: Image.file(
-            File(imagePath.replaceFirst('file://', '')),
+          errorBuilder: (context, error, stackTrace) => Container(
             width: width,
             height: height,
-            fit: fit,
-            errorBuilder: (context, error, stackTrace) =>
-                _buildErrorPlaceholder(),
+            color: Colors.black12,
+            child: const Icon(Icons.error, color: Colors.orange),
           ),
         );
-      } else {
-        return ClipRRect(
-          borderRadius: borderRadius ?? BorderRadius.zero,
-          child: Image.file(
-            File(imagePath),
-            width: width,
-            height: height,
-            fit: fit,
-            errorBuilder: (context, error, stackTrace) =>
-                _buildErrorPlaceholder(),
-          ),
+      } catch (e) {
+        imageWidget = Container(
+          width: width,
+          height: height,
+          color: Colors.black12,
+          child: const Icon(Icons.movie, color: Colors.orange),
         );
       }
-    } catch (e) {
-      print('Error loading image: $e');
-      return _buildErrorPlaceholder();
+    } else {
+      imageWidget = Container(
+        width: width,
+        height: height,
+        color: Colors.black12,
+        child: const Icon(Icons.movie, color: Colors.orange),
+      );
     }
-  }
 
-  Widget _buildPlaceholder() {
-    return Container(
-      width: width,
-      height: height,
-      color: Colors.black,
-      child: Center(
-        child: Icon(
-          Icons.image_not_supported,
-          color: Colors.orange.withOpacity(0.5),
-          size: isBackground ? 100 : 50,
-        ),
-      ),
-    );
-  }
+    if (borderRadius != null) {
+      return ClipRRect(
+        borderRadius: borderRadius!,
+        child: imageWidget,
+      );
+    }
 
-  Widget _buildLoadingPlaceholder() {
-    return Container(
-      width: width,
-      height: height,
-      color: Colors.black,
-      child: Center(
-        child: CircularProgressIndicator(
-          color: Colors.orange,
-          strokeWidth: isBackground ? 3 : 2,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildErrorPlaceholder() {
-    return Container(
-      width: width,
-      height: height,
-      color: Colors.black,
-      child: Center(
-        child: Icon(
-          Icons.error_outline,
-          color: Colors.orange.withOpacity(0.5),
-          size: isBackground ? 100 : 50,
-        ),
-      ),
-    );
+    return imageWidget;
   }
 }

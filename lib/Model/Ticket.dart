@@ -2,6 +2,7 @@ import 'Showtime.dart';
 
 class Ticket {
   final String id;
+  final String userId;
   final Showtime showtime;
   final List<String> selectedSeats;
   final Map<String, int> selectedFoods; // Đổi thành Map<String, int>
@@ -10,6 +11,7 @@ class Ticket {
 
   Ticket({
     required this.id,
+    required this.userId,
     required this.showtime,
     required this.selectedSeats,
     required this.selectedFoods, // Truyền vào Map<String, int>
@@ -20,6 +22,7 @@ class Ticket {
   factory Ticket.fromJson(Map<String, dynamic> json) {
     return Ticket(
       id: json['id'],
+      userId: json['userId'],
       showtime: Showtime.fromJson(json['showtime']),
       selectedSeats: List<String>.from(json['selectedSeats'] ?? []),
       selectedFoods: Map<String, int>.from(json['selectedFoods'] ?? {}),
@@ -31,6 +34,7 @@ class Ticket {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'userId': userId,
       'showtime': showtime.toJson(),
       'selectedSeats': selectedSeats,
       'selectedFoods': selectedFoods, // Truyền Map<String, int> vào JSON

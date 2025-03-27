@@ -301,127 +301,103 @@ class UserService {
     required String password,
   }) async {
     try {
-      // Kiểm tra xem input là email hay số điện thoại
+      // Kiểm tra xem đầu vào là email hay số điện thoại
       bool isEmail = emailOrPhone.contains('@');
-      String email;
 
-      if (!isEmail) {
-        // Nếu là số điện thoại, tìm email tương ứng trong Firestore
-        final userDoc = await _firestore
+      // Logic đăng nhập cho người dùng thông thường
+      QuerySnapshot userQuery;
+      if (isEmail) {
+        userQuery = await _firestore
+            .collection('users')
+            .where('email', isEqualTo: emailOrPhone.toLowerCase())
+            .limit(1)
+            .get();
+      } else {
+        userQuery = await _firestore
             .collection('users')
             .where('phoneNumber', isEqualTo: emailOrPhone)
             .limit(1)
             .get();
-
-        if (userDoc.docs.isEmpty) {
-          return {
-            'success': false,
-            'message': 'Không tìm thấy tài khoản với số điện thoại này',
-          };
-        }
-
-        email = userDoc.docs.first.data()['email'];
-      } else {
-        email = emailOrPhone;
       }
 
-      // Đăng nhập với Firebase Auth
-      final userCredential = await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-
-      // Kiểm tra xác thực email
-      if (!userCredential.user!.emailVerified) {
+      if (userQuery.docs.isEmpty) {
         return {
           'success': false,
-          'message': 'Vui lòng xác thực email trước khi đăng nhập',
+          'field': 'emailOrPhone',
+          'message':
+              isEmail ? 'Email không tồn tại' : 'Số điện thoại không tồn tại',
         };
       }
 
-      // Lấy thông tin user từ Firestore
-      final user = await getUserById(userCredential.user!.uid);
+      final userDoc = userQuery.docs.first;
+      final userData = userDoc.data() as Map<String, dynamic>;
 
-      if (user == null) {
+      if (userData['hashedPassword'] != _hashPassword(password)) {
         return {
           'success': false,
-          'message': 'Không tìm thấy thông tin người dùng',
+          'field': 'password',
+          'message': 'Mật khẩu không đúng',
         };
       }
 
-      // Kiểm tra trạng thái tài khoản
-      if (user.status != 'Active') {
+      if (userData['status'] == 'Blocked') {
         return {
           'success': false,
-          'message': 'Tài khoản đã bị khóa hoặc chưa được xác thực',
+          'message': 'Tài khoản của bạn đã bị khóa',
         };
       }
 
       return {
         'success': true,
         'message': 'Đăng nhập thành công',
-        'user': user,
       };
     } catch (e) {
+      print('Error during login: $e');
       return {
         'success': false,
-        'message': 'Thông tin đăng nhập không đúng',
+        'message': 'Đã có lỗi xảy ra trong quá trình đăng nhập',
       };
     }
   }
 
   // Quên mật khẩu
-  Future<Map<String, dynamic>> forgotPassword({
-    required String email,
-  }) async {
+  Future<Map<String, dynamic>> forgotPassword({required String email}) async {
     try {
-      // Kiểm tra email có tồn tại trong Firestore không
-      if (!await isEmailExists(email)) {
-        return {
-          'success': false,
-          'message': 'Email không tồn tại trong hệ thống',
-        };
-      }
-
-      // Gửi email reset password
       await _auth.sendPasswordResetEmail(email: email);
-
       return {
         'success': true,
-        'message': 'Đã gửi email hướng dẫn đặt lại mật khẩu',
+        'message': 'Email đặt lại mật khẩu đã được gửi',
       };
     } catch (e) {
       return {
         'success': false,
-        'message': 'Đã có lỗi xảy ra khi gửi email',
+        'message': 'Email không tồn tại hoặc đã có lỗi xảy ra',
       };
     }
   }
 
-  // Cập nhật hashedPassword trong Firestore sau khi reset password
+  // Cập nhật mật khẩu sau khi reset
   Future<Map<String, dynamic>> updateHashedPasswordAfterReset({
     required String email,
     required String newPassword,
   }) async {
     try {
-      // Tìm user trong Firestore bằng email
-      final userDoc = await _firestore
+      final userQuery = await _firestore
           .collection('users')
           .where('email', isEqualTo: email)
           .limit(1)
           .get();
 
-      if (userDoc.docs.isEmpty) {
+      if (userQuery.docs.isEmpty) {
         return {
           'success': false,
           'message': 'Không tìm thấy tài khoản',
         };
       }
 
-      // Cập nhật hashedPassword mới
-      final String hashedPassword = _hashPassword(newPassword);
-      await updateUser(userDoc.docs.first.id, {
-        'hashedPassword': hashedPassword,
+      final userDoc = userQuery.docs.first;
+      await _firestore.collection('users').doc(userDoc.id).update({
+        'hashedPassword': _hashPassword(newPassword),
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
@@ -430,7 +406,6 @@ class UserService {
         'message': 'Cập nhật mật khẩu thành công',
       };
     } catch (e) {
-      print('Error updating hashed password: $e');
       return {
         'success': false,
         'message': 'Đã có lỗi xảy ra khi cập nhật mật khẩu',
