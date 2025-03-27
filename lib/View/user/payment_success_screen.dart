@@ -4,6 +4,7 @@ import '../../Components/bottom_nav_bar.dart';
 import '../../Data/data.dart';
 import '../../Model/Ticket.dart';
 import 'ticket_detail_screen.dart';
+import '../../Services/ticket_service.dart';
 
 class PaymentSuccessScreen extends StatefulWidget {
   final String movieTitle;
@@ -36,6 +37,8 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
+  final TicketService _ticketService = TicketService();
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -60,6 +63,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
     );
 
     _controller.forward();
+    _saveTicket();
   }
 
   @override
@@ -247,33 +251,24 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
                       children: [
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: () {
-                              Ticket newTicket = Ticket(
-                                id: DateTime.now()
-                                    .millisecondsSinceEpoch
-                                    .toString(),
-                                showtime: widget.showtime,
-                                selectedSeats: widget.selectedSeats,
-                                selectedFoods: widget.selectedFoods,
-                                totalPrice: widget.totalPrice,
-                                isUsed: false,
-                              );
-                              myTickets.add(newTicket);
-
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => TicketDetailScreen(
-                                    movieTitle: widget.movieTitle,
-                                    moviePoster: widget.moviePoster,
-                                    showtime: widget.showtime,
-                                    selectedSeats: widget.selectedSeats,
-                                    totalPrice: widget.totalPrice,
-                                    selectedFoods: widget.selectedFoods,
-                                  ),
-                                ),
-                              );
-                            },
+                            onPressed: _isSaving
+                                ? null
+                                : () {
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            TicketDetailScreen(
+                                          movieTitle: widget.movieTitle,
+                                          moviePoster: widget.moviePoster,
+                                          showtime: widget.showtime,
+                                          selectedSeats: widget.selectedSeats,
+                                          totalPrice: widget.totalPrice,
+                                          selectedFoods: widget.selectedFoods,
+                                        ),
+                                      ),
+                                    );
+                                  },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.orangeAccent,
                               padding: EdgeInsets.symmetric(vertical: 16),
@@ -282,14 +277,23 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
                               ),
                               elevation: 5,
                             ),
-                            child: Text(
-                              "Xem vé",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
-                            ),
+                            child: _isSaving
+                                ? SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.black,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : Text(
+                                    "Xem vé",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
+                                    ),
+                                  ),
                           ),
                         ),
                         SizedBox(width: 16),
@@ -358,5 +362,39 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
         ),
       ),
     );
+  }
+
+  Future<void> _saveTicket() async {
+    try {
+      setState(() {
+        _isSaving = true;
+      });
+
+      Ticket newTicket = Ticket(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        showtime: widget.showtime,
+        selectedSeats: widget.selectedSeats,
+        selectedFoods: widget.selectedFoods,
+        totalPrice: widget.totalPrice,
+        isUsed: false,
+      );
+
+      await _ticketService.createTicket(newTicket);
+
+      setState(() {
+        _isSaving = false;
+      });
+    } catch (e) {
+      print('Error saving ticket: $e');
+      setState(() {
+        _isSaving = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Có lỗi xảy ra khi lưu vé'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 }

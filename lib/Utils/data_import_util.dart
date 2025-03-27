@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import '../Data/data.dart';
 
 class DataImportUtil {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -334,4 +335,113 @@ class DataImportUtil {
   static Future<void> importShowtimes() async { ... }
   static Future<void> importComments() async { ... }
   */
+
+  // Sample food data
+  static final List<Map<String, dynamic>> foodItems = [
+    {
+      "id": "food_1",
+      "name": "Bắp rang bơ",
+      "price": 45000,
+      "image": "assets/images/bapnuoc.png",
+      "description": "Bắp rang giòn tan, vị bơ thơm ngon",
+    },
+    {
+      "id": "food_2",
+      "name": "Nước ngọt lớn",
+      "price": 35000,
+      "image": "assets/images/bapnuoc.png",
+      "description": "Nước ngọt mát lạnh, nhiều vị lựa chọn",
+    },
+    {
+      "id": "food_3",
+      "name": "Combo bắp nước",
+      "price": 75000,
+      "image": "assets/images/bapnuoc.png",
+      "description": "Combo tiết kiệm: 1 bắp lớn + 1 nước lớn",
+    },
+    {
+      "id": "food_4",
+      "name": "Bắp rang phô mai",
+      "price": 55000,
+      "image": "assets/images/bapnuoc.png",
+      "description": "Bắp rang phô mai thơm ngon, béo ngậy",
+    },
+    {
+      "id": "food_5",
+      "name": "Bắp rang caramel",
+      "price": 50000,
+      "image": "assets/images/bapnuoc.png",
+      "description": "Bắp rang vị caramel ngọt ngào",
+    },
+    {
+      "id": "food_6",
+      "name": "Nước ngọt nhỏ",
+      "price": 25000,
+      "image": "assets/images/bapnuoc.png",
+      "description": "Nước ngọt mát lạnh, nhiều vị lựa chọn",
+    },
+    {
+      "id": "food_7",
+      "name": "Combo gia đình",
+      "price": 150000,
+      "image": "assets/images/bapnuoc.png",
+      "description": "Combo gia đình: 2 bắp lớn + 2 nước lớn",
+    },
+    {
+      "id": "food_8",
+      "name": "Bắp rang mix",
+      "price": 65000,
+      "image": "assets/images/bapnuoc.png",
+      "description": "Bắp rang mix 3 vị: bơ, phô mai, caramel",
+    },
+    {
+      "id": "food_9",
+      "name": "Combo đôi",
+      "price": 95000,
+      "image": "assets/images/bapnuoc.png",
+      "description": "Combo đôi: 1 bắp lớn + 2 nước lớn",
+    },
+    {
+      "id": "food_10",
+      "name": "Bắp rang hải sản",
+      "price": 60000,
+      "image": "assets/images/bapnuoc.png",
+      "description": "Bắp rang vị hải sản độc đáo",
+    },
+  ];
+
+  // Import food data
+  static Future<void> importFoodData() async {
+    try {
+      print('Bắt đầu import ${foodItems.length} món đồ ăn...');
+
+      for (var food in foodItems) {
+        await _firestore.collection('foods').doc(food['id']).set({
+          ...food,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+
+      print('Hoàn thành import đồ ăn');
+    } catch (e) {
+      print('Lỗi khi import đồ ăn: $e');
+      throw e;
+    }
+  }
+
+  // Delete all food data
+  static Future<void> deleteAllFoodData() async {
+    try {
+      CollectionReference foodCollection = _firestore.collection('foods');
+      QuerySnapshot querySnapshot = await foodCollection.get();
+
+      for (var doc in querySnapshot.docs) {
+        await doc.reference.delete();
+      }
+      print('Đã xóa tất cả dữ liệu đồ ăn');
+    } catch (e) {
+      print('Lỗi khi xóa dữ liệu đồ ăn: $e');
+      throw e;
+    }
+  }
 }

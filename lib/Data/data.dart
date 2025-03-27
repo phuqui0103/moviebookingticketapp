@@ -213,6 +213,55 @@ final List<Food> foodItems = [
     image: "assets/images/bapnuoc.png",
     description: "Combo tiết kiệm: 1 bắp lớn + 1 nước lớn",
   ),
+  Food(
+    id: "food_4",
+    name: "Bắp rang phô mai",
+    price: 55000,
+    image: "assets/images/bapnuoc.png",
+    description: "Bắp rang phô mai thơm ngon, béo ngậy",
+  ),
+  Food(
+    id: "food_5",
+    name: "Bắp rang caramel",
+    price: 50000,
+    image: "assets/images/bapnuoc.png",
+    description: "Bắp rang vị caramel ngọt ngào",
+  ),
+  Food(
+    id: "food_6",
+    name: "Nước ngọt nhỏ",
+    price: 25000,
+    image: "assets/images/bapnuoc.png",
+    description: "Nước ngọt mát lạnh, nhiều vị lựa chọn",
+  ),
+  Food(
+    id: "food_7",
+    name: "Combo gia đình",
+    price: 150000,
+    image: "assets/images/bapnuoc.png",
+    description: "Combo gia đình: 2 bắp lớn + 2 nước lớn",
+  ),
+  Food(
+    id: "food_8",
+    name: "Bắp rang mix",
+    price: 65000,
+    image: "assets/images/bapnuoc.png",
+    description: "Bắp rang mix 3 vị: bơ, phô mai, caramel",
+  ),
+  Food(
+    id: "food_9",
+    name: "Combo đôi",
+    price: 95000,
+    image: "assets/images/bapnuoc.png",
+    description: "Combo đôi: 1 bắp lớn + 2 nước lớn",
+  ),
+  Food(
+    id: "food_10",
+    name: "Bắp rang hải sản",
+    price: 60000,
+    image: "assets/images/bapnuoc.png",
+    description: "Bắp rang vị hải sản độc đáo",
+  ),
 ];
 
 List<Ticket> myTickets = [

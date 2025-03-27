@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:movieticketbooking/View/user/payment_screen.dart';
-import '../../Data/data.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../Model/Room.dart';
 import '../../Model/Showtime.dart';
+import '../../Model/Seat.dart';
 import 'food_selection_screen.dart';
 
 class SeatSelectionScreen extends StatefulWidget {
@@ -25,16 +26,62 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
   late Room selectedRoom;
   final double vipSeatPrice = 50000;
   final double normalSeatPrice = 45000;
+  bool isLoading = true;
+  List<Seat> seatLayout = [];
+  Set<String> bookedSeats = {};
 
   @override
   void initState() {
     super.initState();
-    selectedRoom =
-        rooms.firstWhere((room) => room.id == widget.showtime.roomId);
+    _loadRoomAndSeats();
+  }
+
+  Future<void> _loadRoomAndSeats() async {
+    try {
+      // Load room data
+      final roomDoc = await FirebaseFirestore.instance
+          .collection('rooms')
+          .doc(widget.showtime.roomId)
+          .get();
+
+      if (roomDoc.exists) {
+        final roomData = roomDoc.data() as Map<String, dynamic>;
+        selectedRoom = Room(
+          id: roomDoc.id,
+          cinemaId: roomData['cinemaId'] ?? '',
+          name: roomData['name'] ?? '',
+          rows: roomData['rows'] ?? 0,
+          cols: roomData['cols'] ?? 0,
+          seatLayout: [], // We'll load seats separately
+        );
+
+        // Load seat layout
+        final seatLayoutData = roomData['seatLayout'] as List<dynamic>;
+        seatLayout = seatLayoutData.map((seatData) {
+          return Seat(
+            id: seatData['id'] ?? '',
+            row: seatData['row'] ?? '',
+            column: seatData['column'] ?? 0,
+            isVip: seatData['isVip'] ?? false,
+            isBooked: seatData['isBooked'] ?? false,
+          );
+        }).toList();
+
+        // Update booked seats from showtime
+        setState(() {
+          bookedSeats = widget.showtime.bookedSeats.toSet();
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading room and seats: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   List<String> selectedSeats = [];
-  Set<String> bookedSeats = {'A1', 'B2', 'C3', 'G1'};
 
   //Logic kiểm tra ghế có liền kề khi chọn hay không
   void toggleSeat(String seatId) {
@@ -107,22 +154,13 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
               _buildScreenIndicator(),
               const SizedBox(height: 30),
               Expanded(
-                child: _buildSeatGrid((seatId) {
-                  setState(() {
-                    if (!bookedSeats.contains(seatId)) {
-                      if (selectedSeats.contains(seatId)) {
-                        selectedSeats.remove(seatId);
-                      } else {
-                        selectedSeats.add(seatId);
-                      }
-                    }
-                  });
-                }),
+                child: isLoading
+                    ? Center(
+                        child: CircularProgressIndicator(color: Colors.orange))
+                    : _buildSeatGrid(),
               ),
-              _buildLegend(), // Chú thích ghế
-              SizedBox(
-                height: 10,
-              ),
+              _buildLegend(),
+              SizedBox(height: 10),
               _buildBottomBar()
             ],
           ),
@@ -131,27 +169,37 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
     );
   }
 
-  Widget _buildSeatGrid(Function(String) toggleSeat) {
-    final int rows = selectedRoom.rows;
-    final int cols = selectedRoom.cols;
+  Widget _buildSeatGrid() {
     return GridView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 30),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: cols,
+        crossAxisCount: selectedRoom.cols,
         mainAxisSpacing: 3,
         crossAxisSpacing: 3,
         childAspectRatio: 1,
       ),
-      itemCount: rows * cols,
+      itemCount: selectedRoom.rows * selectedRoom.cols,
       itemBuilder: (context, index) {
-        int rowNumber = index ~/ cols;
-        int colNumber = index % cols + 1;
+        int rowNumber = index ~/ selectedRoom.cols;
+        int colNumber = index % selectedRoom.cols + 1;
         String rowLetter = String.fromCharCode(65 + rowNumber);
         String seatId = '$rowLetter$colNumber';
 
+        // Find the seat in the seat layout
+        Seat? seat = seatLayout.firstWhere(
+          (s) => s.row == rowLetter && s.column == colNumber,
+          orElse: () => Seat(
+            id: seatId,
+            row: rowLetter,
+            column: colNumber,
+            isVip: rowNumber < selectedRoom.rows / 3,
+            isBooked: false,
+          ),
+        );
+
         bool isSelected = selectedSeats.contains(seatId);
-        bool isBooked = bookedSeats.contains(seatId);
-        bool isVip = rowNumber < rows / 3;
+        bool isBooked = bookedSeats.contains(seatId) || seat.isBooked;
+        bool isVip = seat.isVip;
         double price = isVip ? vipSeatPrice : normalSeatPrice;
 
         Color seatColor = isBooked
@@ -188,9 +236,37 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
   }
 
   Widget _buildBottomBar() {
-    final int rows = selectedRoom.rows;
-    final int cols = selectedRoom.cols;
+    if (isLoading) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: const BoxDecoration(
+          color: Colors.black,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        child: const Center(
+          child: CircularProgressIndicator(color: Colors.orange),
+        ),
+      );
+    }
+
+    // Get rows from selectedRoom
+    final rows = selectedRoom.rows;
+    print(rows);
     double totalPrice = selectedSeats.fold(0, (sum, seatId) {
+      // Find the seat in the seat layout
+      Seat? seat = seatLayout.firstWhere(
+        (s) => s.id == seatId,
+        orElse: () => Seat(
+          id: seatId,
+          row: seatId.substring(0, 1),
+          column: int.parse(seatId.substring(1)),
+          isVip: seatId.codeUnitAt(0) - 65 < rows / 3,
+          isBooked: false,
+        ),
+      );
       int rowNumber = seatId.codeUnitAt(0) - 65;
       double price = rowNumber < rows / 3 ? normalSeatPrice : vipSeatPrice;
       return sum + price;
@@ -207,9 +283,8 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
       ),
       child: Row(
         children: [
-          // Phần tổng tiền (Chiếm 30%)
           Expanded(
-            flex: 3, // Tỷ lệ 3 phần
+            flex: 3,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -228,8 +303,6 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
               ],
             ),
           ),
-
-          // Phần nút thanh toán (Chiếm 70%)
           Expanded(
             flex: 7,
             child: ElevatedButton(
@@ -243,26 +316,6 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                   return;
                 }
 
-                double totalPrice = selectedSeats.fold(0, (sum, seatId) {
-                  int rowNumber = seatId.codeUnitAt(0) - 65;
-                  double price = rowNumber < selectedRoom.rows / 3
-                      ? normalSeatPrice
-                      : vipSeatPrice;
-                  return sum + price;
-                });
-
-                //Navigator.push(
-                //  context,
-                //  MaterialPageRoute(
-                //    builder: (context) => PaymentScreen(
-                //      movieTitle: widget.movieTitle,
-                //      moviePoster: widget.moviePoster,
-                //      showtime: widget.showtime,
-                //      selectedSeats: selectedSeats,
-                //      totalPrice: totalPrice,
-                //    ),
-                //  ),
-                //);
                 Navigator.push(
                   context,
                   MaterialPageRoute(

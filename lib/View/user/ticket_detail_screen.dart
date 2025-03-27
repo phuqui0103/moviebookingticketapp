@@ -2,13 +2,15 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../Components/bottom_nav_bar.dart';
-import '../../Data/data.dart';
 import '../../Model/Cinema.dart';
 import '../../Model/Room.dart';
 import '../../Model/Showtime.dart';
 import '../../Model/Food.dart';
+import '../../Services/room_service.dart';
+import '../../Services/cinema_service.dart';
+import '../../Services/food_service.dart';
 
-class TicketDetailScreen extends StatelessWidget {
+class TicketDetailScreen extends StatefulWidget {
   final String movieTitle;
   final String moviePoster;
   final Showtime showtime;
@@ -27,23 +29,81 @@ class TicketDetailScreen extends StatelessWidget {
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    Room? selectedRoom = rooms.firstWhere(
-      (room) => room.id == showtime.roomId,
-      orElse: () => Room(
-          id: "",
-          cinemaId: "",
-          name: "Không xác định",
-          rows: 0,
-          seatLayout: [],
-          cols: 0),
-    );
+  _TicketDetailScreenState createState() => _TicketDetailScreenState();
+}
 
-    Cinema? selectedCinema = cinemas.firstWhere(
-      (cinema) => cinema.id == selectedRoom.cinemaId,
-      orElse: () =>
-          Cinema(id: "", name: "Không xác định", provinceId: '', address: ''),
-    );
+class _TicketDetailScreenState extends State<TicketDetailScreen> {
+  Room? selectedRoom;
+  Cinema? selectedCinema;
+  List<Food> foodItems = [];
+  bool isLoading = true;
+
+  final RoomService _roomService = RoomService();
+  final CinemaService _cinemaService = CinemaService();
+  final FoodService _foodService = FoodService();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    try {
+      // Load room data
+      selectedRoom = await _roomService.getRoomById(widget.showtime.roomId);
+
+      if (selectedRoom != null) {
+        // Load cinema data
+        selectedCinema =
+            await _cinemaService.getCinemaById(selectedRoom!.cinemaId);
+
+        // Load food data
+        final foodStream = _foodService.getAllFoods();
+        foodStream.listen((foods) {
+          setState(() {
+            foodItems = foods;
+            isLoading = false;
+          });
+        }, onError: (error) {
+          print('Error loading food data: $error');
+          setState(() {
+            isLoading = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Có lỗi xảy ra khi tải dữ liệu đồ ăn'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        });
+      }
+    } catch (e) {
+      print('Error loading data: $e');
+      setState(() {
+        isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Có lỗi xảy ra khi tải dữ liệu'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (isLoading || selectedRoom == null || selectedCinema == null) {
+      return Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.orangeAccent),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       body: Stack(
@@ -51,7 +111,7 @@ class TicketDetailScreen extends StatelessWidget {
           /// Hình nền poster
           Positioned.fill(
             child: Image.network(
-              moviePoster,
+              widget.moviePoster,
               fit: BoxFit.cover,
             ),
           ),
@@ -95,7 +155,7 @@ class TicketDetailScreen extends StatelessWidget {
                           /// Tên phim
                           Center(
                             child: Text(
-                              movieTitle,
+                              widget.movieTitle,
                               style: TextStyle(
                                   color: Colors.orangeAccent,
                                   fontSize: 22,
@@ -106,15 +166,15 @@ class TicketDetailScreen extends StatelessWidget {
 
                           /// Thông tin suất chiếu
                           _buildInfoRow(
-                              Icons.location_on, "Rạp", selectedCinema.name),
+                              Icons.location_on, "Rạp", selectedCinema!.name),
                           _buildInfoRow(
-                              Icons.meeting_room, "Phòng", selectedRoom.name),
-                          _buildInfoRow(
-                              Icons.schedule, "Suất", showtime.formattedTime),
+                              Icons.meeting_room, "Phòng", selectedRoom!.name),
+                          _buildInfoRow(Icons.schedule, "Suất",
+                              widget.showtime.formattedTime),
                           _buildInfoRow(Icons.calendar_today, "Ngày",
-                              showtime.formattedDate),
+                              widget.showtime.formattedDate),
                           _buildInfoRow(Icons.event_seat, "Ghế",
-                              selectedSeats.join(", ")),
+                              widget.selectedSeats.join(", ")),
 
                           SizedBox(height: 10),
 
@@ -136,12 +196,11 @@ class TicketDetailScreen extends StatelessWidget {
                           /// Mã QR
                           Center(
                             child: QrImageView(
-                              data: "${showtime.id}",
+                              data: "${widget.showtime.id}",
                               version: QrVersions.auto,
                               size: 160,
                               foregroundColor: Colors.white,
-                              backgroundColor:
-                                  Colors.transparent, // Giữ giao diện đẹp
+                              backgroundColor: Colors.transparent,
                             ),
                           ),
 
@@ -149,7 +208,7 @@ class TicketDetailScreen extends StatelessWidget {
 
                           /// Tổng tiền
                           _buildInfoRow(Icons.attach_money, "Tổng tiền",
-                              "${totalPrice.toStringAsFixed(0)}đ",
+                              "${widget.totalPrice.toStringAsFixed(0)}đ",
                               isBold: true),
 
                           SizedBox(height: 16),
@@ -213,7 +272,7 @@ class TicketDetailScreen extends StatelessWidget {
 
   /// Hiển thị bảng bắp & nước
   Widget _buildFoodTable() {
-    if (selectedFoods.isEmpty) {
+    if (widget.selectedFoods.isEmpty) {
       return Center(
         child: Text("Không có",
             style: TextStyle(color: Colors.white54, fontSize: 16)),
@@ -227,7 +286,7 @@ class TicketDetailScreen extends StatelessWidget {
         2: FlexColumnWidth(1),
       },
       children: [
-        ...selectedFoods.entries.map((entry) {
+        ...widget.selectedFoods.entries.map((entry) {
           Food? food = foodItems.firstWhere(
             (f) => f.id == entry.key,
             orElse: () => Food(

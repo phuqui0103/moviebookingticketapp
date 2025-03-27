@@ -4,7 +4,11 @@ import '../../Model/Food.dart';
 import '../../Model/Showtime.dart';
 import '../../Model/Room.dart';
 import '../../Model/Cinema.dart';
+import '../../Services/room_service.dart';
+import '../../Services/cinema_service.dart';
+import '../../Services/food_service.dart';
 import 'payment_success_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PaymentScreen extends StatefulWidget {
   final String movieTitle;
@@ -45,6 +49,14 @@ class _PaymentScreenState extends State<PaymentScreen>
   String? expiryError;
   String? cvvError;
 
+  Room? selectedRoom;
+  Cinema? selectedCinema;
+  List<Food> foodItems = [];
+
+  final RoomService _roomService = RoomService();
+  final CinemaService _cinemaService = CinemaService();
+  final FoodService _foodService = FoodService();
+
   @override
   void initState() {
     super.initState();
@@ -55,6 +67,7 @@ class _PaymentScreenState extends State<PaymentScreen>
     _fadeAnimation =
         Tween<double>(begin: 0.0, end: 1.0).animate(_animationController);
     _animationController.forward();
+    _loadData();
   }
 
   @override
@@ -300,68 +313,44 @@ class _PaymentScreenState extends State<PaymentScreen>
     Navigator.pop(context);
 
     // Chuyển đến màn hình thành công
-    Room? selectedRoom = rooms.firstWhere(
-      (room) => room.id == widget.showtime.roomId,
-      orElse: () => Room(
-        id: "",
-        cinemaId: "",
-        name: "Không xác định",
-        rows: 0,
-        seatLayout: [],
-        cols: 0,
-      ),
-    );
-
-    Cinema? selectedCinema = cinemas.firstWhere(
-      (cinema) => cinema.id == selectedRoom.cinemaId,
-      orElse: () => Cinema(
-        id: "",
-        name: "Không xác định",
-        provinceId: '',
-        address: '',
-      ),
-    );
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PaymentSuccessScreen(
-          movieTitle: widget.movieTitle,
-          moviePoster: widget.moviePoster,
-          showtime: widget.showtime,
-          roomName: selectedRoom.name,
-          cinemaName: selectedCinema.name,
-          selectedSeats: widget.selectedSeats,
-          totalPrice: widget.totalPrice,
-          selectedFoods: widget.selectedFoods,
+    if (selectedRoom != null && selectedCinema != null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PaymentSuccessScreen(
+            movieTitle: widget.movieTitle,
+            moviePoster: widget.moviePoster,
+            showtime: widget.showtime,
+            roomName: selectedRoom!.name,
+            cinemaName: selectedCinema!.name,
+            selectedSeats: widget.selectedSeats,
+            totalPrice: widget.totalPrice,
+            selectedFoods: widget.selectedFoods,
+          ),
         ),
-      ),
-    );
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Có lỗi xảy ra khi chuyển đến màn hình thành công'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    Room? selectedRoom = rooms.firstWhere(
-      (room) => room.id == widget.showtime.roomId,
-      orElse: () => Room(
-        id: "",
-        cinemaId: "",
-        name: "Không xác định",
-        rows: 0,
-        seatLayout: [],
-        cols: 0,
-      ),
-    );
-
-    Cinema? selectedCinema = cinemas.firstWhere(
-      (cinema) => cinema.id == selectedRoom.cinemaId,
-      orElse: () => Cinema(
-        id: "",
-        name: "Không xác định",
-        provinceId: '',
-        address: '',
-      ),
-    );
+    if (selectedRoom == null || selectedCinema == null) {
+      return Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.orangeAccent),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -387,23 +376,14 @@ class _PaymentScreenState extends State<PaymentScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Thông tin đặt vé
-              _buildTicketInfo(selectedCinema, selectedRoom),
+              _buildTicketInfo(selectedCinema!, selectedRoom!),
               SizedBox(height: 20),
-
-              // Thông tin bắp nước nếu có
               if (widget.selectedFoods.isNotEmpty) _buildFoodInfo(),
               SizedBox(height: 20),
-
-              // Phương thức thanh toán
               _buildPaymentMethods(),
               SizedBox(height: 20),
-
-              // Điều khoản
               _buildTerms(),
               SizedBox(height: 20),
-
-              // Tổng tiền và nút thanh toán
               _buildTotalAndPayButton(),
             ],
           ),
@@ -476,6 +456,10 @@ class _PaymentScreenState extends State<PaymentScreen>
   }
 
   Widget _buildFoodInfo() {
+    if (foodItems.isEmpty) {
+      return SizedBox.shrink();
+    }
+
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -503,7 +487,16 @@ class _PaymentScreenState extends State<PaymentScreen>
           ),
           SizedBox(height: 12),
           ...widget.selectedFoods.entries.map((entry) {
-            Food food = foodItems.firstWhere((item) => item.id == entry.key);
+            Food? food = foodItems.firstWhere(
+              (item) => item.id == entry.key,
+              orElse: () => Food(
+                id: entry.key,
+                name: "Không xác định",
+                price: 0,
+                image: "assets/images/food/placeholder.png",
+                description: "",
+              ),
+            );
             return Container(
               margin: EdgeInsets.only(bottom: 12),
               padding: EdgeInsets.all(12),
@@ -521,6 +514,14 @@ class _PaymentScreenState extends State<PaymentScreen>
                       width: 60,
                       height: 60,
                       fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          width: 60,
+                          height: 60,
+                          color: Colors.grey[800],
+                          child: Icon(Icons.error, color: Colors.white),
+                        );
+                      },
                     ),
                   ),
                   SizedBox(width: 12),
@@ -580,8 +581,16 @@ class _PaymentScreenState extends State<PaymentScreen>
                 ),
                 Text(
                   "${widget.selectedFoods.entries.fold(0, (sum, entry) {
-                    Food food =
-                        foodItems.firstWhere((item) => item.id == entry.key);
+                    Food food = foodItems.firstWhere(
+                      (item) => item.id == entry.key,
+                      orElse: () => Food(
+                        id: entry.key,
+                        name: "Không xác định",
+                        price: 0,
+                        image: "assets/images/food/placeholder.png",
+                        description: "",
+                      ),
+                    );
                     return sum + (entry.value * food.price).toInt();
                   }).toStringAsFixed(0)}đ",
                   style: TextStyle(
@@ -941,5 +950,44 @@ class _PaymentScreenState extends State<PaymentScreen>
         ],
       ),
     );
+  }
+
+  Future<void> _loadData() async {
+    try {
+      // Load room data
+      selectedRoom = await _roomService.getRoomById(widget.showtime.roomId);
+
+      if (selectedRoom != null) {
+        // Load cinema data
+        selectedCinema =
+            await _cinemaService.getCinemaById(selectedRoom!.cinemaId);
+
+        // Load food data
+        final foodStream = _foodService.getAllFoods();
+        foodStream.listen((foods) {
+          setState(() {
+            foodItems = foods;
+          });
+        }, onError: (error) {
+          print('Error loading food data: $error');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Có lỗi xảy ra khi tải dữ liệu đồ ăn'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        });
+
+        setState(() {});
+      }
+    } catch (e) {
+      print('Error loading data: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Có lỗi xảy ra khi tải dữ liệu'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 }
