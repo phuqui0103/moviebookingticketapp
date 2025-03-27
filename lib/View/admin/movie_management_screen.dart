@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart'; // Thêm thư viện CachedNetworkImage
-import '../../Data/data.dart';
 import '../../Model/Movie.dart';
 import '../../Model/Genre.dart';
 import '../../Services/movie_service.dart';

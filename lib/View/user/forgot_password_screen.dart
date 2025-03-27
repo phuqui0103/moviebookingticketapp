@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:movieticketbooking/View/user/login_screen.dart';
 import 'package:movieticketbooking/Components/loading_animation.dart';
-import 'package:movieticketbooking/Services/auth_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:movieticketbooking/Services/user_service.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -13,7 +15,9 @@ class ForgotPasswordScreen extends StatefulWidget {
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController newPasswordController = TextEditingController();
-  final AuthService _authService = AuthService();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final UserService _userService = UserService();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   String? emailError;
   bool _isLoading = false;
   bool _showNewPasswordInput = false;
@@ -37,7 +41,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
     try {
       // Gửi yêu cầu reset password
-      final result = await _authService.forgotPassword(
+      final result = await _userService.forgotPassword(
         email: emailController.text,
       );
 
@@ -134,7 +138,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final result = await _authService.updateHashedPasswordAfterReset(
+      final result = await _userService.updateHashedPasswordAfterReset(
         email: emailController.text,
         newPassword: newPasswordController.text,
       );

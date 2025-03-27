@@ -3,7 +3,11 @@ import 'package:movieticketbooking/View/user/login_screen.dart';
 import 'package:movieticketbooking/Components/loading_animation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:movieticketbooking/Services/auth_service.dart';
+import 'package:movieticketbooking/Services/user_service.dart';
+import 'package:movieticketbooking/Services/province_service.dart';
+import 'package:movieticketbooking/Services/district_service.dart';
+import 'package:movieticketbooking/Model/Province.dart';
+import 'package:movieticketbooking/Model/District.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -22,10 +26,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       TextEditingController();
   final TextEditingController otpController = TextEditingController();
   String? gender;
-  String? province;
-  String? district;
-  List<String> provinces = [];
-  List<String> districts = [];
+  List<Province> provinces = [];
+  List<District> districts = [];
+  Province? selectedProvince;
+  District? selectedDistrict;
   bool _obscureText = true;
   bool _isAgreed = false;
   bool _obscurePassword = true;
@@ -42,8 +46,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? _verificationId; // hoặc "vi" nếu bạn muốn tiếng Việt
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final AuthService _authService = AuthService();
+  final UserService _userService = UserService();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final ProvinceService _provinceService = ProvinceService();
+  final DistrictService _districtService = DistrictService();
 
   @override
   void initState() {
@@ -53,44 +59,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Future<void> _loadProvinces() async {
     try {
-      final snapshot = await _firestore.collection('provinces').get();
-      setState(() {
-        provinces =
-            snapshot.docs.map((doc) => doc.data()['name'] as String).toList();
+      _provinceService.getAllProvinces().listen((provinceList) {
+        if (mounted) {
+          setState(() {
+            provinces = provinceList;
+          });
+        }
       });
     } catch (e) {
       print('Error loading provinces: $e');
     }
   }
 
-  Future<void> _loadDistricts(String selectedProvince) async {
+  Future<void> _loadDistricts(String provinceId) async {
     try {
-      // First, get the province ID from the selected province name
-      final provinceSnapshot = await _firestore
-          .collection('provinces')
-          .where('name', isEqualTo: selectedProvince)
-          .get();
-
-      if (provinceSnapshot.docs.isEmpty) {
-        print('Province not found: $selectedProvince');
-        return;
-      }
-
-      final provinceId = provinceSnapshot.docs.first.id;
-      print('Loading districts for province ID: $provinceId');
-
-      // Then get districts using the province ID
-      final snapshot = await _firestore
-          .collection('districts')
-          .where('provinceId', isEqualTo: provinceId)
-          .get();
-
-      print('Found ${snapshot.docs.length} districts');
-
-      setState(() {
-        districts =
-            snapshot.docs.map((doc) => doc.data()['name'] as String).toList();
-        district = null; // Reset district when province changes
+      _districtService
+          .getDistrictsByProvince(provinceId)
+          .listen((districtList) {
+        if (mounted) {
+          setState(() {
+            districts = districtList;
+            selectedDistrict = null;
+          });
+        }
       });
     } catch (e) {
       print('Error loading districts: $e');
@@ -141,9 +132,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
       setState(() => birthDateError = 'Vui lòng chọn ngày sinh');
       return;
     }
+    if (gender == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Vui lòng chọn giới tính'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    if (selectedProvince == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Vui lòng chọn tỉnh/thành phố'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    if (selectedDistrict == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Vui lòng chọn quận/huyện'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
     if (!_isAgreed) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Vui lòng đồng ý với điều khoản và điều kiện'),
           backgroundColor: Colors.red,
         ),
@@ -156,21 +174,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
     try {
       // Parse birth date
       final parts = birthDateController.text.split('/');
-      final birthDate = DateTime(
-        int.parse(parts[2]), // year
-        int.parse(parts[1]), // month
-        int.parse(parts[0]), // day
-      );
+      if (parts.length != 3) {
+        throw FormatException('Định dạng ngày sinh không hợp lệ');
+      }
 
-      final result = await _authService.register(
+      final day = int.tryParse(parts[0]);
+      final month = int.tryParse(parts[1]);
+      final year = int.tryParse(parts[2]);
+
+      if (day == null || month == null || year == null) {
+        throw FormatException('Ngày sinh không hợp lệ');
+      }
+
+      final birthDate = DateTime(year, month, day);
+
+      if (birthDate.isAfter(DateTime.now())) {
+        throw FormatException('Ngày sinh không thể trong tương lai');
+      }
+
+      final result = await _userService.register(
         fullName: nameController.text,
         phoneNumber: phoneController.text,
         email: emailController.text,
         password: passwordController.text,
         birthDate: birthDate,
-        gender: gender ?? 'Khác',
-        province: province ?? 'Chưa chọn',
-        district: district ?? 'Chưa chọn',
+        gender: gender!,
+        province: selectedProvince!.name,
+        district: selectedDistrict!.name,
       );
 
       setState(() => _isLoading = false);
@@ -181,6 +211,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
         setState(() => emailError = result['message']);
       }
     } catch (e) {
+      if (e is FormatException) {
+        setState(() {
+          birthDateError = e.message;
+          _isLoading = false;
+        });
+        return;
+      }
       setState(() {
         emailError = 'Đã xảy ra lỗi: ${e.toString()}';
         _isLoading = false;
@@ -303,7 +340,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
 
       // Sử dụng AuthService để cập nhật trạng thái
-      final result = await _authService.verifyEmailAndUpdateStatus();
+      final result = await _userService.verifyEmailAndUpdateStatus();
 
       setState(() {
         _isLoading = false;
@@ -905,96 +942,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           opacity: value.clamp(0.0, 1.0),
                           child: Column(
                             children: [
-                              Container(
-                                padding: EdgeInsets.symmetric(horizontal: 20),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.05),
-                                  borderRadius: BorderRadius.circular(15),
-                                  border: Border.all(
-                                    color: Colors.white.withOpacity(0.1),
-                                    width: 1,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.2),
-                                      blurRadius: 10,
-                                      offset: Offset(0, 5),
-                                    ),
-                                  ],
-                                ),
-                                child: DropdownButtonFormField<String>(
-                                  value: province,
-                                  hint: Text('Tỉnh',
-                                      style: TextStyle(color: Colors.white38)),
-                                  items: provinces
-                                      .map<DropdownMenuItem<String>>(
-                                          (String value) {
-                                    return DropdownMenuItem<String>(
-                                      value: value,
-                                      child: Text(value,
-                                          style:
-                                              TextStyle(color: Colors.orange)),
-                                    );
-                                  }).toList(),
-                                  onChanged: (String? newValue) {
-                                    setState(() {
-                                      province = newValue;
-                                      if (newValue != null) {
-                                        _loadDistricts(newValue);
-                                      }
-                                    });
-                                  },
-                                  decoration: InputDecoration(
-                                    border: InputBorder.none,
-                                    icon: Icon(Icons.location_city_outlined,
-                                        color: Colors.orange),
-                                  ),
-                                ),
-                              ),
+                              _buildProvinceDropdown(),
                               SizedBox(height: 20),
-                              Container(
-                                padding: EdgeInsets.symmetric(horizontal: 20),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.05),
-                                  borderRadius: BorderRadius.circular(15),
-                                  border: Border.all(
-                                    color: Colors.white.withOpacity(0.1),
-                                    width: 1,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.2),
-                                      blurRadius: 10,
-                                      offset: Offset(0, 5),
-                                    ),
-                                  ],
-                                ),
-                                child: DropdownButtonFormField<String>(
-                                  value: district,
-                                  hint: Text('Quận/Huyện',
-                                      style: TextStyle(color: Colors.white38)),
-                                  items: districts
-                                      .map<DropdownMenuItem<String>>(
-                                          (String value) {
-                                    return DropdownMenuItem<String>(
-                                      value: value,
-                                      child: Text(value,
-                                          style:
-                                              TextStyle(color: Colors.orange)),
-                                    );
-                                  }).toList(),
-                                  onChanged: (String? newValue) {
-                                    setState(() {
-                                      district = newValue;
-                                    });
-                                  },
-                                  decoration: InputDecoration(
-                                    border: InputBorder.none,
-                                    icon: Icon(Icons.location_on_outlined,
-                                        color: Colors.orange),
-                                  ),
-                                ),
-                              ),
+                              _buildDistrictDropdown(),
                             ],
                           ),
                         ),
@@ -1143,6 +1093,79 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildProvinceDropdown() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.black12,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.orange.withOpacity(0.3)),
+      ),
+      child: DropdownButtonFormField<Province>(
+        value: selectedProvince,
+        hint: const Text('Tỉnh/Thành phố',
+            style: TextStyle(color: Colors.white38)),
+        items: provinces.map((province) {
+          return DropdownMenuItem<Province>(
+            value: province,
+            child: Text(province.name,
+                style: const TextStyle(color: Colors.orange)),
+          );
+        }).toList(),
+        onChanged: (Province? newValue) {
+          setState(() {
+            selectedProvince = newValue;
+            if (newValue != null) {
+              _loadDistricts(newValue.id);
+            } else {
+              districts.clear();
+              selectedDistrict = null;
+            }
+          });
+        },
+        decoration: const InputDecoration(
+          border: InputBorder.none,
+          icon: Icon(Icons.location_city_outlined, color: Colors.orange),
+        ),
+        dropdownColor: const Color(0xff252429),
+      ),
+    );
+  }
+
+  Widget _buildDistrictDropdown() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.black12,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.orange.withOpacity(0.3)),
+      ),
+      child: DropdownButtonFormField<District>(
+        value: selectedDistrict,
+        hint: const Text('Quận/Huyện', style: TextStyle(color: Colors.white38)),
+        items: districts.map((district) {
+          return DropdownMenuItem<District>(
+            value: district,
+            child: Text(district.name,
+                style: const TextStyle(color: Colors.orange)),
+          );
+        }).toList(),
+        onChanged: selectedProvince == null
+            ? null
+            : (District? newValue) {
+                setState(() {
+                  selectedDistrict = newValue;
+                });
+              },
+        decoration: const InputDecoration(
+          border: InputBorder.none,
+          icon: Icon(Icons.location_on_outlined, color: Colors.orange),
+        ),
+        dropdownColor: const Color(0xff252429),
       ),
     );
   }

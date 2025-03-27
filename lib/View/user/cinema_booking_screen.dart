@@ -48,9 +48,17 @@ class _CinemaBookingScreenState extends State<CinemaBookingScreen> {
       // Lấy danh sách suất chiếu cho ngày được chọn
       final showtimes = await _showtimeService.getShowtimesByDate(selectedDate);
 
-      // Lọc suất chiếu theo rạp
+      // Lọc suất chiếu theo rạp và thời gian
       final filteredShowtimes = await Future.wait(
         showtimes.map((showtime) async {
+          // Kiểm tra xem suất chiếu có quá 1 giờ không
+          final now = DateTime.now();
+          final difference = now.difference(showtime.startTime);
+          if (difference.inHours >= 1) {
+            print('Suất chiếu ${showtime.startTime.toString()} đã qua 1 giờ');
+            return null;
+          }
+
           final roomDoc =
               await _firestore.collection('rooms').doc(showtime.roomId).get();
           final roomData = roomDoc.data();

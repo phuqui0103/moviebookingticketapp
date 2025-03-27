@@ -5,7 +5,9 @@ import 'package:movieticketbooking/View/user/register_screen.dart';
 import 'package:movieticketbooking/View/user/forgot_password_screen.dart';
 import 'package:movieticketbooking/main.dart';
 import 'package:movieticketbooking/Components/loading_animation.dart';
-import 'package:movieticketbooking/Services/auth_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:movieticketbooking/Services/user_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -18,7 +20,9 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final AuthService _authService = AuthService();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final UserService _userService = UserService();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   bool _obscureText = true;
   String? emailError;
   String? passwordError;
@@ -67,7 +71,7 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final result = await _authService.login(
+      final result = await _userService.login(
         emailOrPhone: emailController.text,
         password: passwordController.text,
       );

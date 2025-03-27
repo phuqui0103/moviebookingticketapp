@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:movieticketbooking/Data/data.dart';
 import '../../Model/User.dart';
+import '../../Services/user_service.dart';
 
 class UserManagementScreen extends StatefulWidget {
   const UserManagementScreen({Key? key}) : super(key: key);
@@ -17,6 +17,8 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   final TextEditingController _searchController = TextEditingController();
   List<User> users = [];
   List<User> filteredUsers = [];
+  bool isLoading = true;
+  final UserService _userService = UserService();
 
   @override
   void initState() {
@@ -25,36 +27,25 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   }
 
   void _loadUsers() {
-    users = [
-      User(
-        id: "1",
-        fullName: "Nguyễn Văn A",
-        phoneNumber: "0987654321",
-        email: "nguyenvana@gmail.com",
-        hashedPassword: "123456",
-        birthDate: DateTime(2000, 5, 20),
-        gender: "Nam",
-        province: "Hà Nội",
-        district: "Cầu Giấy",
-        status: "Active",
-        createdAt: DateTime.now(),
-      ),
-      User(
-        id: "2",
-        fullName: "Trần Thị B",
-        phoneNumber: "0912345678",
-        email: "tranthib@gmail.com",
-        hashedPassword: "abcdef",
-        birthDate: DateTime(1995, 8, 10),
-        gender: "Nữ",
-        province: "TP HCM",
-        district: "Quận 1",
-        status: "Blocked",
-        createdAt: DateTime.now(),
-      ),
-    ];
-
-    filteredUsers = List.from(users);
+    _userService.getAllUsers().listen(
+      (userList) {
+        setState(() {
+          users = userList;
+          filteredUsers = List.from(users);
+          isLoading = false;
+        });
+      },
+      onError: (error) {
+        print('Error loading users: $error');
+        setState(() => isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Đã có lỗi xảy ra khi tải danh sách người dùng'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      },
+    );
   }
 
   void _searchUser(String query) {
@@ -68,15 +59,27 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     });
   }
 
-  void _deleteUser(String userId) {
-    setState(() {
-      users.removeWhere((user) => user.id == userId);
-      filteredUsers = List.from(users);
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Người dùng đã được xóa")),
-    );
+  Future<void> _deleteUser(String userId) async {
+    try {
+      await _userService.deleteUser(userId);
+      setState(() {
+        users.removeWhere((user) => user.id == userId);
+        filteredUsers = List.from(users);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Người dùng đã được xóa"),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Không thể xóa người dùng. Vui lòng thử lại sau."),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   void _editUser(User user) {
@@ -192,13 +195,30 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton(
-                      onPressed: () {
-                        setState(() {
-                          user.fullName = nameController.text;
-                          user.phoneNumber = phoneController.text;
-                          user.status = status;
-                        });
-                        Navigator.pop(context);
+                      onPressed: () async {
+                        try {
+                          await _userService.updateUser(user.id, {
+                            'fullName': nameController.text,
+                            'phoneNumber': phoneController.text,
+                            'status': status,
+                            'updatedAt': DateTime.now(),
+                          });
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Đã cập nhật thông tin người dùng"),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                  "Không thể cập nhật thông tin. Vui lòng thử lại sau."),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
                       },
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: Colors.orange, width: 2),
@@ -224,6 +244,15 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return Scaffold(
+        backgroundColor: const Color(0xff252429),
+        body: Center(
+          child: CircularProgressIndicator(color: Colors.orange),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xff252429),
       body: Column(
@@ -286,6 +315,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   }
 
   Widget _buildProvinceDropdown() {
+    final provinces = users.map((u) => u.province).toSet().toList();
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
@@ -306,8 +336,8 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               child: Text('Tất cả tỉnh/thành'),
             ),
             ...provinces.map((province) => DropdownMenuItem(
-                  value: province.name,
-                  child: Text(province.name),
+                  value: province,
+                  child: Text(province),
                 )),
           ],
           onChanged: (value) {
@@ -579,16 +609,29 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
             child: const Text('Hủy', style: TextStyle(color: Colors.white70)),
           ),
           TextButton(
-            onPressed: () {
-              // TODO: Cập nhật trạng thái người dùng
-              Navigator.pop(context);
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Đã cập nhật trạng thái người dùng'),
-                  backgroundColor: Colors.green,
-                ),
-              );
+            onPressed: () async {
+              try {
+                await _userService.updateUser(user.id, {
+                  'status': newStatus,
+                  'updatedAt': DateTime.now(),
+                });
+                Navigator.pop(context);
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Đã cập nhật trạng thái người dùng'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                        'Không thể cập nhật trạng thái. Vui lòng thử lại sau.'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
             },
             child: const Text('Lưu', style: TextStyle(color: Colors.orange)),
           ),

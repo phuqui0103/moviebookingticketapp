@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:movieticketbooking/Model/Showtime.dart';
 import '../../Components/bottom_nav_bar.dart';
-import '../../Data/data.dart';
 import '../../Model/Ticket.dart';
 import 'ticket_detail_screen.dart';
 import '../../Services/ticket_service.dart';
@@ -39,6 +38,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
   late Animation<double> _fadeAnimation;
   final TicketService _ticketService = TicketService();
   bool _isSaving = false;
+  Ticket? _newTicket;
 
   @override
   void initState() {
@@ -251,7 +251,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
                       children: [
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: _isSaving
+                            onPressed: _isSaving || _newTicket == null
                                 ? null
                                 : () {
                                     Navigator.pushReplacement(
@@ -261,10 +261,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
                                             TicketDetailScreen(
                                           movieTitle: widget.movieTitle,
                                           moviePoster: widget.moviePoster,
-                                          showtime: widget.showtime,
-                                          selectedSeats: widget.selectedSeats,
-                                          totalPrice: widget.totalPrice,
-                                          selectedFoods: widget.selectedFoods,
+                                          ticket: _newTicket!,
                                         ),
                                       ),
                                     );
@@ -370,7 +367,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
         _isSaving = true;
       });
 
-      Ticket newTicket = Ticket(
+      _newTicket = Ticket(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         showtime: widget.showtime,
         selectedSeats: widget.selectedSeats,
@@ -379,7 +376,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
         isUsed: false,
       );
 
-      await _ticketService.createTicket(newTicket);
+      await _ticketService.createTicket(_newTicket!);
 
       setState(() {
         _isSaving = false;

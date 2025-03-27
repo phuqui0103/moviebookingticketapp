@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:movieticketbooking/Components/bottom_nav_bar.dart';
 import 'package:movieticketbooking/View/user/movie_detail_screen.dart';
-import '../../Data/data.dart' as app_data;
 import '../../Model/Movie.dart';
 import '../../Model/Genre.dart';
 import '../../Services/movie_service.dart';

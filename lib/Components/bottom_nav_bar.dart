@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:movieticketbooking/Data/data.dart';
 import 'package:movieticketbooking/View/user/cinema_list_screen.dart';
 import 'package:movieticketbooking/View/user/home_screen.dart';
 import 'package:movieticketbooking/View/user/login_screen.dart';
@@ -7,8 +6,11 @@ import 'package:movieticketbooking/View/user/profile_screen.dart';
 import 'package:movieticketbooking/View/user/movie_list_screen.dart';
 import 'package:movieticketbooking/View/user/register_screen.dart';
 import 'package:movieticketbooking/View/user/my_ticket_list_screen.dart';
-import 'package:movieticketbooking/View/user/profile_screen.dart';
 import 'package:movieticketbooking/View/user/showtime_picker_screen.dart';
+import 'package:movieticketbooking/Services/user_service.dart';
+import 'package:movieticketbooking/Services/ticket_service.dart';
+import 'package:movieticketbooking/Model/User.dart';
+import 'package:movieticketbooking/Model/Ticket.dart';
 
 class BottomNavBar extends StatefulWidget {
   @override
@@ -17,33 +19,79 @@ class BottomNavBar extends StatefulWidget {
 
 class _BottomNavBarState extends State<BottomNavBar> {
   int currentIndex = 0;
-  bool isBottomNavBarVisible = true; // Biến để kiểm tra hiển thị BottomNavBar
-  final List<Widget> pages = [
-    HomeScreen(),
-    MovieListScreen(),
-    CinemaListScreen(),
-    MyTicketListScreen(
-      myTickets: myTickets,
-    ),
-    ProfileScreen(
-      user: sampleUser,
-    ),
-  ];
+  bool isBottomNavBarVisible = true;
+  bool isLoading = true;
+  User? currentUser;
+  List<Ticket> userTickets = [];
+  final UserService _userService = UserService();
+  final TicketService _ticketService = TicketService();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      // Lấy thông tin người dùng hiện tại
+      _userService.getCurrentUser().listen((user) {
+        setState(() {
+          currentUser = user;
+          isLoading = false;
+        });
+
+        // Lấy danh sách vé của người dùng
+        if (user != null) {
+          _ticketService.getTicketsByUser(user.id).listen((tickets) {
+            setState(() {
+              userTickets = tickets;
+            });
+          });
+        }
+      });
+    } catch (e) {
+      print('Error loading user data: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   setBottomBarIndex(index) {
+    if (index == 4 && currentUser == null) {
+      // Nếu nhấn vào tab Profile và chưa đăng nhập
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => LoginScreen(),
+        ),
+      );
+      return;
+    }
+
     setState(() {
       currentIndex = index;
     });
   }
 
-  // Hàm hiển thị modal bottom sheet
   void _showPurchaseOptions() {
+    if (currentUser == null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => LoginScreen(),
+        ),
+      );
+      return;
+    }
+
     showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
         return Container(
           padding: EdgeInsets.all(16.0),
-          height: 220, // Chiều cao của modal
+          height: 220,
           decoration: BoxDecoration(
             color: Colors.black,
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -98,7 +146,6 @@ class _BottomNavBarState extends State<BottomNavBar> {
   Widget build(BuildContext context) {
     final Size size = MediaQuery.of(context).size;
 
-    // Xác định nếu đang ở các trang Login hoặc Register thì ẩn BottomNavBar
     if (currentIndex == 1 ||
         currentIndex == 2 ||
         currentIndex == 3 ||
@@ -114,14 +161,23 @@ class _BottomNavBarState extends State<BottomNavBar> {
         children: [
           IndexedStack(
             index: currentIndex,
-            children: pages,
+            children: [
+              HomeScreen(),
+              MovieListScreen(),
+              CinemaListScreen(),
+              MyTicketListScreen(myTickets: userTickets),
+              currentUser != null
+                  ? ProfileScreen(user: currentUser!)
+                  : Center(
+                      child: CircularProgressIndicator(
+                          color: Colors.orangeAccent)),
+            ],
           ),
           Positioned(
             bottom: 0,
             left: 0,
             child: Visibility(
-              visible:
-                  isBottomNavBarVisible, // Điều chỉnh trạng thái visibility
+              visible: isBottomNavBarVisible,
               child: Container(
                 width: size.width,
                 height: 80,
@@ -156,29 +212,23 @@ class _BottomNavBarState extends State<BottomNavBar> {
                         children: [
                           Column(
                             mainAxisSize: MainAxisSize.min,
-                            // Để chiều cao của Column chỉ đủ cho nội dung
                             children: [
-                              const SizedBox(
-                                height: 15,
-                              ),
+                              const SizedBox(height: 15),
                               GestureDetector(
-                                onTap: () {
-                                  setBottomBarIndex(1);
-                                },
+                                onTap: () => setBottomBarIndex(1),
                                 child: Container(
                                   child: Image.asset(
-                                    'assets/icons/film.png', // Đường dẫn đến hình ảnh của bạn
-                                    height: 35.0, // Chiều cao của hình ảnh
-                                    width: 35.0, // Chiều rộng của hình ảnh
+                                    'assets/icons/film.png',
+                                    height: 35.0,
+                                    width: 35.0,
                                     color: currentIndex == 1
                                         ? Colors.orangeAccent
-                                        : Colors
-                                            .black, // Thay đổi màu sắc nếu cần
+                                        : Colors.black,
                                   ),
                                 ),
                               ),
                               Text(
-                                'Phim', // Nhãn phía dưới
+                                'Phim',
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: currentIndex == 1
@@ -191,27 +241,23 @@ class _BottomNavBarState extends State<BottomNavBar> {
                           Padding(
                             padding: EdgeInsets.only(right: 80),
                             child: Column(
-                              mainAxisSize: MainAxisSize
-                                  .min, // Để chiều cao của Column chỉ đủ cho nội dung
+                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 GestureDetector(
-                                  onTap: () {
-                                    setBottomBarIndex(2);
-                                  },
+                                  onTap: () => setBottomBarIndex(2),
                                   child: Container(
                                     child: Image.asset(
-                                      'assets/icons/theater.png', // Đường dẫn đến hình ảnh của bạn
-                                      height: 35.0, // Chiều cao của hình ảnh
-                                      width: 35.0, // Chiều rộng của hình ảnh
+                                      'assets/icons/theater.png',
+                                      height: 35.0,
+                                      width: 35.0,
                                       color: currentIndex == 2
                                           ? Colors.orangeAccent
-                                          : Colors
-                                              .black, // Thay đổi màu sắc nếu cần
+                                          : Colors.black,
                                     ),
                                   ),
                                 ),
                                 Text(
-                                  'Rạp', // Nhãn phía dưới
+                                  'Rạp',
                                   style: TextStyle(
                                     fontSize: 14,
                                     color: currentIndex == 2
@@ -223,66 +269,56 @@ class _BottomNavBarState extends State<BottomNavBar> {
                             ),
                           ),
                           Column(
-                            mainAxisSize: MainAxisSize
-                                .min, // Để chiều cao của Column chỉ đủ cho nội dung
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               GestureDetector(
-                                onTap: () {
-                                  setBottomBarIndex(3);
-                                },
+                                onTap: () => setBottomBarIndex(3),
                                 child: Container(
                                   child: Image.asset(
-                                    'assets/icons/myticket.png', // Đường dẫn đến hình ảnh của bạn
-                                    height: 35.0, // Chiều cao của hình ảnh
-                                    width: 35.0, // Chiều rộng của hình ảnh
+                                    'assets/icons/myticket.png',
+                                    height: 35.0,
+                                    width: 35.0,
                                     color: currentIndex == 3
                                         ? Colors.orangeAccent
-                                        : const Color.fromARGB(255, 0, 0,
-                                            0), // Thay đổi màu sắc nếu cần
+                                        : Colors.black,
                                   ),
                                 ),
                               ),
                               Text(
-                                'Vé', // Nhãn phía dưới
+                                'Vé',
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: currentIndex == 3
                                       ? Colors.orangeAccent
-                                      : const Color.fromARGB(255, 0, 0, 0),
+                                      : Colors.black,
                                 ),
                               ),
                             ],
                           ),
                           Column(
-                            mainAxisSize: MainAxisSize
-                                .min, // Để chiều cao của Column chỉ đủ cho nội dung
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              const SizedBox(
-                                height: 15,
-                              ),
+                              const SizedBox(height: 15),
                               GestureDetector(
-                                onTap: () {
-                                  setBottomBarIndex(4);
-                                },
+                                onTap: () => setBottomBarIndex(4),
                                 child: Container(
                                   child: Image.asset(
-                                    'assets/icons/user.png', // Đường dẫn đến hình ảnh của bạn
-                                    height: 35.0, // Chiều cao của hình ảnh
-                                    width: 35.0, // Chiều rộng của hình ảnh
+                                    'assets/icons/user.png',
+                                    height: 35.0,
+                                    width: 35.0,
                                     color: currentIndex == 4
                                         ? Colors.orangeAccent
-                                        : Colors
-                                            .black, // Thay đổi màu sắc nếu cần
+                                        : Colors.black,
                                   ),
                                 ),
                               ),
                               Text(
-                                'Tôi', // Nhãn phía dưới
+                                'Tôi',
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: currentIndex == 4
                                       ? Colors.orangeAccent
-                                      : const Color.fromARGB(255, 0, 0, 0),
+                                      : Colors.black,
                                 ),
                               ),
                             ],
@@ -304,12 +340,12 @@ class _BottomNavBarState extends State<BottomNavBar> {
 class BNBCustomPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    Paint paint = new Paint()
+    Paint paint = Paint()
       ..color = Colors.orange
       ..style = PaintingStyle.fill;
 
     Path path = Path();
-    path.moveTo(0, 20); // Start
+    path.moveTo(0, 20);
     path.quadraticBezierTo(size.width * 0.20, 0, size.width * 0.35, 0);
     path.quadraticBezierTo(size.width * 0.40, 0, size.width * 0.40, 20);
     path.arcToPoint(Offset(size.width * 0.60, 20),
@@ -329,10 +365,11 @@ class BNBCustomPainter extends CustomPainter {
   }
 }
 
-Widget buildTicketOption(
-    {required IconData icon,
-    required String text,
-    required VoidCallback onTap}) {
+Widget buildTicketOption({
+  required IconData icon,
+  required String text,
+  required VoidCallback onTap,
+}) {
   return InkWell(
     onTap: onTap,
     borderRadius: BorderRadius.circular(10),

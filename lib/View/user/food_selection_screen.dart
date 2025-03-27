@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:movieticketbooking/Data/data.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../Model/Food.dart';
+import '../../Services/food_service.dart';
 import 'payment_screen.dart';
 
 class FoodSelectionScreen extends StatefulWidget {
@@ -25,6 +26,29 @@ class FoodSelectionScreen extends StatefulWidget {
 
 class _FoodSelectionScreenState extends State<FoodSelectionScreen> {
   Map<String, int> selectedFoods = {}; // Lưu số lượng món ăn đã chọn
+  List<Food> foodItems = [];
+  bool isLoading = true;
+  final FoodService _foodService = FoodService();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFoodItems();
+  }
+
+  void _loadFoodItems() {
+    _foodService.getAllFoods().listen((foods) {
+      setState(() {
+        foodItems = foods;
+        isLoading = false;
+      });
+    }, onError: (e) {
+      print('Error loading food items: $e');
+      setState(() {
+        isLoading = false;
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,19 +66,23 @@ class _FoodSelectionScreenState extends State<FoodSelectionScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              itemCount: foodItems.length,
-              itemBuilder: (context, index) {
-                return _buildFoodItem(foodItems[index]);
-              },
+      body: isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: Colors.orange),
+            )
+          : Column(
+              children: [
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: foodItems.length,
+                    itemBuilder: (context, index) {
+                      return _buildFoodItem(foodItems[index]);
+                    },
+                  ),
+                ),
+                _buildBottomBar(foodTotal, finalTotal),
+              ],
             ),
-          ),
-          _buildBottomBar(foodTotal, finalTotal),
-        ],
-      ),
     );
   }
 
@@ -75,7 +103,7 @@ class _FoodSelectionScreenState extends State<FoodSelectionScreen> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
               image: DecorationImage(
-                image: AssetImage(item.image),
+                image: NetworkImage(item.image),
                 fit: BoxFit.cover,
               ),
             ),
@@ -110,21 +138,17 @@ class _FoodSelectionScreenState extends State<FoodSelectionScreen> {
               ],
             ),
           ),
-          SizedBox(
-            width: 10,
-          ),
+          const SizedBox(width: 10),
           Container(
             decoration: BoxDecoration(
-              color: Colors.black, // Nền đen
-              borderRadius: BorderRadius.circular(8), // Bo góc nhẹ hơn
-              border: Border.all(
-                  color: Colors.white54, width: 0.8), // Viền mỏng hơn
+              color: Colors.black,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.white54, width: 0.8),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 4), // Giảm padding
+            padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Nút giảm
                 GestureDetector(
                   onTap: () {
                     setState(() {
@@ -135,15 +159,12 @@ class _FoodSelectionScreenState extends State<FoodSelectionScreen> {
                     });
                   },
                   child: const Padding(
-                    padding: EdgeInsets.all(4), // Giảm padding
-                    child: Icon(Icons.remove,
-                        color: Colors.white, size: 16), // Nhỏ hơn
+                    padding: EdgeInsets.all(4),
+                    child: Icon(Icons.remove, color: Colors.white, size: 16),
                   ),
                 ),
-
-                // Hiển thị số lượng
                 Container(
-                  width: 22, // Thu gọn kích thước
+                  width: 22,
                   alignment: Alignment.center,
                   child: Text(
                     (selectedFoods[item.id] ?? 0).toString(),
@@ -153,8 +174,6 @@ class _FoodSelectionScreenState extends State<FoodSelectionScreen> {
                         fontWeight: FontWeight.bold),
                   ),
                 ),
-
-                // Nút tăng
                 GestureDetector(
                   onTap: () {
                     setState(() {
@@ -163,9 +182,8 @@ class _FoodSelectionScreenState extends State<FoodSelectionScreen> {
                     });
                   },
                   child: const Padding(
-                    padding: EdgeInsets.all(4), // Giảm padding
-                    child: Icon(Icons.add,
-                        color: Colors.white, size: 16), // Nhỏ hơn
+                    padding: EdgeInsets.all(4),
+                    child: Icon(Icons.add, color: Colors.white, size: 16),
                   ),
                 ),
               ],
@@ -185,7 +203,6 @@ class _FoodSelectionScreenState extends State<FoodSelectionScreen> {
       ),
       child: Row(
         children: [
-          // Tổng tiền
           Expanded(
             flex: 3,
             child: Column(
@@ -206,8 +223,6 @@ class _FoodSelectionScreenState extends State<FoodSelectionScreen> {
               ],
             ),
           ),
-
-          // Nút thanh toán
           Expanded(
             flex: 7,
             child: ElevatedButton(

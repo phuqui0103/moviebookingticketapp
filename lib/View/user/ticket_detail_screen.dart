@@ -4,28 +4,22 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../../Components/bottom_nav_bar.dart';
 import '../../Model/Cinema.dart';
 import '../../Model/Room.dart';
-import '../../Model/Showtime.dart';
 import '../../Model/Food.dart';
+import '../../Model/Ticket.dart';
 import '../../Services/room_service.dart';
 import '../../Services/cinema_service.dart';
 import '../../Services/food_service.dart';
 
 class TicketDetailScreen extends StatefulWidget {
+  final Ticket ticket;
   final String movieTitle;
   final String moviePoster;
-  final Showtime showtime;
-  final List<String> selectedSeats;
-  final double totalPrice;
-  final Map<String, int> selectedFoods;
 
   const TicketDetailScreen({
     Key? key,
+    required this.ticket,
     required this.movieTitle,
     required this.moviePoster,
-    required this.showtime,
-    required this.selectedSeats,
-    required this.totalPrice,
-    required this.selectedFoods,
   }) : super(key: key);
 
   @override
@@ -51,7 +45,8 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
   Future<void> _loadData() async {
     try {
       // Load room data
-      selectedRoom = await _roomService.getRoomById(widget.showtime.roomId);
+      selectedRoom =
+          await _roomService.getRoomById(widget.ticket.showtime.roomId);
 
       if (selectedRoom != null) {
         // Load cinema data
@@ -170,11 +165,16 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                           _buildInfoRow(
                               Icons.meeting_room, "Phòng", selectedRoom!.name),
                           _buildInfoRow(Icons.schedule, "Suất",
-                              widget.showtime.formattedTime),
+                              widget.ticket.showtime.formattedTime),
                           _buildInfoRow(Icons.calendar_today, "Ngày",
-                              widget.showtime.formattedDate),
+                              widget.ticket.showtime.formattedDate),
                           _buildInfoRow(Icons.event_seat, "Ghế",
-                              widget.selectedSeats.join(", ")),
+                              widget.ticket.selectedSeats.join(", ")),
+
+                          if (widget.ticket.isUsed)
+                            _buildInfoRow(
+                                Icons.check_circle, "Trạng thái", "Đã sử dụng",
+                                textColor: Colors.grey),
 
                           SizedBox(height: 10),
 
@@ -196,7 +196,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                           /// Mã QR
                           Center(
                             child: QrImageView(
-                              data: "${widget.showtime.id}",
+                              data: widget.ticket.id,
                               version: QrVersions.auto,
                               size: 160,
                               foregroundColor: Colors.white,
@@ -208,7 +208,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
 
                           /// Tổng tiền
                           _buildInfoRow(Icons.attach_money, "Tổng tiền",
-                              "${widget.totalPrice.toStringAsFixed(0)}đ",
+                              "${widget.ticket.totalPrice.toStringAsFixed(0)}đ",
                               isBold: true),
 
                           SizedBox(height: 16),
@@ -247,7 +247,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
 
   /// Hàm hiển thị thông tin
   Widget _buildInfoRow(IconData icon, String label, String value,
-      {bool isBold = false}) {
+      {bool isBold = false, Color textColor = Colors.white}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Row(
@@ -258,7 +258,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
             child: Text(
               "$label: $value",
               style: TextStyle(
-                color: Colors.white,
+                color: textColor,
                 fontSize: isBold ? 18 : 16,
                 fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
               ),
@@ -272,7 +272,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
 
   /// Hiển thị bảng bắp & nước
   Widget _buildFoodTable() {
-    if (widget.selectedFoods.isEmpty) {
+    if (widget.ticket.selectedFoods.isEmpty) {
       return Center(
         child: Text("Không có",
             style: TextStyle(color: Colors.white54, fontSize: 16)),
@@ -286,15 +286,15 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
         2: FlexColumnWidth(1),
       },
       children: [
-        ...widget.selectedFoods.entries.map((entry) {
+        ...widget.ticket.selectedFoods.entries.map((entry) {
           Food? food = foodItems.firstWhere(
             (f) => f.id == entry.key,
             orElse: () => Food(
-                id: "",
+                id: entry.key,
                 name: "Không xác định",
                 price: 0,
-                image: '',
-                description: ''),
+                image: 'https://via.placeholder.com/150',
+                description: 'Không tìm thấy thông tin món ăn'),
           );
           return TableRow(
             children: [
@@ -308,13 +308,6 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
       ],
     );
   }
-
-  Widget _buildTableHeader(String title) => Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Text(title,
-            style: TextStyle(
-                color: Colors.orangeAccent, fontWeight: FontWeight.bold)),
-      );
 
   Widget _buildTableCell(String content) => Padding(
         padding: const EdgeInsets.all(8.0),

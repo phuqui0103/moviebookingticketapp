@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import '../Data/data.dart';
 
 class DataImportUtil {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;

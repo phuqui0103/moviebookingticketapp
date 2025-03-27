@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../Data/data.dart';
 import '../../Model/Food.dart';
 import '../../Model/Showtime.dart';
 import '../../Model/Room.dart';
@@ -509,7 +508,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: Image.asset(
+                    child: Image.network(
                       food.image,
                       width: 60,
                       height: 60,

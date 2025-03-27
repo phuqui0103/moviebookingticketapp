@@ -187,6 +187,15 @@ class ShowtimeService {
     }
   }
 
+  // Kiểm tra xem suất chiếu có quá 1 giờ không
+  bool _isWithinOneHour(DateTime startTime) {
+    final now = DateTime.now();
+    final difference = now.difference(startTime);
+    print(
+        'Kiểm tra suất chiếu: ${startTime.toString()} - Khoảng cách: ${difference.inHours} giờ');
+    return difference.inHours < 1;
+  }
+
   // Lấy danh sách suất chiếu theo ID phim và ngày
   Stream<List<Showtime>> getShowtimesByMovieAndDate(
       String movieId, DateTime date) {
@@ -225,13 +234,15 @@ class ShowtimeService {
               continue; // Bỏ qua suất chiếu này nếu không parse được startTime
             }
 
-            // Chỉ lọc suất chiếu trong ngày được chọn
+            // Chỉ lọc suất chiếu trong ngày được chọn và trong vòng 1 giờ
             bool isInSelectedDate = startTime.year == date.year &&
                 startTime.month == date.month &&
                 startTime.day == date.day;
 
-            if (!isInSelectedDate) {
-              continue; // Bỏ qua suất chiếu không nằm trong ngày đã chọn
+            bool isWithinOneHour = _isWithinOneHour(startTime);
+
+            if (!isInSelectedDate || !isWithinOneHour) {
+              continue; // Bỏ qua suất chiếu không thỏa mãn điều kiện
             }
 
             // Chuyển đổi bookedSeats từ List dynamic sang List<String>

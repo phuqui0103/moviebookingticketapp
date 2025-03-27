@@ -3,7 +3,6 @@ import 'package:movieticketbooking/Model/Food.dart';
 import '../../Components/bottom_nav_bar.dart';
 import '../../Model/Movie.dart';
 import '../../Model/Ticket.dart';
-import '../../Data/data.dart';
 import 'ticket_detail_screen.dart'; // Chứa danh sách phim & phòng chiếu
 import '../../Services/ticket_service.dart';
 import '../../Services/movie_service.dart';
@@ -166,10 +165,7 @@ class _MyTicketListScreenState extends State<MyTicketListScreen>
             builder: (context) => TicketDetailScreen(
               movieTitle: movie.title ?? "",
               moviePoster: movie.imagePath ?? "",
-              showtime: ticket.showtime,
-              selectedSeats: ticket.selectedSeats,
-              totalPrice: ticket.totalPrice,
-              selectedFoods: ticket.selectedFoods,
+              ticket: ticket,
             ),
           ),
         );
