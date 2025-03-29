@@ -2,33 +2,33 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class DatePicker extends StatefulWidget {
-  final Function(String) onDateSelected;
+  final List<DateTime> dates;
+  final DateTime selectedDate;
+  final Function(DateTime) onDateSelected;
 
-  const DatePicker({Key? key, required this.onDateSelected}) : super(key: key);
+  const DatePicker({
+    Key? key,
+    required this.dates,
+    required this.selectedDate,
+    required this.onDateSelected,
+  }) : super(key: key);
 
   @override
   _DatePickerState createState() => _DatePickerState();
 }
 
 class _DatePickerState extends State<DatePicker> {
-  int selectedIndex = 0;
-  final List<DateTime> days =
-      List.generate(7, (index) => DateTime.now().add(Duration(days: index)));
-
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       height: 80,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: days.length,
+        itemCount: widget.dates.length,
         physics: const BouncingScrollPhysics(),
         itemBuilder: (context, index) => GestureDetector(
           onTap: () {
-            setState(() {
-              selectedIndex = index;
-            });
-            widget.onDateSelected(DateFormat('yyyy-MM-dd').format(days[index]));
+            widget.onDateSelected(widget.dates[index]);
           },
           child: Container(
             width: 60,
@@ -36,22 +36,27 @@ class _DatePickerState extends State<DatePicker> {
             padding: const EdgeInsets.all(5),
             decoration: BoxDecoration(
               border: Border.all(
-                color: selectedIndex == index
+                color: DateFormat('yyyy-MM-dd').format(widget.dates[index]) ==
+                        DateFormat('yyyy-MM-dd').format(widget.selectedDate)
                     ? Colors.orangeAccent
                     : Colors.grey.shade800,
                 width: 1.5,
               ),
               borderRadius: BorderRadius.circular(10),
-              color:
-                  selectedIndex == index ? Colors.black54 : Colors.transparent,
+              color: DateFormat('yyyy-MM-dd').format(widget.dates[index]) ==
+                      DateFormat('yyyy-MM-dd').format(widget.selectedDate)
+                  ? Colors.black54
+                  : Colors.transparent,
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  DateFormat('EEE').format(days[index]).toUpperCase(),
+                  DateFormat('EEE').format(widget.dates[index]).toUpperCase(),
                   style: TextStyle(
-                    color: selectedIndex == index
+                    color: DateFormat('yyyy-MM-dd')
+                                .format(widget.dates[index]) ==
+                            DateFormat('yyyy-MM-dd').format(widget.selectedDate)
                         ? Colors.orangeAccent
                         : Colors.white54,
                     fontSize: 16,
@@ -59,9 +64,11 @@ class _DatePickerState extends State<DatePicker> {
                 ),
                 const SizedBox(height: 5),
                 Text(
-                  DateFormat('d').format(days[index]),
+                  DateFormat('d').format(widget.dates[index]),
                   style: TextStyle(
-                    color: selectedIndex == index
+                    color: DateFormat('yyyy-MM-dd')
+                                .format(widget.dates[index]) ==
+                            DateFormat('yyyy-MM-dd').format(widget.selectedDate)
                         ? Colors.orangeAccent
                         : Colors.white,
                     fontSize: 20,

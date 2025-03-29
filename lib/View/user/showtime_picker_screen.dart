@@ -506,7 +506,10 @@ class _ShowtimePickerScreenState extends State<ShowtimePickerScreen>
                       ),
                       child: Center(
                         child: Text(
-                          "${selectedShowtime!.bookedSeatsCount} ghế đã đặt",
+                          selectedShowtime!.bookedSeats.length <
+                                  selectedShowtime!.totalSeats
+                              ? "Còn ghế"
+                              : "Hết ghế",
                           style: const TextStyle(
                               color: Colors.white,
                               fontSize: 18.0,

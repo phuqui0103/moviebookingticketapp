@@ -1201,17 +1201,21 @@ class _ShowtimeManagementScreenState extends State<ShowtimeManagementScreen> {
                       .doc()
                       .id;
 
-                  final newShowtime = Showtime(
-                    id: newShowtimeId,
-                    movieId: selectedMovie!.id,
-                    cinemaId: selectedCinemaId!,
-                    roomId: selectedRoom!.id,
-                    startTime: selectedTime!,
-                    bookedSeats: [],
-                  );
+                  // Tạo showtime mới với startTime là Timestamp
+                  final newShowtime = {
+                    'id': newShowtimeId,
+                    'movieId': selectedMovie!.id,
+                    'cinemaId': selectedCinemaId!,
+                    'roomId': selectedRoom!.id,
+                    'startTime': Timestamp.fromDate(selectedTime!),
+                    'bookedSeats': [],
+                  };
 
                   // Thêm vào Firebase
-                  await _showtimeService.createShowtime(newShowtime);
+                  await FirebaseFirestore.instance
+                      .collection('showtimes')
+                      .doc(newShowtimeId)
+                      .set(newShowtime);
 
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(

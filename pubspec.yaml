@@ -33,6 +33,8 @@ dependencies:
   crypto: ^3.0.3
   youtube_player_flutter: ^9.1.1
   flutter_inappwebview: ^6.1.5
+  shared_preferences: ^2.2.2
+  path_provider: ^2.1.2
 
 dev_dependencies:
   flutter_test:

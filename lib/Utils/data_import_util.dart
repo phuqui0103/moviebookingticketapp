@@ -133,21 +133,14 @@ class DataImportUtil {
             children: [
               CircularProgressIndicator(),
               SizedBox(height: 16),
-              Text("Đang import dữ liệu..."),
+              Text("Đang import dữ liệu phim..."),
             ],
           ),
         ),
       );
 
-      // Import dữ liệu
-      // await importGenres();
-      // await importProvinces();
-      // await importCinemas();
-      // await importRooms();
-      // await importMovies();
-      // await importShowtimes();
-      // await importComments();
-      await importDistricts();
+      // Import dữ liệu phim
+      await importMovies();
 
       // Đóng dialog loading
       Navigator.pop(context);
@@ -157,10 +150,10 @@ class DataImportUtil {
         context: context,
         builder: (context) => AlertDialog(
           title: const Text("Thành công"),
-          content: const Text("Đã import dữ liệu thành công!\n\n"
+          content: const Text("Đã import dữ liệu phim thành công!\n\n"
               "Dữ liệu đã được thêm vào:\n"
-              "- 10 tỉnh/thành phố\n"
-              "- 50 quận/huyện"),
+              "- 6 phim đang chiếu\n"
+              "- 3 phim sắp chiếu"),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -178,7 +171,7 @@ class DataImportUtil {
         context: context,
         builder: (context) => AlertDialog(
           title: const Text("Lỗi"),
-          content: Text("Lỗi khi import dữ liệu: $e"),
+          content: Text("Lỗi khi import dữ liệu phim: $e"),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -440,6 +433,270 @@ class DataImportUtil {
       print('Đã xóa tất cả dữ liệu đồ ăn');
     } catch (e) {
       print('Lỗi khi xóa dữ liệu đồ ăn: $e');
+      throw e;
+    }
+  }
+
+  // Import movies
+  static Future<void> importMovies() async {
+    final List<Map<String, dynamic>> movies = [
+      // Phim đang chiếu
+      {
+        "id": "movie1",
+        "title": "Mai",
+        "imagePath":
+            "https://image.tmdb.org/t/p/w500/1Kv9H9KOO3Dl1LSmWXo3gyl5dUV.jpg",
+        "trailerUrl": "https://www.youtube.com/watch?v=8qZqXqXqXqX",
+        "duration": "130 phút",
+        "genres": [
+          {"id": "g001", "name": "Tình cảm"},
+          {"id": "g002", "name": "Chính kịch"}
+        ],
+        "rating": 8.5,
+        "isShowingNow": true,
+        "description":
+            "Mai là một cô gái trẻ đẹp, thông minh nhưng phải đối mặt với nhiều khó khăn trong cuộc sống. Khi gặp Dũng, một chàng trai tốt bụng, Mai dần tìm thấy hạnh phúc và sức mạnh để vượt qua những thử thách.",
+        "cast": [
+          "Phương Anh Đào",
+          "Tuấn Trần",
+          "Minh Thư",
+          "Hồng Ánh",
+          "NSND Trần Nhượng"
+        ],
+        "reviewCount": 850,
+        "releaseDate": "10/02/2024",
+        "director": "Trần Thanh Huy",
+        "comments": []
+      },
+      {
+        "id": "movie2",
+        "title": "Gặp Lại Chị Ba",
+        "imagePath":
+            "https://image.tmdb.org/t/p/w500/2Kv9H9KOO3Dl1LSmWXo3gyl5dUV.jpg",
+        "trailerUrl": "https://www.youtube.com/watch?v=9qZqXqXqXqX",
+        "duration": "120 phút",
+        "genres": [
+          {"id": "g003", "name": "Hài"},
+          {"id": "g004", "name": "Gia đình"}
+        ],
+        "rating": 8.2,
+        "isShowingNow": true,
+        "description":
+            "Sau 20 năm xa cách, chị Ba trở về quê hương với nhiều thay đổi. Bộ phim kể về hành trình hài hước và cảm động của chị Ba khi cố gắng hòa nhập với cuộc sống mới.",
+        "cast": [
+          "NSND Hồng Vân",
+          "Minh Thư",
+          "Hoài Linh",
+          "Việt Hương",
+          "NSND Trần Nhượng"
+        ],
+        "reviewCount": 720,
+        "releaseDate": "15/02/2024",
+        "director": "NSND Trần Bảo Huy",
+        "comments": []
+      },
+      {
+        "id": "movie3",
+        "title": "Đất Rừng Phương Nam",
+        "imagePath":
+            "https://image.tmdb.org/t/p/w500/3Kv9H9KOO3Dl1LSmWXo3gyl5dUV.jpg",
+        "trailerUrl": "https://www.youtube.com/watch?v=8rZqXqXqXqX",
+        "duration": "135 phút",
+        "genres": [
+          {"id": "g005", "name": "Phiêu lưu"},
+          {"id": "g006", "name": "Lịch sử"}
+        ],
+        "rating": 8.7,
+        "isShowingNow": true,
+        "description":
+            "Bộ phim kể về hành trình của một cậu bé miền Bắc vào Nam tìm cha trong thời kỳ kháng chiến. Trên đường đi, cậu gặp nhiều người tốt và trải qua những cuộc phiêu lưu thú vị.",
+        "cast": [
+          "Hoàng Yến",
+          "NSND Trần Nhượng",
+          "NSND Hồng Vân",
+          "Minh Thư",
+          "NSND Trần Bảo Huy"
+        ],
+        "reviewCount": 950,
+        "releaseDate": "20/02/2024",
+        "director": "NSND Trần Bảo Huy",
+        "comments": []
+      },
+      {
+        "id": "movie4",
+        "title": "Chuyện Kể Về Mẹ",
+        "imagePath":
+            "https://image.tmdb.org/t/p/w500/4Kv9H9KOO3Dl1LSmWXo3gyl5dUV.jpg",
+        "trailerUrl": "https://www.youtube.com/watch?v=7qZqXqXqXqX",
+        "duration": "125 phút",
+        "genres": [
+          {"id": "g007", "name": "Tâm lý"},
+          {"id": "g008", "name": "Gia đình"}
+        ],
+        "rating": 8.6,
+        "isShowingNow": true,
+        "description":
+            "Bộ phim kể về tình mẫu tử thiêng liêng và sự hy sinh thầm lặng của người mẹ. Thông qua những câu chuyện đời thường, phim khắc họa chân thực và xúc động về tình yêu thương vô bờ bến của mẹ.",
+        "cast": [
+          "NSND Hồng Vân",
+          "Minh Thư",
+          "NSND Trần Nhượng",
+          "Hoàng Yến",
+          "NSND Trần Bảo Huy"
+        ],
+        "reviewCount": 880,
+        "releaseDate": "25/02/2024",
+        "director": "NSND Trần Bảo Huy",
+        "comments": []
+      },
+      {
+        "id": "movie5",
+        "title": "Đường Đua Số 1",
+        "imagePath":
+            "https://image.tmdb.org/t/p/w500/5Kv9H9KOO3Dl1LSmWXo3gyl5dUV.jpg",
+        "trailerUrl": "https://www.youtube.com/watch?v=6qZqXqXqXqX",
+        "duration": "140 phút",
+        "genres": [
+          {"id": "g009", "name": "Thể thao"},
+          {"id": "g010", "name": "Động lực"}
+        ],
+        "rating": 8.3,
+        "isShowingNow": true,
+        "description":
+            "Bộ phim kể về hành trình vươn lên của một vận động viên đua xe đạp trẻ. Với niềm đam mê và quyết tâm, anh đã vượt qua mọi khó khăn để trở thành nhà vô địch quốc gia.",
+        "cast": [
+          "Tuấn Trần",
+          "Minh Thư",
+          "NSND Trần Nhượng",
+          "Hoàng Yến",
+          "NSND Trần Bảo Huy"
+        ],
+        "reviewCount": 650,
+        "releaseDate": "01/03/2024",
+        "director": "NSND Trần Bảo Huy",
+        "comments": []
+      },
+      {
+        "id": "movie6",
+        "title": "Người Đàn Bà Thứ Hai",
+        "imagePath":
+            "https://image.tmdb.org/t/p/w500/6Kv9H9KOO3Dl1LSmWXo3gyl5dUV.jpg",
+        "trailerUrl": "https://www.youtube.com/watch?v=5qZqXqXqXqX",
+        "duration": "130 phút",
+        "genres": [
+          {"id": "g011", "name": "Tâm lý"},
+          {"id": "g012", "name": "Tình cảm"}
+        ],
+        "rating": 8.4,
+        "isShowingNow": true,
+        "description":
+            "Bộ phim kể về cuộc đời của một người phụ nữ phải đối mặt với những khó khăn trong tình yêu và hôn nhân. Thông qua những trải nghiệm đau thương, cô dần tìm thấy sức mạnh để đứng lên và sống cho chính mình.",
+        "cast": [
+          "NSND Hồng Vân",
+          "Minh Thư",
+          "NSND Trần Nhượng",
+          "Hoàng Yến",
+          "NSND Trần Bảo Huy"
+        ],
+        "reviewCount": 780,
+        "releaseDate": "05/03/2024",
+        "director": "NSND Trần Bảo Huy",
+        "comments": []
+      },
+      // Phim sắp chiếu
+      {
+        "id": "movie7",
+        "title": "Đất Phương Nam 2",
+        "imagePath":
+            "https://image.tmdb.org/t/p/w500/7Kv9H9KOO3Dl1LSmWXo3gyl5dUV.jpg",
+        "trailerUrl": "https://www.youtube.com/watch?v=4qZqXqXqXqX",
+        "duration": "145 phút",
+        "genres": [
+          {"id": "g013", "name": "Phiêu lưu"},
+          {"id": "g014", "name": "Lịch sử"}
+        ],
+        "rating": 0,
+        "isShowingNow": false,
+        "description":
+            "Tiếp nối câu chuyện của phần 1, Đất Phương Nam 2 kể về những cuộc phiêu lưu mới của nhân vật chính khi anh trưởng thành và phải đối mặt với những thử thách lớn hơn trong cuộc sống.",
+        "cast": [
+          "Hoàng Yến",
+          "NSND Trần Nhượng",
+          "NSND Hồng Vân",
+          "Minh Thư",
+          "NSND Trần Bảo Huy"
+        ],
+        "reviewCount": 0,
+        "releaseDate": "15/03/2024",
+        "director": "NSND Trần Bảo Huy",
+        "comments": []
+      },
+      {
+        "id": "movie8",
+        "title": "Mùa Hè Của Mẹ",
+        "imagePath":
+            "https://image.tmdb.org/t/p/w500/8Kv9H9KOO3Dl1LSmWXo3gyl5dUV.jpg",
+        "trailerUrl": "https://www.youtube.com/watch?v=3qZqXqXqXqX",
+        "duration": "120 phút",
+        "genres": [
+          {"id": "g015", "name": "Tình cảm"},
+          {"id": "g016", "name": "Gia đình"}
+        ],
+        "rating": 0,
+        "isShowingNow": false,
+        "description":
+            "Bộ phim kể về một mùa hè đặc biệt khi người mẹ trở về quê hương sau nhiều năm xa cách. Thông qua những khoảnh khắc ấm áp bên gia đình, phim khắc họa tình yêu thương và sự gắn kết giữa các thế hệ.",
+        "cast": [
+          "NSND Hồng Vân",
+          "Minh Thư",
+          "NSND Trần Nhượng",
+          "Hoàng Yến",
+          "NSND Trần Bảo Huy"
+        ],
+        "reviewCount": 0,
+        "releaseDate": "20/03/2024",
+        "director": "NSND Trần Bảo Huy",
+        "comments": []
+      },
+      {
+        "id": "movie9",
+        "title": "Đường Đua Số 2",
+        "imagePath":
+            "https://image.tmdb.org/t/p/w500/9Kv9H9KOO3Dl1LSmWXo3gyl5dUV.jpg",
+        "trailerUrl": "https://www.youtube.com/watch?v=2qZqXqXqXqX",
+        "duration": "135 phút",
+        "genres": [
+          {"id": "g017", "name": "Thể thao"},
+          {"id": "g018", "name": "Động lực"}
+        ],
+        "rating": 0,
+        "isShowingNow": false,
+        "description":
+            "Tiếp nối thành công của phần 1, Đường Đua Số 2 kể về hành trình mới của vận động viên đua xe đạp khi anh phải đối mặt với những thử thách lớn hơn trên đường đua quốc tế.",
+        "cast": [
+          "Tuấn Trần",
+          "Minh Thư",
+          "NSND Trần Nhượng",
+          "Hoàng Yến",
+          "NSND Trần Bảo Huy"
+        ],
+        "reviewCount": 0,
+        "releaseDate": "25/03/2024",
+        "director": "NSND Trần Bảo Huy",
+        "comments": []
+      }
+    ];
+
+    try {
+      print('Bắt đầu import ${movies.length} phim...');
+
+      for (var movie in movies) {
+        await _firestore.collection('movies').doc(movie['id']).set(movie);
+      }
+
+      print('Hoàn thành import phim');
+    } catch (e) {
+      print('Lỗi khi import phim: $e');
       throw e;
     }
   }

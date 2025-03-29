@@ -12,6 +12,31 @@ class _DataImportScreenState extends State<DataImportScreen> {
   bool isLoading = false;
   String statusMessage = '';
 
+  Future<void> _importMovies() async {
+    setState(() {
+      isLoading = true;
+      statusMessage = 'Đang import dữ liệu phim...';
+    });
+
+    try {
+      await DataImportUtil.importMovies();
+      setState(() {
+        statusMessage = 'Import dữ liệu phim thành công!\n\n'
+            'Dữ liệu đã được thêm vào:\n'
+            '- 6 phim đang chiếu\n'
+            '- 3 phim sắp chiếu';
+      });
+    } catch (e) {
+      setState(() {
+        statusMessage = 'Lỗi khi import dữ liệu phim: $e';
+      });
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
   Future<void> _importFoodData() async {
     setState(() {
       isLoading = true;
@@ -56,28 +81,6 @@ class _DataImportScreenState extends State<DataImportScreen> {
     }
   }
 
-  Future<void> _importAllData() async {
-    setState(() {
-      isLoading = true;
-      statusMessage = 'Đang import tất cả dữ liệu...';
-    });
-
-    try {
-      await DataImportUtil.importAllData(context);
-      setState(() {
-        statusMessage = 'Import tất cả dữ liệu thành công!';
-      });
-    } catch (e) {
-      setState(() {
-        statusMessage = 'Lỗi khi import dữ liệu: $e';
-      });
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -90,6 +93,36 @@ class _DataImportScreenState extends State<DataImportScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Dữ Liệu Phim',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: isLoading ? null : _importMovies,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                      ),
+                      child: const Text('Import Phim'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -130,36 +163,6 @@ class _DataImportScreenState extends State<DataImportScreen> {
                           child: const Text('Xóa Tất Cả'),
                         ),
                       ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Dữ Liệu Khác',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: isLoading ? null : _importAllData,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 12,
-                        ),
-                      ),
-                      child: const Text('Import Tất Cả'),
                     ),
                   ],
                 ),

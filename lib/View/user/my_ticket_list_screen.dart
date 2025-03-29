@@ -315,7 +315,19 @@ class _MyTicketListScreenState extends State<MyTicketListScreen>
 
       // Lấy danh sách vé theo userId
       final ticketStream = _ticketService.getTicketsByUserId(widget.userId);
-      ticketStream.listen((ticketList) {
+      ticketStream.listen((ticketList) async {
+        // Kiểm tra và cập nhật trạng thái vé
+        DateTime now = DateTime.now();
+        for (var ticket in ticketList) {
+          if (!ticket.isUsed) {
+            // Nếu thời gian hiện tại lớn hơn thời gian chiếu
+            if (now.isAfter(ticket.showtime.startTime)) {
+              // Cập nhật trạng thái vé sang đã sử dụng
+              await _ticketService.updateTicketStatus(ticket.id, true);
+            }
+          }
+        }
+
         setState(() {
           myTickets = ticketList;
           isLoading = false;

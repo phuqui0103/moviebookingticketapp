@@ -9,7 +9,7 @@ class Showtime {
   final String roomId;
   final DateTime startTime;
   final List<String> bookedSeats;
-  final int availableSeats;
+  final int totalSeats;
 
   Showtime({
     required this.id,
@@ -18,7 +18,7 @@ class Showtime {
     required this.roomId,
     required this.startTime,
     required this.bookedSeats,
-    this.availableSeats = 0,
+    required this.totalSeats,
   });
 
   // Getter để định dạng ngày giờ theo "dd/MM/yyyy HH:mm"
@@ -40,6 +40,8 @@ class Showtime {
     // Chỉ trả về số ghế đã đặt, giá trị âm không cần dùng với UI
     return bookedSeats.length;
   }
+
+  int get availableSeatsCount => totalSeats - bookedSeats.length;
 
   // Phương thức để lấy thông tin phòng từ Firebase
   Future<Room?> getRoom() async {
@@ -75,7 +77,6 @@ class Showtime {
       'roomId': roomId,
       'startTime': startTime.toIso8601String(),
       'bookedSeats': bookedSeats,
-      'availableSeats': availableSeats,
     };
   }
 
@@ -96,7 +97,7 @@ class Showtime {
       roomId: json['roomId'] ?? '',
       startTime: parseStartTime(json['startTime']),
       bookedSeats: List<String>.from(json['bookedSeats'] ?? []),
-      availableSeats: json['availableSeats'] ?? 0,
+      totalSeats: json['totalSeats'] ?? 0,
     );
   }
 
@@ -107,7 +108,7 @@ class Showtime {
     String? roomId,
     DateTime? startTime,
     List<String>? bookedSeats,
-    int? availableSeats,
+    int? totalSeats,
   }) {
     return Showtime(
       id: id ?? this.id,
@@ -116,7 +117,7 @@ class Showtime {
       roomId: roomId ?? this.roomId,
       startTime: startTime ?? this.startTime,
       bookedSeats: bookedSeats ?? this.bookedSeats,
-      availableSeats: availableSeats ?? this.availableSeats,
+      totalSeats: totalSeats ?? this.totalSeats,
     );
   }
 }

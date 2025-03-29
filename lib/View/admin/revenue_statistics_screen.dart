@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
+import 'package:movieticketbooking/Services/ticket_service.dart';
 
 class RevenueStatisticsScreen extends StatefulWidget {
   const RevenueStatisticsScreen({Key? key}) : super(key: key);
@@ -14,6 +15,59 @@ class _RevenueStatisticsScreenState extends State<RevenueStatisticsScreen> {
   String selectedFilter = "Tháng";
   DateTime selectedDate = DateTime.now();
   final currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
+  final TicketService _ticketService = TicketService();
+  bool isLoading = false;
+
+  Map<String, dynamic> revenueData = {
+    'totalRevenue': 0.0,
+    'ticketCount': 0,
+    'dailyRevenue': {},
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRevenueData();
+  }
+
+  Future<void> _loadRevenueData() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      Map<String, dynamic> data;
+      switch (selectedFilter) {
+        case "Ngày":
+          data = await _ticketService.getDailyRevenue(selectedDate);
+          break;
+        case "Tháng":
+          data = await _ticketService.getMonthlyRevenue(selectedDate);
+          break;
+        case "Năm":
+          data = await _ticketService.getYearlyRevenue(selectedDate);
+          break;
+        default:
+          data = await _ticketService.getMonthlyRevenue(selectedDate);
+      }
+
+      setState(() {
+        revenueData = data;
+        isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading revenue data: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Có lỗi xảy ra khi tải dữ liệu'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,23 +106,33 @@ class _RevenueStatisticsScreenState extends State<RevenueStatisticsScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildFilterSection(),
-              const SizedBox(height: 24),
-              _buildStatisticsCards(),
-              const SizedBox(height: 24),
-              _buildChartSection(),
-              const SizedBox(height: 24),
-              _buildDetailedStats(),
-            ],
-          ),
-        ),
-      ),
+      body: isLoading
+          ? const Center(
+              child: CircularProgressIndicator(
+                color: Colors.orange,
+              ),
+            )
+          : RefreshIndicator(
+              onRefresh: _loadRevenueData,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildFilterSection(),
+                      const SizedBox(height: 24),
+                      _buildStatisticsCards(),
+                      const SizedBox(height: 24),
+                      _buildChartSection(),
+                      const SizedBox(height: 24),
+                      _buildDetailedStats(),
+                    ],
+                  ),
+                ),
+              ),
+            ),
     );
   }
 
@@ -124,7 +188,7 @@ class _RevenueStatisticsScreenState extends State<RevenueStatisticsScreen> {
           isExpanded: true,
           dropdownColor: const Color(0xff252429),
           style: const TextStyle(color: Colors.white),
-          items: ["Ngày", "Tuần", "Tháng", "Năm"].map((String value) {
+          items: ["Ngày", "Tháng", "Năm"].map((String value) {
             return DropdownMenuItem<String>(
               value: value,
               child: Text(value),
@@ -133,6 +197,7 @@ class _RevenueStatisticsScreenState extends State<RevenueStatisticsScreen> {
           onChanged: (value) {
             setState(() {
               selectedFilter = value!;
+              _loadRevenueData();
             });
           },
         ),
@@ -141,6 +206,21 @@ class _RevenueStatisticsScreenState extends State<RevenueStatisticsScreen> {
   }
 
   Widget _buildDatePicker() {
+    String displayDate;
+    switch (selectedFilter) {
+      case "Ngày":
+        displayDate = DateFormat('dd/MM/yyyy').format(selectedDate);
+        break;
+      case "Tháng":
+        displayDate = DateFormat('MM/yyyy').format(selectedDate);
+        break;
+      case "Năm":
+        displayDate = selectedDate.year.toString();
+        break;
+      default:
+        displayDate = DateFormat('dd/MM/yyyy').format(selectedDate);
+    }
+
     return InkWell(
       onTap: () => _selectDate(context),
       child: Container(
@@ -154,7 +234,7 @@ class _RevenueStatisticsScreenState extends State<RevenueStatisticsScreen> {
             const Icon(Icons.calendar_today, color: Colors.orange, size: 20),
             const SizedBox(width: 8),
             Text(
-              DateFormat('dd/MM/yyyy').format(selectedDate),
+              displayDate,
               style: const TextStyle(color: Colors.white),
             ),
           ],
@@ -169,7 +249,7 @@ class _RevenueStatisticsScreenState extends State<RevenueStatisticsScreen> {
         Expanded(
           child: _buildStatCard(
             "Tổng doanh thu",
-            currencyFormat.format(15000000),
+            currencyFormat.format(revenueData['totalRevenue'] ?? 0),
             Icons.monetization_on,
             Colors.green,
           ),
@@ -178,7 +258,7 @@ class _RevenueStatisticsScreenState extends State<RevenueStatisticsScreen> {
         Expanded(
           child: _buildStatCard(
             "Số vé đã bán",
-            "230 vé",
+            "${revenueData['ticketCount'] ?? 0} vé",
             Icons.confirmation_number,
             Colors.blue,
           ),
@@ -205,7 +285,7 @@ class _RevenueStatisticsScreenState extends State<RevenueStatisticsScreen> {
               const SizedBox(width: 8),
               Text(
                 title,
-                style: TextStyle(color: Colors.white70, fontSize: 14),
+                style: const TextStyle(color: Colors.white70, fontSize: 14),
               ),
             ],
           ),
@@ -224,6 +304,40 @@ class _RevenueStatisticsScreenState extends State<RevenueStatisticsScreen> {
   }
 
   Widget _buildChartSection() {
+    Map<String, dynamic> chartData = {};
+
+    switch (selectedFilter) {
+      case "Năm":
+        chartData = revenueData['yearlyRevenue'] ?? {};
+        break;
+      case "Tháng":
+        chartData = revenueData['monthlyRevenue'] ?? {};
+        break;
+      default:
+        chartData = revenueData['dailyRevenue'] ?? {};
+    }
+
+    if (chartData.isEmpty) {
+      return Container(
+        height: 400,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.black12,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.orange.withOpacity(0.3)),
+        ),
+        child: const Center(
+          child: Text(
+            "Không có dữ liệu",
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 16,
+            ),
+          ),
+        ),
+      );
+    }
+
     return Container(
       height: 400,
       padding: const EdgeInsets.all(16),
@@ -269,16 +383,20 @@ class _RevenueStatisticsScreenState extends State<RevenueStatisticsScreen> {
                     sideTitles: SideTitles(
                       showTitles: true,
                       getTitlesWidget: (value, meta) {
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Text(
-                            _getXAxisLabel(value.toInt()),
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12,
+                        final entries = chartData.entries.toList();
+                        if (value >= 0 && value < entries.length) {
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Text(
+                              entries[value.toInt()].key,
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                              ),
                             ),
-                          ),
-                        );
+                          );
+                        }
+                        return const SizedBox();
                       },
                     ),
                   ),
@@ -300,7 +418,10 @@ class _RevenueStatisticsScreenState extends State<RevenueStatisticsScreen> {
                 ),
                 borderData: FlBorderData(show: false),
                 barGroups: _generateChartData(),
-                maxY: 20000000,
+                maxY: chartData.values
+                        .map((v) => (v as num).toDouble())
+                        .reduce((a, b) => a > b ? a : b) *
+                    1.2,
               ),
             ),
           ),
@@ -309,7 +430,93 @@ class _RevenueStatisticsScreenState extends State<RevenueStatisticsScreen> {
     );
   }
 
+  List<BarChartGroupData> _generateChartData() {
+    Map<String, dynamic> chartData = {};
+
+    switch (selectedFilter) {
+      case "Năm":
+        chartData = revenueData['yearlyRevenue'] ?? {};
+        break;
+      case "Tháng":
+        chartData = revenueData['monthlyRevenue'] ?? {};
+        break;
+      default:
+        chartData = revenueData['dailyRevenue'] ?? {};
+    }
+
+    if (chartData.isEmpty) return [];
+
+    final entries = chartData.entries.toList();
+
+    return List.generate(
+      entries.length,
+      (index) => BarChartGroupData(
+        x: index,
+        barRods: [
+          BarChartRodData(
+            toY: (entries[index].value as num).toDouble(),
+            color: Colors.orange,
+            width: 16,
+            borderRadius: BorderRadius.circular(4),
+            backDrawRodData: BackgroundBarChartRodData(
+              show: true,
+              toY: chartData.values
+                  .map((v) => (v as num).toDouble())
+                  .reduce((a, b) => a > b ? a : b),
+              color: Colors.white.withOpacity(0.05),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildDetailedStats() {
+    Map<String, dynamic> detailData = {};
+
+    switch (selectedFilter) {
+      case "Năm":
+        detailData = revenueData['yearlyRevenue'] ?? {};
+        break;
+      case "Tháng":
+        detailData = revenueData['monthlyRevenue'] ?? {};
+        break;
+      default:
+        detailData = revenueData['dailyRevenue'] ?? {};
+    }
+
+    if (detailData.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.black12,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.orange.withOpacity(0.3)),
+        ),
+        child: const Center(
+          child: Text(
+            "Không có dữ liệu chi tiết",
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 16,
+            ),
+          ),
+        ),
+      );
+    }
+
+    String periodText = "";
+    switch (selectedFilter) {
+      case "Năm":
+        periodText = selectedDate.year.toString();
+        break;
+      case "Tháng":
+        periodText = "${selectedDate.month}/${selectedDate.year}";
+        break;
+      default:
+        periodText = DateFormat('dd/MM/yyyy').format(selectedDate);
+    }
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -320,73 +527,57 @@ class _RevenueStatisticsScreenState extends State<RevenueStatisticsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            "Chi tiết doanh thu",
-            style: TextStyle(
+          Text(
+            "Chi tiết doanh thu ${selectedFilter.toLowerCase()} $periodText",
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 16),
-          _buildDetailRow("Doanh thu vé", "12,500,000đ"),
-          _buildDetailRow("Doanh thu đồ ăn", "2,500,000đ"),
-          _buildDetailRow("Số vé thường", "180 vé"),
-          _buildDetailRow("Số vé VIP", "50 vé"),
+          ...detailData.entries.map((entry) => _buildDetailRow(
+                entry.key,
+                currencyFormat.format(entry.value),
+              )),
         ],
       ),
     );
   }
 
   Widget _buildDetailRow(String label, String value) {
+    String displayLabel = label;
+
+    switch (selectedFilter) {
+      case "Năm":
+        // Chuyển số tháng thành tên tháng
+        final monthNumber = int.tryParse(label);
+        if (monthNumber != null) {
+          displayLabel = '$monthNumber/${selectedDate.year}';
+        }
+        break;
+      case "Tháng":
+        // Định dạng lại ngày/tháng
+        final parts = label.split('/');
+        if (parts.length == 2) {
+          displayLabel = '${parts[0]}/${parts[1]}/${selectedDate.year}';
+        }
+        break;
+      default:
+        // Giữ nguyên format cho ngày
+        displayLabel = label;
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: Colors.white70)),
+          Text(displayLabel, style: const TextStyle(color: Colors.white70)),
           Text(value, style: const TextStyle(color: Colors.white)),
         ],
       ),
     );
-  }
-
-  List<BarChartGroupData> _generateChartData() {
-    return List.generate(
-      7,
-      (index) => BarChartGroupData(
-        x: index,
-        barRods: [
-          BarChartRodData(
-            toY: (index + 1) * 2500000,
-            color: Colors.orange,
-            width: 16,
-            borderRadius: BorderRadius.circular(4),
-            backDrawRodData: BackgroundBarChartRodData(
-              show: true,
-              toY: 20000000,
-              color: Colors.white.withOpacity(0.05),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _getXAxisLabel(int index) {
-    switch (selectedFilter) {
-      case "Ngày":
-        return DateFormat('dd/MM')
-            .format(selectedDate.subtract(Duration(days: 6 - index)));
-      case "Tuần":
-        return "T${index + 1}";
-      case "Tháng":
-        return "T${index + 1}";
-      case "Năm":
-        return "${selectedDate.year - 6 + index}";
-      default:
-        return "";
-    }
   }
 
   String _formatChartValue(double value) {
@@ -399,6 +590,41 @@ class _RevenueStatisticsScreenState extends State<RevenueStatisticsScreen> {
   }
 
   Future<void> _selectDate(BuildContext context) async {
+    if (selectedFilter == "Năm") {
+      await showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            backgroundColor: const Color(0xff252429),
+            title:
+                const Text('Chọn năm', style: TextStyle(color: Colors.white)),
+            content: SizedBox(
+              width: double.minPositive,
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: 5,
+                itemBuilder: (BuildContext context, int index) {
+                  final year = DateTime.now().year - index;
+                  return ListTile(
+                    title: Text(year.toString(),
+                        style: const TextStyle(color: Colors.white)),
+                    onTap: () {
+                      setState(() {
+                        selectedDate = DateTime(year);
+                        _loadRevenueData();
+                      });
+                      Navigator.pop(context);
+                    },
+                  );
+                },
+              ),
+            ),
+          );
+        },
+      );
+      return;
+    }
+
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: selectedDate,
@@ -421,16 +647,54 @@ class _RevenueStatisticsScreenState extends State<RevenueStatisticsScreen> {
     if (picked != null && picked != selectedDate) {
       setState(() {
         selectedDate = picked;
+        _loadRevenueData();
       });
     }
   }
 
-  void _exportData() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Đang xuất báo cáo...'),
-        backgroundColor: Colors.orange,
-      ),
-    );
+  Future<void> _exportData() async {
+    try {
+      final now = DateTime.now();
+      final reportDate = DateFormat('dd/MM/yyyy').format(now);
+
+      String report = 'BÁO CÁO DOANH THU\n';
+      report += 'Ngày xuất báo cáo: $reportDate\n';
+      report += 'Thời gian: ${selectedFilter.toLowerCase()}\n\n';
+
+      report +=
+          'Tổng doanh thu: ${currencyFormat.format(revenueData['totalRevenue'])}\n';
+      report += 'Tổng số vé đã bán: ${revenueData['ticketCount']}\n\n';
+
+      if (revenueData.containsKey('dailyRevenue')) {
+        report += 'Chi tiết doanh thu theo ngày:\n';
+        final dailyRevenue =
+            revenueData['dailyRevenue'] as Map<String, dynamic>;
+        for (var entry in dailyRevenue.entries) {
+          report += '${entry.key}: ${currencyFormat.format(entry.value)}\n';
+        }
+      } else if (revenueData.containsKey('monthlyRevenue')) {
+        report += 'Chi tiết doanh thu theo tháng:\n';
+        final monthlyRevenue =
+            revenueData['monthlyRevenue'] as Map<String, dynamic>;
+        for (var entry in monthlyRevenue.entries) {
+          report += '${entry.key}: ${currencyFormat.format(entry.value)}\n';
+        }
+      }
+
+      // TODO: Implement export functionality (e.g. save to file, share, etc.)
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Báo cáo đã được xuất thành công'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Có lỗi xảy ra khi xuất báo cáo'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 }

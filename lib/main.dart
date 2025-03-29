@@ -48,8 +48,8 @@ class MyApp extends StatelessWidget {
               fontSize: 18, color: const Color.fromARGB(255, 184, 49, 49)),
         ),
       ),
-      home: const SplashScreen(),
-      //home: AdminMainScreen(),
+      //home: const SplashScreen(),
+      home: AdminMainScreen(),
       //home: DataImportScreen(),
       //home: const RegisterScreen(),
     );

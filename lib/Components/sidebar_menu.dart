@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:movieticketbooking/View/user/login_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:movieticketbooking/Services/user_service.dart';
 
 class SidebarMenu extends StatefulWidget {
   final Function(int) onMenuSelected;
@@ -17,6 +18,8 @@ class SidebarMenu extends StatefulWidget {
 }
 
 class _SidebarMenuState extends State<SidebarMenu> {
+  final UserService _userService = UserService();
+
   void _showLogoutDialog() {
     showDialog(
       context: context,
@@ -37,6 +40,7 @@ class _SidebarMenuState extends State<SidebarMenu> {
           ),
           TextButton(
             onPressed: () async {
+              await _userService.clearSavedLoginInfo();
               await FirebaseAuth.instance.signOut();
               if (context.mounted) {
                 Navigator.pushAndRemoveUntil(

@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../Components/bottom_nav_bar.dart';
-import '../../Components/date_picker.dart';
 import '../../Components/time_picker.dart';
+import '../../Components/custom_image_widget.dart';
 import '../../Model/Movie.dart';
-import '../../Model/Room.dart';
 import '../../Model/Showtime.dart';
 import '../../Model/Cinema.dart';
+import '../../Model/Genre.dart';
 import '../../Services/showtime_service.dart';
 import '../../Services/movie_service.dart';
 import 'seat_selection_screen.dart';
 import 'package:provider/provider.dart';
 import '../../Providers/user_provider.dart';
 import 'login_screen.dart';
+import '../../Model/Room.dart';
 
 class CinemaBookingScreen extends StatefulWidget {
   final Cinema cinema;
@@ -30,6 +30,7 @@ class _CinemaBookingScreenState extends State<CinemaBookingScreen> {
   List<Showtime> availableShowtimes = [];
   List<Movie> moviesShowing = [];
   Map<String, bool> selectedTimeStates = {};
+  Map<String, Room> roomsMap = {};
   final ShowtimeService _showtimeService = ShowtimeService();
   final MovieService _movieService = MovieService();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -48,45 +49,122 @@ class _CinemaBookingScreenState extends State<CinemaBookingScreen> {
 
   Future<void> _fetchShowtimesAndMovies() async {
     try {
-      // Lấy danh sách suất chiếu cho ngày được chọn
-      final showtimes = await _showtimeService.getShowtimesByDate(selectedDate);
+      // Tạo timestamp cho đầu và cuối ngày
+      final startOfDay =
+          DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
+      final endOfDay = startOfDay.add(const Duration(days: 1));
 
-      // Lọc suất chiếu theo rạp và thời gian
-      final filteredShowtimes = await Future.wait(
-        showtimes.map((showtime) async {
-          // Kiểm tra xem suất chiếu có quá 1 giờ không
-          final now = DateTime.now();
-          final difference = now.difference(showtime.startTime);
-          if (difference.inHours >= 1) {
-            print('Suất chiếu ${showtime.startTime.toString()} đã qua 1 giờ');
-            return null;
-          }
+      // Lấy danh sách suất chiếu theo rạp và thời gian
+      final showtimesSnapshot = await _firestore
+          .collection('showtimes')
+          .where('cinemaId', isEqualTo: widget.cinema.id)
+          .where('startTime',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+          .where('startTime', isLessThan: Timestamp.fromDate(endOfDay))
+          .get();
 
-          final roomDoc =
-              await _firestore.collection('rooms').doc(showtime.roomId).get();
-          final roomData = roomDoc.data();
-          return roomData != null && roomData['cinemaId'] == widget.cinema.id
-              ? showtime
-              : null;
-        }),
-      );
+      print(
+          'Found ${showtimesSnapshot.docs.length} showtimes for cinema ${widget.cinema.id} on date: $selectedDate');
 
-      // Lọc bỏ các suất chiếu null
-      final validShowtimes = filteredShowtimes.whereType<Showtime>().toList();
+      // Lấy thông tin phòng trước
+      final roomsSnapshot = await _firestore
+          .collection('rooms')
+          .where('cinemaId', isEqualTo: widget.cinema.id)
+          .get();
 
-      // Lấy danh sách phim từ các suất chiếu
-      final movieIds = validShowtimes.map((s) => s.movieId).toSet();
+      roomsMap.clear();
+      for (var doc in roomsSnapshot.docs) {
+        final data = doc.data();
+        roomsMap[doc.id] = Room(
+          id: doc.id,
+          cinemaId: data['cinemaId'] as String,
+          name: data['name'] as String,
+          rows: data['rows'] as int,
+          cols: data['cols'] as int,
+          seatLayout: [], // Bỏ qua seatLayout vì không cần thiết cho việc tính số ghế
+        );
+      }
+
+      // Xử lý dữ liệu suất chiếu
+      final showtimes = showtimesSnapshot.docs
+          .map((doc) {
+            try {
+              final data = doc.data();
+              final startTime = (data['startTime'] as Timestamp).toDate();
+              final bookedSeats = List<String>.from(data['bookedSeats'] ?? []);
+              final roomId = data['roomId'] as String;
+              final room = roomsMap[roomId];
+
+              if (room == null) {
+                print('Room not found for showtime ${doc.id}');
+                return null;
+              }
+
+              return Showtime(
+                id: doc.id,
+                movieId: data['movieId'] as String,
+                cinemaId: widget.cinema.id,
+                roomId: roomId,
+                startTime: startTime,
+                bookedSeats: bookedSeats,
+                totalSeats: room.rows *
+                    room.cols, // Thêm tổng số ghế từ thông tin phòng
+              );
+            } catch (e) {
+              print('Error processing showtime document ${doc.id}: $e');
+              return null;
+            }
+          })
+          .whereType<Showtime>()
+          .toList();
+
+      // Lấy thông tin phim cho mỗi suất chiếu
+      final movieIds = showtimes.map((s) => s.movieId).toSet();
       final movies = await Future.wait(
-        movieIds.map((id) => _movieService.getMovieById(id)),
+        movieIds.map((id) => _firestore.collection('movies').doc(id).get()),
       );
+
+      final validMovies = movies.where((doc) => doc.exists).map((doc) {
+        final data = doc.data()!;
+        return Movie(
+          id: doc.id,
+          title: data['title'] as String,
+          description: data['description'] as String,
+          duration: data['duration'].toString(),
+          imagePath: data['imagePath'] as String,
+          trailerUrl: data['trailerUrl'] as String,
+          isShowingNow: data['isShowingNow'] as bool,
+          cast: List<String>.from(data['cast'] ?? []),
+          reviewCount: data['reviewCount'] as int? ?? 0,
+          releaseDate: data['releaseDate'] is Timestamp
+              ? (data['releaseDate'] as Timestamp).toDate().toString()
+              : data['releaseDate'] as String,
+          director: data['director'] as String,
+          genres: (data['genres'] as List? ?? [])
+              .map((genre) => Genre.fromJson(genre))
+              .toList(),
+        );
+      }).toList();
+
+      print('Found ${validMovies.length} valid movies');
+      print('Found ${showtimes.length} valid showtimes');
 
       setState(() {
-        availableShowtimes = validShowtimes;
-        moviesShowing = movies.whereType<Movie>().toList();
+        availableShowtimes = showtimes;
+        moviesShowing = validMovies;
       });
     } catch (e) {
       print('Error fetching showtimes and movies: $e');
-      // Có thể thêm thông báo lỗi cho người dùng ở đây
+      setState(() {
+        availableShowtimes = [];
+        moviesShowing = [];
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Có lỗi xảy ra khi tải dữ liệu'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -276,8 +354,10 @@ class _CinemaBookingScreenState extends State<CinemaBookingScreen> {
                             ),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(10),
-                              child: Image.network(
-                                movie.imagePath,
+                              child: CustomImageWidget(
+                                imagePath: movie.imagePath,
+                                width: 80,
+                                height: 120,
                                 fit: BoxFit.cover,
                               ),
                             ),
@@ -336,7 +416,10 @@ class _CinemaBookingScreenState extends State<CinemaBookingScreen> {
                     ),
                     child: Center(
                       child: Text(
-                        "${selectedShowtime!.availableSeats} ghế trống",
+                        selectedShowtime!.bookedSeats.length <
+                                selectedShowtime!.totalSeats
+                            ? "Còn ghế"
+                            : "Hết ghế",
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 18.0,

@@ -4,11 +4,14 @@ import 'package:movieticketbooking/View/user/login_screen.dart';
 import '../../Model/User.dart';
 import 'edit_profile_screen.dart';
 import 'change_password_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide User;
+import '../../Services/user_service.dart';
 
 class ProfileScreen extends StatelessWidget {
   final User user;
+  final UserService _userService = UserService();
 
-  const ProfileScreen({Key? key, required this.user}) : super(key: key);
+  ProfileScreen({Key? key, required this.user}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -250,12 +253,20 @@ class ProfileScreen extends StatelessWidget {
                     ),
                   ),
                   TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      Navigator.push(
+                    onPressed: () async {
+                      // Xóa thông tin đăng nhập đã lưu
+                      await _userService.clearSavedLoginInfo();
+                      // Đăng xuất khỏi Firebase
+                      await FirebaseAuth.instance.signOut();
+                      if (context.mounted) {
+                        Navigator.pushAndRemoveUntil(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => LoginScreen()));
+                            builder: (context) => const LoginScreen(),
+                          ),
+                          (route) => false,
+                        );
+                      }
                     },
                     child: const Text(
                       'Đăng xuất',
@@ -277,8 +288,8 @@ class ProfileScreen extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
           ),
         ),
-        child: Text(
-          "Đăng xuất",
+        child: const Text(
+          'Đăng xuất',
           style: TextStyle(
             color: Colors.white,
             fontSize: 16,

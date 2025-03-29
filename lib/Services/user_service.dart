@@ -3,10 +3,55 @@ import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:movieticketbooking/Model/User.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class UserService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final auth.FirebaseAuth _auth = auth.FirebaseAuth.instance;
+
+  // Constants for SharedPreferences keys
+  static const String KEY_SAVED_EMAIL = 'saved_email';
+  static const String KEY_SAVED_PASSWORD = 'saved_password';
+  static const String KEY_REMEMBER_LOGIN = 'remember_login';
+
+  // Lưu thông tin đăng nhập
+  Future<void> saveLoginInfo(
+      String email, String password, bool rememberLogin) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (rememberLogin) {
+      await prefs.setString(KEY_SAVED_EMAIL, email);
+      await prefs.setString(KEY_SAVED_PASSWORD, password);
+    }
+    await prefs.setBool(KEY_REMEMBER_LOGIN, rememberLogin);
+  }
+
+  // Lấy thông tin đăng nhập đã lưu
+  Future<Map<String, dynamic>> getSavedLoginInfo() async {
+    final prefs = await SharedPreferences.getInstance();
+    final bool rememberLogin = prefs.getBool(KEY_REMEMBER_LOGIN) ?? false;
+
+    if (rememberLogin) {
+      return {
+        'email': prefs.getString(KEY_SAVED_EMAIL) ?? '',
+        'password': prefs.getString(KEY_SAVED_PASSWORD) ?? '',
+        'rememberLogin': true,
+      };
+    }
+
+    return {
+      'email': '',
+      'password': '',
+      'rememberLogin': false,
+    };
+  }
+
+  // Xóa thông tin đăng nhập đã lưu
+  Future<void> clearSavedLoginInfo() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(KEY_SAVED_EMAIL);
+    await prefs.remove(KEY_SAVED_PASSWORD);
+    await prefs.remove(KEY_REMEMBER_LOGIN);
+  }
 
   // Hàm băm mật khẩu
   String _hashPassword(String password) {
@@ -344,6 +389,13 @@ class UserService {
         return {
           'success': false,
           'message': 'Tài khoản của bạn đã bị khóa',
+        };
+      }
+
+      if (userData['status'] == 'Deleted') {
+        return {
+          'success': false,
+          'message': 'Tài khoản của bạn đã bị xóa',
         };
       }
 
