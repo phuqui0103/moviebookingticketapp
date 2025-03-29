@@ -320,6 +320,8 @@ class _PaymentScreenState extends State<PaymentScreen>
         context,
         MaterialPageRoute(
           builder: (context) => PaymentSuccessScreen(
+            userEmail: userProvider.currentUser!.email,
+            userName: userProvider.currentUser!.fullName,
             movieTitle: widget.movieTitle,
             moviePoster: widget.moviePoster,
             showtime: widget.showtime,

@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:movieticketbooking/Model/Showtime.dart';
-import '../../Components/bottom_nav_bar.dart';
+import '../../Model/Showtime.dart';
 import '../../Model/Ticket.dart';
 import 'ticket_detail_screen.dart';
 import '../../Services/ticket_service.dart';
 import '../../Components/custom_image_widget.dart';
+import '../../Services/email_service.dart';
+import '../../Services/cinema_service.dart';
+import '../../Services/room_service.dart';
+import '../../Model/Cinema.dart';
+import '../../Model/Room.dart';
 
 class PaymentSuccessScreen extends StatefulWidget {
   final String movieTitle;
@@ -16,6 +20,8 @@ class PaymentSuccessScreen extends StatefulWidget {
   final double totalPrice;
   final Map<String, int> selectedFoods;
   final String userId;
+  final String userEmail;
+  final String userName;
 
   const PaymentSuccessScreen({
     Key? key,
@@ -28,6 +34,8 @@ class PaymentSuccessScreen extends StatefulWidget {
     required this.cinemaName,
     required this.selectedFoods,
     required this.userId,
+    required this.userEmail,
+    required this.userName,
   }) : super(key: key);
 
   @override
@@ -40,8 +48,14 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
   final TicketService _ticketService = TicketService();
+  final EmailService _emailService = EmailService();
+  final CinemaService _cinemaService = CinemaService();
+  final RoomService _roomService = RoomService();
   bool _isSaving = false;
+  bool _isSendingEmail = false;
   Ticket? _newTicket;
+  Cinema? _cinema;
+  Room? _room;
 
   @override
   void initState() {
@@ -69,297 +83,13 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
     _saveTicket();
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Container(
-        child: SafeArea(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                children: [
-                  ScaleTransition(
-                    scale: _scaleAnimation,
-                    child: Container(
-                      padding: EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.greenAccent.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.check_circle,
-                        color: Colors.greenAccent,
-                        size: 80,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 24),
-                  FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: Text(
-                      "Thanh toán thành công!",
-                      style: TextStyle(
-                        color: Colors.orangeAccent,
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 32),
-                  FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: Container(
-                      padding: EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white10,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: Colors.orangeAccent.withOpacity(0.3),
-                          width: 1,
-                        ),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: CustomImageWidget(
-                              imagePath: widget.moviePoster,
-                              width: 120,
-                              height: 180,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildInfoText("🎬 Phim", widget.movieTitle),
-                                _buildInfoText("📅 Ngày chiếu",
-                                    widget.showtime.formattedDate),
-                                _buildInfoText("⏰ Giờ chiếu",
-                                    widget.showtime.formattedTime),
-                                _buildInfoText("📍 Rạp", widget.cinemaName),
-                                _buildInfoText("🏠 Phòng", widget.roomName),
-                                _buildInfoText(
-                                    "💺 Ghế", widget.selectedSeats.join(", ")),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 24),
-                  FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: Container(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.orangeAccent.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(15),
-                        border: Border.all(
-                          color: Colors.orangeAccent,
-                          width: 1,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.orangeAccent.withOpacity(0.1),
-                            blurRadius: 10,
-                            spreadRadius: 2,
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Tổng tiền",
-                                style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              SizedBox(height: 4),
-                              Text(
-                                "${widget.totalPrice.toStringAsFixed(0)}đ",
-                                style: TextStyle(
-                                  color: Colors.orangeAccent,
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: Colors.orangeAccent.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.payment,
-                                  color: Colors.orangeAccent,
-                                  size: 18,
-                                ),
-                                SizedBox(width: 8),
-                                Text(
-                                  "Đã thanh toán",
-                                  style: TextStyle(
-                                    color: Colors.orangeAccent,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 32),
-                  FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: _isSaving || _newTicket == null
-                                ? null
-                                : () {
-                                    Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            TicketDetailScreen(
-                                          movieTitle: widget.movieTitle,
-                                          moviePoster: widget.moviePoster,
-                                          ticket: _newTicket!,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.orangeAccent,
-                              padding: EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(15),
-                              ),
-                              elevation: 5,
-                            ),
-                            child: _isSaving
-                                ? SizedBox(
-                                    width: 24,
-                                    height: 24,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.black,
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : Text(
-                                    "Xem vé",
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                          ),
-                        ),
-                        SizedBox(width: 16),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.pushAndRemoveUntil(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => BottomNavBar()),
-                                (route) => false,
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white10,
-                              padding: EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(15),
-                              ),
-                              elevation: 5,
-                            ),
-                            child: Text(
-                              "Về trang chủ",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoText(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: RichText(
-        text: TextSpan(
-          children: [
-            TextSpan(
-              text: "$label: ",
-              style: TextStyle(
-                color: Colors.orangeAccent,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            TextSpan(
-              text: value,
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 16,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Future<void> _saveTicket() async {
-    try {
-      setState(() {
-        _isSaving = true;
-      });
+    setState(() {
+      _isSaving = true;
+    });
 
+    try {
+      // Tạo vé mới
       _newTicket = Ticket(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         userId: widget.userId,
@@ -370,7 +100,17 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
         isUsed: false,
       );
 
+      // Lưu vé vào database
       await _ticketService.createTicket(_newTicket!);
+
+      // Lấy thông tin rạp và phòng chiếu
+      _cinema = await _cinemaService.getCinemaById(widget.showtime.cinemaId);
+      _room = await _roomService.getRoomById(widget.showtime.roomId);
+
+      if (_cinema != null && _room != null) {
+        // Gửi email
+        await _sendTicketEmail();
+      }
 
       setState(() {
         _isSaving = false;
@@ -387,5 +127,183 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
         ),
       );
     }
+  }
+
+  Future<void> _sendTicketEmail() async {
+    setState(() {
+      _isSendingEmail = true;
+    });
+
+    try {
+      await _emailService.sendTicketEmail(
+        recipientEmail: widget.userEmail,
+        recipientName: widget.userName,
+        movieTitle: widget.movieTitle,
+        ticket: _newTicket!,
+        cinema: _cinema!,
+        room: _room!,
+      );
+
+      setState(() {
+        _isSendingEmail = false;
+      });
+    } catch (e) {
+      print('Error sending email: $e');
+      setState(() {
+        _isSendingEmail = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Có lỗi xảy ra khi gửi email'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          // Background image
+          Positioned.fill(
+            child: ShaderMask(
+              shaderCallback: (bounds) {
+                return LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withOpacity(0.4),
+                    Colors.black.withOpacity(0.95),
+                  ],
+                ).createShader(bounds);
+              },
+              blendMode: BlendMode.darken,
+              child: CustomImageWidget(
+                imagePath: widget.moviePoster,
+                isBackground: true,
+              ),
+            ),
+          ),
+
+          // Content
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ScaleTransition(
+                        scale: _scaleAnimation,
+                        child: Icon(
+                          Icons.check_circle_outline,
+                          size: 100,
+                          color: Colors.green,
+                        ),
+                      ),
+                      SizedBox(height: 20),
+                      FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: Text(
+                          'Thanh Toán Thành Công!',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 10),
+                      FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: Text(
+                          'Vé của bạn đã được đặt thành công',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 30),
+                      if (_isSendingEmail)
+                        Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            children: [
+                              CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.orangeAccent),
+                              ),
+                              SizedBox(height: 16),
+                              Text(
+                                'Đang gửi thông tin vé đến email của bạn...',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: _isSaving || _newTicket == null
+                                    ? null
+                                    : () {
+                                        Navigator.pushReplacement(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                TicketDetailScreen(
+                                              movieTitle: widget.movieTitle,
+                                              moviePoster: widget.moviePoster,
+                                              ticket: _newTicket!,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.orangeAccent,
+                                  padding: EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  elevation: 5,
+                                ),
+                                child: Text(
+                                  "Xem Chi Tiết Vé",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

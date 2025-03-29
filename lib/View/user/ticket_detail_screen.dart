@@ -129,19 +129,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
           SafeArea(
             child: Column(
               children: [
-                /// Nút quay lại
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Align(
-                    alignment: Alignment.topLeft,
-                    child: IconButton(
-                      icon: Icon(Icons.arrow_back, color: Colors.white),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ),
-                ),
-
-                SizedBox(height: 16),
+                SizedBox(height: 40),
 
                 /// Thông tin vé
                 Expanded(
