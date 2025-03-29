@@ -470,29 +470,29 @@ class DataImportUtil {
       },
       {
         "id": "movie2",
-        "title": "Gặp Lại Chị Ba",
+        "title": "Avengers: Endgame",
         "imagePath":
-            "https://image.tmdb.org/t/p/w500/2Kv9H9KOO3Dl1LSmWXo3gyl5dUV.jpg",
-        "trailerUrl": "https://www.youtube.com/watch?v=9qZqXqXqXqX",
-        "duration": "120 phút",
+            "https://image.tmdb.org/t/p/w500/q6725aR8Zs4IwGMXzZT8aC8lh41.jpg",
+        "trailerUrl": "https://www.youtube.com/watch?v=TcMBFSGVi1c",
+        "duration": "181 phút",
         "genres": [
-          {"id": "g003", "name": "Hài"},
-          {"id": "g004", "name": "Gia đình"}
+          {"id": "g003", "name": "Hành động"},
+          {"id": "g004", "name": "Phiêu lưu"}
         ],
-        "rating": 8.2,
+        "rating": 8.4,
         "isShowingNow": true,
         "description":
-            "Sau 20 năm xa cách, chị Ba trở về quê hương với nhiều thay đổi. Bộ phim kể về hành trình hài hước và cảm động của chị Ba khi cố gắng hòa nhập với cuộc sống mới.",
+            "Sau sự kiện Thanos xóa sổ một nửa vũ trụ, các Avengers còn lại phải tập hợp lại một lần nữa để đảo ngược tình thế và cứu vũ trụ.",
         "cast": [
-          "NSND Hồng Vân",
-          "Minh Thư",
-          "Hoài Linh",
-          "Việt Hương",
-          "NSND Trần Nhượng"
+          "Robert Downey Jr.",
+          "Chris Evans",
+          "Mark Ruffalo",
+          "Chris Hemsworth",
+          "Scarlett Johansson"
         ],
-        "reviewCount": 720,
-        "releaseDate": "15/02/2024",
-        "director": "NSND Trần Bảo Huy",
+        "reviewCount": 1200,
+        "releaseDate": "26/04/2019",
+        "director": "Anthony Russo, Joe Russo",
         "comments": []
       },
       {
@@ -524,165 +524,165 @@ class DataImportUtil {
       },
       {
         "id": "movie4",
-        "title": "Chuyện Kể Về Mẹ",
+        "title": "Spider-Man: No Way Home",
         "imagePath":
-            "https://image.tmdb.org/t/p/w500/4Kv9H9KOO3Dl1LSmWXo3gyl5dUV.jpg",
-        "trailerUrl": "https://www.youtube.com/watch?v=7qZqXqXqXqX",
-        "duration": "125 phút",
+            "https://image.tmdb.org/t/p/w500/1Jj7E7jn1c8qehCEQvil5lF82b6.jpg",
+        "trailerUrl": "https://www.youtube.com/watch?v=JfVOs4VSqnA",
+        "duration": "148 phút",
         "genres": [
-          {"id": "g007", "name": "Tâm lý"},
-          {"id": "g008", "name": "Gia đình"}
+          {"id": "g007", "name": "Hành động"},
+          {"id": "g008", "name": "Phiêu lưu"}
         ],
-        "rating": 8.6,
+        "rating": 8.2,
         "isShowingNow": true,
         "description":
-            "Bộ phim kể về tình mẫu tử thiêng liêng và sự hy sinh thầm lặng của người mẹ. Thông qua những câu chuyện đời thường, phim khắc họa chân thực và xúc động về tình yêu thương vô bờ bến của mẹ.",
+            "Peter Parker phải đối mặt với nhiều phiên bản của những kẻ thù từ các vũ trụ khác nhau sau khi một phép thuật bị sai lệch.",
         "cast": [
-          "NSND Hồng Vân",
-          "Minh Thư",
-          "NSND Trần Nhượng",
-          "Hoàng Yến",
-          "NSND Trần Bảo Huy"
+          "Tom Holland",
+          "Zendaya",
+          "Benedict Cumberbatch",
+          "Willem Dafoe",
+          "Alfred Molina"
         ],
-        "reviewCount": 880,
-        "releaseDate": "25/02/2024",
-        "director": "NSND Trần Bảo Huy",
+        "reviewCount": 1100,
+        "releaseDate": "17/12/2021",
+        "director": "Jon Watts",
         "comments": []
       },
       {
         "id": "movie5",
-        "title": "Đường Đua Số 1",
+        "title": "Black Panther: Wakanda Forever",
         "imagePath":
-            "https://image.tmdb.org/t/p/w500/5Kv9H9KOO3Dl1LSmWXo3gyl5dUV.jpg",
-        "trailerUrl": "https://www.youtube.com/watch?v=6qZqXqXqXqX",
-        "duration": "140 phút",
+            "https://image.tmdb.org/t/p/w500/sv1xJUazXeYqALzczSZ3O6nkH75.jpg",
+        "trailerUrl": "https://www.youtube.com/watch?v=_Z3QKkl1WyM",
+        "duration": "161 phút",
         "genres": [
-          {"id": "g009", "name": "Thể thao"},
-          {"id": "g010", "name": "Động lực"}
+          {"id": "g009", "name": "Hành động"},
+          {"id": "g010", "name": "Phiêu lưu"}
         ],
-        "rating": 8.3,
+        "rating": 7.3,
         "isShowingNow": true,
         "description":
-            "Bộ phim kể về hành trình vươn lên của một vận động viên đua xe đạp trẻ. Với niềm đam mê và quyết tâm, anh đã vượt qua mọi khó khăn để trở thành nhà vô địch quốc gia.",
+            "Wakanda phải bảo vệ quốc gia của họ khỏi sự can thiệp của các cường quốc sau cái chết của Vua T'Challa.",
         "cast": [
-          "Tuấn Trần",
-          "Minh Thư",
-          "NSND Trần Nhượng",
-          "Hoàng Yến",
-          "NSND Trần Bảo Huy"
+          "Letitia Wright",
+          "Lupita Nyong'o",
+          "Danai Gurira",
+          "Winston Duke",
+          "Angela Bassett"
         ],
-        "reviewCount": 650,
-        "releaseDate": "01/03/2024",
-        "director": "NSND Trần Bảo Huy",
+        "reviewCount": 800,
+        "releaseDate": "11/11/2022",
+        "director": "Ryan Coogler",
         "comments": []
       },
       {
         "id": "movie6",
-        "title": "Người Đàn Bà Thứ Hai",
+        "title": "Avatar: The Way of Water",
         "imagePath":
-            "https://image.tmdb.org/t/p/w500/6Kv9H9KOO3Dl1LSmWXo3gyl5dUV.jpg",
-        "trailerUrl": "https://www.youtube.com/watch?v=5qZqXqXqXqX",
-        "duration": "130 phút",
+            "https://image.tmdb.org/t/p/w500/t6HIqrRAclMCA60NsSmeqe9RmNV.jpg",
+        "trailerUrl": "https://www.youtube.com/watch?v=d9MyW72ELq0",
+        "duration": "192 phút",
         "genres": [
-          {"id": "g011", "name": "Tâm lý"},
-          {"id": "g012", "name": "Tình cảm"}
+          {"id": "g011", "name": "Phiêu lưu"},
+          {"id": "g012", "name": "Khoa học viễn tưởng"}
         ],
-        "rating": 8.4,
+        "rating": 7.6,
         "isShowingNow": true,
         "description":
-            "Bộ phim kể về cuộc đời của một người phụ nữ phải đối mặt với những khó khăn trong tình yêu và hôn nhân. Thông qua những trải nghiệm đau thương, cô dần tìm thấy sức mạnh để đứng lên và sống cho chính mình.",
+            "Jake Sully và gia đình phải bảo vệ Pandora khỏi mối đe dọa mới của loài người.",
         "cast": [
-          "NSND Hồng Vân",
-          "Minh Thư",
-          "NSND Trần Nhượng",
-          "Hoàng Yến",
-          "NSND Trần Bảo Huy"
+          "Sam Worthington",
+          "Zoe Saldana",
+          "Sigourney Weaver",
+          "Stephen Lang",
+          "Kate Winslet"
         ],
-        "reviewCount": 780,
-        "releaseDate": "05/03/2024",
-        "director": "NSND Trần Bảo Huy",
+        "reviewCount": 900,
+        "releaseDate": "16/12/2022",
+        "director": "James Cameron",
         "comments": []
       },
       // Phim sắp chiếu
       {
         "id": "movie7",
-        "title": "Đất Phương Nam 2",
+        "title": "Guardians of the Galaxy Vol. 3",
         "imagePath":
-            "https://image.tmdb.org/t/p/w500/7Kv9H9KOO3Dl1LSmWXo3gyl5dUV.jpg",
-        "trailerUrl": "https://www.youtube.com/watch?v=4qZqXqXqXqX",
-        "duration": "145 phút",
+            "https://image.tmdb.org/t/p/w500/1rMiRax3mW5F2QjHjKpn7EUzrUp.jpg",
+        "trailerUrl": "https://www.youtube.com/watch?v=u3V5KDHRQvk",
+        "duration": "150 phút",
         "genres": [
-          {"id": "g013", "name": "Phiêu lưu"},
-          {"id": "g014", "name": "Lịch sử"}
+          {"id": "g013", "name": "Hành động"},
+          {"id": "g014", "name": "Phiêu lưu"}
         ],
         "rating": 0,
         "isShowingNow": false,
         "description":
-            "Tiếp nối câu chuyện của phần 1, Đất Phương Nam 2 kể về những cuộc phiêu lưu mới của nhân vật chính khi anh trưởng thành và phải đối mặt với những thử thách lớn hơn trong cuộc sống.",
+            "Peter Quill phải tập hợp đội của mình để bảo vệ vũ trụ và hoàn thành một nhiệm vụ quan trọng.",
         "cast": [
-          "Hoàng Yến",
-          "NSND Trần Nhượng",
-          "NSND Hồng Vân",
-          "Minh Thư",
-          "NSND Trần Bảo Huy"
+          "Chris Pratt",
+          "Zoe Saldana",
+          "Dave Bautista",
+          "Vin Diesel",
+          "Bradley Cooper"
         ],
         "reviewCount": 0,
-        "releaseDate": "15/03/2024",
-        "director": "NSND Trần Bảo Huy",
+        "releaseDate": "05/05/2023",
+        "director": "James Gunn",
         "comments": []
       },
       {
         "id": "movie8",
-        "title": "Mùa Hè Của Mẹ",
+        "title": "The Flash",
         "imagePath":
-            "https://image.tmdb.org/t/p/w500/8Kv9H9KOO3Dl1LSmWXo3gyl5dUV.jpg",
-        "trailerUrl": "https://www.youtube.com/watch?v=3qZqXqXqXqX",
-        "duration": "120 phút",
+            "https://image.tmdb.org/t/p/w500/rktDFPbfHfUbArZ6OOOKsXcv0Bm.jpg",
+        "trailerUrl": "https://www.youtube.com/watch?v=hebWYacbdvc",
+        "duration": "144 phút",
         "genres": [
-          {"id": "g015", "name": "Tình cảm"},
-          {"id": "g016", "name": "Gia đình"}
+          {"id": "g015", "name": "Hành động"},
+          {"id": "g016", "name": "Phiêu lưu"}
         ],
         "rating": 0,
         "isShowingNow": false,
         "description":
-            "Bộ phim kể về một mùa hè đặc biệt khi người mẹ trở về quê hương sau nhiều năm xa cách. Thông qua những khoảnh khắc ấm áp bên gia đình, phim khắc họa tình yêu thương và sự gắn kết giữa các thế hệ.",
+            "Barry Allen sử dụng sức mạnh siêu tốc để thay đổi quá khứ, nhưng khi anh cố gắng cứu gia đình mình, anh vô tình tạo ra một vũ trụ thay thế.",
         "cast": [
-          "NSND Hồng Vân",
-          "Minh Thư",
-          "NSND Trần Nhượng",
-          "Hoàng Yến",
-          "NSND Trần Bảo Huy"
+          "Ezra Miller",
+          "Michael Keaton",
+          "Sasha Calle",
+          "Michael Shannon",
+          "Ron Livingston"
         ],
         "reviewCount": 0,
-        "releaseDate": "20/03/2024",
-        "director": "NSND Trần Bảo Huy",
+        "releaseDate": "16/06/2023",
+        "director": "Andy Muschietti",
         "comments": []
       },
       {
         "id": "movie9",
-        "title": "Đường Đua Số 2",
+        "title": "Mission: Impossible - Dead Reckoning Part One",
         "imagePath":
-            "https://image.tmdb.org/t/p/w500/9Kv9H9KOO3Dl1LSmWXo3gyl5dUV.jpg",
-        "trailerUrl": "https://www.youtube.com/watch?v=2qZqXqXqXqX",
-        "duration": "135 phút",
+            "https://image.tmdb.org/t/p/w500/NNxYkU70HPurnNCSiCjYAmacBt.jpg",
+        "trailerUrl": "https://www.youtube.com/watch?v=avz06PDqDbM",
+        "duration": "163 phút",
         "genres": [
-          {"id": "g017", "name": "Thể thao"},
-          {"id": "g018", "name": "Động lực"}
+          {"id": "g017", "name": "Hành động"},
+          {"id": "g018", "name": "Giật gân"}
         ],
         "rating": 0,
         "isShowingNow": false,
         "description":
-            "Tiếp nối thành công của phần 1, Đường Đua Số 2 kể về hành trình mới của vận động viên đua xe đạp khi anh phải đối mặt với những thử thách lớn hơn trên đường đua quốc tế.",
+            "Ethan Hunt và IMF phải ngăn chặn một mối đe dọa toàn cầu mới trước khi quá muộn.",
         "cast": [
-          "Tuấn Trần",
-          "Minh Thư",
-          "NSND Trần Nhượng",
-          "Hoàng Yến",
-          "NSND Trần Bảo Huy"
+          "Tom Cruise",
+          "Hayley Atwell",
+          "Ving Rhames",
+          "Simon Pegg",
+          "Rebecca Ferguson"
         ],
         "reviewCount": 0,
-        "releaseDate": "25/03/2024",
-        "director": "NSND Trần Bảo Huy",
+        "releaseDate": "12/07/2023",
+        "director": "Christopher McQuarrie",
         "comments": []
       }
     ];

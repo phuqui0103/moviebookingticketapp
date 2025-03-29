@@ -49,6 +49,9 @@ class _CinemaBookingScreenState extends State<CinemaBookingScreen> {
 
   Future<void> _fetchShowtimesAndMovies() async {
     try {
+      // Lấy thời gian hiện tại
+      final now = DateTime.now();
+
       // Tạo timestamp cho đầu và cuối ngày
       final startOfDay =
           DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
@@ -81,7 +84,7 @@ class _CinemaBookingScreenState extends State<CinemaBookingScreen> {
           name: data['name'] as String,
           rows: data['rows'] as int,
           cols: data['cols'] as int,
-          seatLayout: [], // Bỏ qua seatLayout vì không cần thiết cho việc tính số ghế
+          seatLayout: [],
         );
       }
 
@@ -107,8 +110,7 @@ class _CinemaBookingScreenState extends State<CinemaBookingScreen> {
                 roomId: roomId,
                 startTime: startTime,
                 bookedSeats: bookedSeats,
-                totalSeats: room.rows *
-                    room.cols, // Thêm tổng số ghế từ thông tin phòng
+                totalSeats: room.rows * room.cols,
               );
             } catch (e) {
               print('Error processing showtime document ${doc.id}: $e');
@@ -118,8 +120,13 @@ class _CinemaBookingScreenState extends State<CinemaBookingScreen> {
           .whereType<Showtime>()
           .toList();
 
+      // **Lọc bỏ suất chiếu đã quá 1 giờ**
+      final filteredShowtimes = showtimes.where((showtime) {
+        return now.isBefore(showtime.startTime.add(const Duration(hours: 1)));
+      }).toList();
+
       // Lấy thông tin phim cho mỗi suất chiếu
-      final movieIds = showtimes.map((s) => s.movieId).toSet();
+      final movieIds = filteredShowtimes.map((s) => s.movieId).toSet();
       final movies = await Future.wait(
         movieIds.map((id) => _firestore.collection('movies').doc(id).get()),
       );
@@ -147,10 +154,11 @@ class _CinemaBookingScreenState extends State<CinemaBookingScreen> {
       }).toList();
 
       print('Found ${validMovies.length} valid movies');
-      print('Found ${showtimes.length} valid showtimes');
+      print(
+          'Found ${filteredShowtimes.length} valid showtimes (after filtering)');
 
       setState(() {
-        availableShowtimes = showtimes;
+        availableShowtimes = filteredShowtimes;
         moviesShowing = validMovies;
       });
     } catch (e) {
