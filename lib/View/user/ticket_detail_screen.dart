@@ -171,6 +171,8 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                           /// Thông tin suất chiếu
                           _buildInfoRow(
                               Icons.location_on, "Rạp", selectedCinema!.name),
+                          _buildInfoRow(Icons.location_city, "Địa chỉ",
+                              selectedCinema!.address),
                           _buildInfoRow(
                               Icons.meeting_room, "Phòng", selectedRoom!.name),
                           _buildInfoRow(Icons.schedule, "Suất",
@@ -260,18 +262,34 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, color: Colors.orangeAccent, size: 20),
           SizedBox(width: 8),
           Expanded(
-            child: Text(
-              "$label: $value",
-              style: TextStyle(
-                color: textColor,
-                fontSize: isBold ? 18 : 16,
-                fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+            child: RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: "$label: ",
+                    style: TextStyle(
+                      color: textColor,
+                      fontSize: isBold ? 18 : 16,
+                      fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+                  TextSpan(
+                    text: value,
+                    style: TextStyle(
+                      color: textColor,
+                      fontSize: isBold ? 18 : 16,
+                      fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+                ],
               ),
-              overflow: TextOverflow.ellipsis,
+              softWrap: true,
+              overflow: TextOverflow.visible,
             ),
           ),
         ],

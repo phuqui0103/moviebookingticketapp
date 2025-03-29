@@ -10,6 +10,7 @@ import '../../Model/Province.dart';
 import '../../Services/movie_service.dart';
 import '../../Services/showtime_service.dart';
 import '../../Services/province_service.dart';
+import '../../View/admin/showtime_tickets_screen.dart';
 
 class ShowtimeManagementScreen extends StatefulWidget {
   const ShowtimeManagementScreen({Key? key}) : super(key: key);
@@ -926,6 +927,27 @@ class _ShowtimeManagementScreenState extends State<ShowtimeManagementScreen> {
                     // Các nút hành động
                     Row(
                       children: [
+                        IconButton(
+                          icon: const Icon(Icons.confirmation_number,
+                              color: Colors.orange, size: 20),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ShowtimeTicketsScreen(
+                                  showtime: showtime,
+                                  movie: movie!,
+                                  room: room,
+                                  cinema: cinema,
+                                ),
+                              ),
+                            );
+                          },
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          tooltip: 'Xem thông tin vé đã đặt',
+                        ),
+                        const SizedBox(width: 12),
                         IconButton(
                           icon: const Icon(Icons.edit,
                               color: Colors.orange, size: 20),

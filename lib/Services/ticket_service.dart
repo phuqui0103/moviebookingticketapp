@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:movieticketbooking/Model/Ticket.dart';
 import 'package:movieticketbooking/Services/showtime_service.dart';
 import 'package:intl/intl.dart';
+import 'package:movieticketbooking/Model/Food.dart';
 
 class TicketService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -22,13 +23,13 @@ class TicketService {
 
         // 2. Tạo vé mới
         await transaction.set(
-          _ticketsCollection.doc(ticket.id),
+          _firestore.collection('tickets').doc(ticket.id),
           ticket.toJson(),
         );
       });
     } catch (e) {
       print('Error creating ticket: $e');
-      throw e;
+      rethrow;
     }
   }
 
@@ -53,7 +54,7 @@ class TicketService {
       await _firestore.collection('tickets').doc(ticketId).update(data);
     } catch (e) {
       print('Error updating ticket: $e');
-      throw e;
+      rethrow;
     }
   }
 
@@ -63,7 +64,7 @@ class TicketService {
       await _firestore.collection('tickets').doc(ticketId).delete();
     } catch (e) {
       print('Error deleting ticket: $e');
-      throw e;
+      rethrow;
     }
   }
 
@@ -283,6 +284,39 @@ class TicketService {
         'ticketCount': 0,
         'yearlyRevenue': {},
       };
+    }
+  }
+
+  Future<List<Ticket>> getTicketsByShowtimeId(String showtimeId) async {
+    try {
+      // Lấy danh sách vé từ collection tickets
+      final QuerySnapshot snapshot = await _firestore
+          .collection('tickets')
+          .where('showtime.id', isEqualTo: showtimeId)
+          .get();
+
+      return snapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        data['id'] = doc.id;
+        return Ticket.fromJson(data);
+      }).toList();
+    } catch (e) {
+      print('Error getting tickets: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<Food>> getFoodItems() async {
+    try {
+      final QuerySnapshot snapshot = await _firestore.collection('foods').get();
+      return snapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        data['id'] = doc.id;
+        return Food.fromJson(data);
+      }).toList();
+    } catch (e) {
+      print('Error getting food items: $e');
+      rethrow;
     }
   }
 }
