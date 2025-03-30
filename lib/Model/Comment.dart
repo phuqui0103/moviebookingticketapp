@@ -7,6 +7,7 @@ class Comment {
   final String content; // Nội dung bình luận
   final DateTime createdAt; // Thời gian bình luận
   final double rating; // Điểm đánh giá của người dùng
+  final String ticketId; // ID của vé
 
   const Comment({
     required this.id,
@@ -15,6 +16,7 @@ class Comment {
     required this.content,
     required this.createdAt,
     required this.rating,
+    required this.ticketId,
   });
 
   /// Chuyển đổi từ JSON sang Comment object
@@ -26,6 +28,7 @@ class Comment {
       content: json['content'] as String,
       createdAt: (json['createdAt'] as Timestamp).toDate(),
       rating: (json['rating'] as num).toDouble(),
+      ticketId: json['ticketId'] as String,
     );
   }
 
@@ -37,6 +40,7 @@ class Comment {
         'content': content,
         'createdAt': createdAt,
         'rating': rating,
+        'ticketId': ticketId,
       };
 
   Map<String, dynamic> toMap() {
@@ -47,6 +51,7 @@ class Comment {
       'content': content,
       'createdAt': Timestamp.fromDate(createdAt),
       'rating': rating,
+      'ticketId': ticketId,
     };
   }
 
@@ -67,6 +72,7 @@ class Comment {
       content: map['content'] ?? '',
       createdAt: parseCreatedAt(map['createdAt']),
       rating: (map['rating'] ?? 0.0).toDouble(),
+      ticketId: map['ticketId'] ?? '',
     );
   }
 }

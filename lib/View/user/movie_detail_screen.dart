@@ -37,6 +37,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
   late Movie _currentMovie;
   bool _canComment = false;
   String _commentMessage = '';
+  String _currentTicketId = '';
 
   @override
   void initState() {
@@ -62,13 +63,28 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
     }
 
     try {
-      // Lấy tất cả vé của người dùng cho phim này
+      // Kiểm tra xem người dùng đã comment cho phim này chưa
+      final commentSnapshot = await FirebaseFirestore.instance
+          .collection('comments')
+          .where('userId', isEqualTo: _auth.currentUser!.uid)
+          .where('movieId', isEqualTo: _currentMovie.id)
+          .get();
+
+      if (commentSnapshot.docs.isNotEmpty) {
+        setState(() {
+          _canComment = false;
+          _commentMessage = 'Bạn đã bình luận cho phim này';
+        });
+        return;
+      }
+
+      // Nếu chưa comment, kiểm tra xem có vé nào đã qua thời gian chiếu không
       final tickets =
           await _ticketService.getTicketsByUserId(_auth.currentUser!.uid).first;
 
-      // Kiểm tra xem có vé nào đã đến thời gian chiếu chưa
       final now = DateTime.now();
       bool hasEligibleTicket = false;
+      String ticketId = '';
 
       for (var ticket in tickets) {
         if (ticket.showtime.movieId == _currentMovie.id) {
@@ -82,18 +98,9 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
 
           // Nếu thời gian hiện tại đã qua thời gian chiếu
           if (now.isAfter(showDateTime)) {
-            // Kiểm tra xem người dùng đã comment chưa
-            final commentSnapshot = await FirebaseFirestore.instance
-                .collection('comments')
-                .where('userId', isEqualTo: _auth.currentUser!.uid)
-                .where('movieId', isEqualTo: _currentMovie.id)
-                .where('ticketId', isEqualTo: ticket.id)
-                .get();
-
-            if (commentSnapshot.docs.isEmpty) {
-              hasEligibleTicket = true;
-              break;
-            }
+            hasEligibleTicket = true;
+            ticketId = ticket.id;
+            break;
           }
         }
       }
@@ -103,6 +110,9 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
         _commentMessage = hasEligibleTicket
             ? 'Bạn có thể bình luận phim này'
             : 'Bạn chưa thể bình luận phim này';
+        if (hasEligibleTicket) {
+          _currentTicketId = ticketId;
+        }
       });
     } catch (e) {
       print('Error checking comment eligibility: $e');
@@ -242,11 +252,15 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
         content: _commentController.text.trim(),
         createdAt: DateTime.now(),
         rating: _selectedRating,
+        ticketId: _currentTicketId,
       );
 
       await _commentService.createComment(comment);
       _commentController.clear();
-      await _updateMovieRating();
+      setState(() {
+        _selectedRating = 5.0;
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Bình luận thành công'),
@@ -276,6 +290,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
+      resizeToAvoidBottomInset: true,
       backgroundColor: const Color(0xff252429),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -309,125 +324,126 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
           ),
 
           // Main Content
-          Column(
-            children: [
-              const SizedBox(height: 100),
-              // Movie Poster and Info
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Movie Poster
-                    Container(
-                      width: 190,
-                      height: 280,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.orange.withOpacity(0.2),
-                            blurRadius: 10,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: CustomImageWidget(
-                          imagePath: _currentMovie.imagePath,
-                          width: 190,
-                          height: 280,
+          SingleChildScrollView(
+            child: Column(
+              children: [
+                const SizedBox(height: 100),
+                // Movie Poster and Info
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Movie Poster
+                      Container(
+                        width: 190,
+                        height: 280,
+                        decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.orange.withOpacity(0.2),
+                              blurRadius: 10,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: CustomImageWidget(
+                            imagePath: _currentMovie.imagePath,
+                            width: 190,
+                            height: 280,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 20),
-                    // Movie Info
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _currentMovie.title,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 26,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 16),
-                          buildInfoBox("⏳ ${_currentMovie.duration}"),
-                          buildInfoBox("📅 ${_currentMovie.releaseDate}"),
-                          buildInfoBox(
-                              "⭐ ${_averageRating.toStringAsFixed(1)}/10"),
-                          const SizedBox(height: 20),
-                          ElevatedButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => TrailerScreen(
-                                    trailerUrl: _currentMovie.trailerUrl,
-                                  ),
-                                ),
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.orange,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 28,
-                                vertical: 14,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            child: const Text(
-                              "▶ Xem Trailer",
-                              style: TextStyle(
-                                color: Colors.black,
+                      const SizedBox(width: 20),
+                      // Movie Info
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _currentMovie.title,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 26,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 16),
+                            buildInfoBox("⏳ ${_currentMovie.duration}"),
+                            buildInfoBox("📅 ${_currentMovie.releaseDate}"),
+                            buildInfoBox(
+                                "⭐ ${_averageRating.toStringAsFixed(1)}/10"),
+                            const SizedBox(height: 20),
+                            ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => TrailerScreen(
+                                      trailerUrl: _currentMovie.trailerUrl,
+                                    ),
+                                  ),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.orange,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 28,
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              child: const Text(
+                                "▶ Xem Trailer",
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                // Tab Bar
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.3),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(20),
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-              // Tab Bar
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.3),
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(20),
+                  ),
+                  child: TabBar(
+                    controller: _tabController,
+                    labelColor: Colors.orange,
+                    unselectedLabelColor: Colors.white70,
+                    indicatorColor: Colors.transparent,
+                    labelStyle: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    unselectedLabelStyle: const TextStyle(fontSize: 16),
+                    tabs: const [
+                      Tab(text: "Giới thiệu"),
+                      Tab(text: "Đánh giá"),
+                    ],
                   ),
                 ),
-                child: TabBar(
-                  controller: _tabController,
-                  labelColor: Colors.orange,
-                  unselectedLabelColor: Colors.white70,
-                  indicatorColor: Colors.transparent,
-                  labelStyle: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  unselectedLabelStyle: const TextStyle(fontSize: 16),
-                  tabs: const [
-                    Tab(text: "Giới thiệu"),
-                    Tab(text: "Đánh giá"),
-                  ],
-                ),
-              ),
-              // Tab Content
-              Expanded(
-                child: Container(
+                // Tab Content
+                Container(
+                  height: MediaQuery.of(context).size.height - 300,
                   decoration: BoxDecoration(
                     color: Colors.black.withOpacity(0.3),
                     borderRadius: const BorderRadius.vertical(
@@ -442,11 +458,11 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
                     ],
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           // Bottom Button
-          if (_tabController.index == 0) // Only show when on introduction tab
+          if (_tabController.index == 0)
             Positioned(
               left: 16,
               right: 16,
@@ -593,31 +609,29 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
               top: Radius.circular(20),
             ),
           ),
-          child: Column(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              // Rating Number with Star Icon
               Row(
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.star, color: Colors.orange, size: 32),
+                  const Icon(
+                    Icons.star,
+                    color: Colors.orange,
+                    size: 24,
+                  ),
                   const SizedBox(width: 8),
                   Text(
-                    _averageRating.toStringAsFixed(1),
+                    '${_averageRating.toStringAsFixed(1)}/10',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const Text(
-                    '/10',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 24,
-                    ),
-                  ),
                 ],
               ),
-              const SizedBox(height: 8),
+              // Review Count
               Text(
                 '${_comments.length} đánh giá',
                 style: const TextStyle(
@@ -670,17 +684,15 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
                                     ),
                                   ),
                                   Row(
-                                    children: [
-                                      ...List.generate(5, (index) {
-                                        return Icon(
-                                          index < comment.rating
-                                              ? Icons.star
-                                              : Icons.star_border,
-                                          color: Colors.orange,
-                                          size: 16,
-                                        );
-                                      }),
-                                    ],
+                                    children: List.generate(10, (index) {
+                                      return Icon(
+                                        index < comment.rating
+                                            ? Icons.star
+                                            : Icons.star_border,
+                                        color: Colors.orange,
+                                        size: 14,
+                                      );
+                                    }),
                                   ),
                                 ],
                               ),
@@ -708,90 +720,92 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
                   },
                 ),
         ),
-        // Comment Input
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.2),
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(20),
+        // Comment Input - Only show if user can comment
+        if (_canComment)
+          Container(
+            padding: EdgeInsets.only(
+              left: 16,
+              right: 16,
+              top: 16,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.2),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Rating Stars
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(10, (index) {
+                    return Expanded(
+                      child: IconButton(
+                        icon: Icon(
+                          index < _selectedRating
+                              ? Icons.star
+                              : Icons.star_border,
+                          color: Colors.orange,
+                          size: 20,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _selectedRating = index + 1;
+                          });
+                        },
+                      ),
+                    );
+                  }),
+                ),
+                const SizedBox(height: 12),
+                // Comment Input
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(25),
+                          border: Border.all(
+                            color: Colors.orange.withOpacity(0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: TextField(
+                          controller: _commentController,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                          ),
+                          decoration: const InputDecoration(
+                            hintText: "Viết bình luận...",
+                            hintStyle: TextStyle(color: Colors.white54),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(vertical: 12),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.orange,
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.send, color: Colors.white),
+                        onPressed: _submitComment,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-          child: Column(
-            children: [
-              Text(
-                _commentMessage,
-                style: TextStyle(
-                  color: _canComment ? Colors.green : Colors.red,
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 12),
-              // Rating Stars
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(5, (index) {
-                  return IconButton(
-                    icon: Icon(
-                      index < _selectedRating ? Icons.star : Icons.star_border,
-                      color: Colors.orange,
-                      size: 28,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _selectedRating = index + 1;
-                      });
-                    },
-                  );
-                }),
-              ),
-              const SizedBox(height: 12),
-              // Comment Input
-              Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(25),
-                        border: Border.all(
-                          color: Colors.orange.withOpacity(0.3),
-                          width: 1,
-                        ),
-                      ),
-                      child: TextField(
-                        controller: _commentController,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                        ),
-                        decoration: const InputDecoration(
-                          hintText: "Viết bình luận...",
-                          hintStyle: TextStyle(color: Colors.white54),
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(vertical: 12),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.orange,
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    child: IconButton(
-                      icon: const Icon(Icons.send, color: Colors.white),
-                      onPressed: _canComment ? _submitComment : null,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-            ],
-          ),
-        ),
       ],
     );
   }
