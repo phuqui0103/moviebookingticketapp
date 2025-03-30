@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:movieticketbooking/Data/data.dart';
-import 'package:movieticketbooking/Model/Showtime.dart';
+import 'package:movieticketbooking/Model/Movie.dart';
 import 'package:movieticketbooking/View/user/showtime_picker_screen.dart';
-import '../../Model/Movie.dart';
 import 'trailer_screen.dart';
 import '../../Components/custom_image_widget.dart';
 

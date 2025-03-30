@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// 🔹 Model bình luận của người dùng
 class Comment {
   final String id; // ID của bình luận
   final String userId; // ID của người dùng
@@ -39,4 +38,26 @@ class Comment {
         'content': content,
         'rating': rating,
       };
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'userId': userId,
+      'movieId': movieId,
+      'userName': userName,
+      'content': content,
+      'rating': rating,
+    };
+  }
+
+  factory Comment.fromMap(Map<String, dynamic> map) {
+    return Comment(
+      id: map['id'] ?? '',
+      userId: map['userId'] ?? '',
+      movieId: map['movieId'] ?? '',
+      userName: map['userName'] ?? '',
+      content: map['content'] ?? '',
+      rating: (map['rating'] ?? 0.0).toDouble(),
+    );
+  }
 }
