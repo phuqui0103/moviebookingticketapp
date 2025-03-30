@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:movieticketbooking/Model/Comment.dart';
+import 'package:movieticketbooking/Model/User.dart';
 
 class CommentService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -7,12 +8,28 @@ class CommentService {
   // Tạo bình luận mới
   Future<void> createComment(Comment comment) async {
     try {
-      await _firestore
-          .collection('comments')
-          .doc(comment.id)
-          .set(comment.toJson());
+      print('Creating comment with data:'); // Debug log
+      print('ID: ${comment.id}'); // Debug log
+      print('MovieID: ${comment.movieId}'); // Debug log
+      print('Content: ${comment.content}'); // Debug log
+      print('CreatedAt: ${comment.createdAt}'); // Debug log
+
+      final commentData = {
+        'id': comment.id,
+        'userId': comment.userId,
+        'movieId': comment.movieId,
+        'content': comment.content,
+        'createdAt': Timestamp.fromDate(comment.createdAt),
+        'rating': comment.rating,
+      };
+
+      print('Saving comment data to Firestore: $commentData'); // Debug log
+
+      await _firestore.collection('comments').doc(comment.id).set(commentData);
+
+      print('Comment saved successfully'); // Debug log
     } catch (e) {
-      print('Error creating comment: $e');
+      print('Error creating comment: $e'); // Debug log
       throw e;
     }
   }
@@ -23,7 +40,7 @@ class CommentService {
       DocumentSnapshot doc =
           await _firestore.collection('comments').doc(commentId).get();
       if (doc.exists) {
-        return Comment.fromJson(doc.data() as Map<String, dynamic>);
+        return Comment.fromMap(doc.data() as Map<String, dynamic>);
       }
       return null;
     } catch (e) {
@@ -57,22 +74,33 @@ class CommentService {
   Stream<List<Comment>> getAllComments() {
     return _firestore.collection('comments').snapshots().map((snapshot) {
       return snapshot.docs.map((doc) {
-        return Comment.fromJson(doc.data());
+        return Comment.fromMap(doc.data());
       }).toList();
     });
   }
 
   // Lấy danh sách bình luận theo phim
   Stream<List<Comment>> getCommentsByMovie(String movieId) {
+    print('Fetching comments for movie: $movieId');
     return _firestore
         .collection('comments')
         .where('movieId', isEqualTo: movieId)
-        .orderBy('timestamp', descending: true)
+        .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        return Comment.fromJson(doc.data());
-      }).toList();
+      print('Received ${snapshot.docs.length} comments from Firestore');
+      final comments = <Comment>[];
+      for (var doc in snapshot.docs) {
+        try {
+          print('Processing comment data: ${doc.data()}');
+          comments.add(Comment.fromMap(doc.data()));
+        } catch (e) {
+          print('Error parsing comment ${doc.id}: $e');
+          // Skip invalid comments instead of breaking the entire stream
+          continue;
+        }
+      }
+      return comments;
     });
   }
 
@@ -81,11 +109,11 @@ class CommentService {
     return _firestore
         .collection('comments')
         .where('userId', isEqualTo: userId)
-        .orderBy('timestamp', descending: true)
+        .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
       return snapshot.docs.map((doc) {
-        return Comment.fromJson(doc.data());
+        return Comment.fromMap(doc.data());
       }).toList();
     });
   }
@@ -94,13 +122,28 @@ class CommentService {
   Stream<List<Comment>> getLatestComments({int limit = 10}) {
     return _firestore
         .collection('comments')
-        .orderBy('timestamp', descending: true)
+        .orderBy('createdAt', descending: true)
         .limit(limit)
         .snapshots()
         .map((snapshot) {
       return snapshot.docs.map((doc) {
-        return Comment.fromJson(doc.data());
+        return Comment.fromMap(doc.data());
       }).toList();
     });
+  }
+
+  // Lấy thông tin người dùng cho một comment
+  Future<User?> getUserForComment(String userId) async {
+    try {
+      DocumentSnapshot userDoc =
+          await _firestore.collection('users').doc(userId).get();
+      if (userDoc.exists) {
+        return User.fromJson(userDoc.data() as Map<String, dynamic>);
+      }
+      return null;
+    } catch (e) {
+      print('Error getting user for comment: $e');
+      return null;
+    }
   }
 }

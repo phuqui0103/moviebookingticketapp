@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:movieticketbooking/View/user/showtime_picker_screen.dart';
 import '../../Model/Movie.dart';
 import '../../Model/Comment.dart';
+import '../../Model/Ticket.dart';
+import '../../Model/User.dart' as app_user;
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' as auth;
 import '../../Services/comment_service.dart';
+import '../../Services/ticket_service.dart';
 import 'trailer_screen.dart';
 import '../../Components/custom_image_widget.dart';
 
@@ -24,13 +27,16 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _commentController = TextEditingController();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final auth.FirebaseAuth _auth = auth.FirebaseAuth.instance;
   final CommentService _commentService = CommentService();
+  final TicketService _ticketService = TicketService();
   List<Comment> _comments = [];
   bool _isLoading = false;
   double _averageRating = 10.0;
   double _selectedRating = 5.0;
   late Movie _currentMovie;
+  bool _canComment = false;
+  String _commentMessage = '';
 
   @override
   void initState() {
@@ -38,41 +44,131 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
     _tabController = TabController(length: 2, vsync: this);
     _currentMovie = widget.movie;
     _loadComments();
+    _checkCommentEligibility();
+
+    // Add listener for tab changes
+    _tabController.addListener(() {
+      setState(() {}); // Rebuild UI when tab changes
+    });
+  }
+
+  Future<void> _checkCommentEligibility() async {
+    if (_auth.currentUser == null) {
+      setState(() {
+        _canComment = false;
+        _commentMessage = 'Vui lòng đăng nhập để bình luận';
+      });
+      return;
+    }
+
+    try {
+      // Lấy tất cả vé của người dùng cho phim này
+      final tickets =
+          await _ticketService.getTicketsByUserId(_auth.currentUser!.uid).first;
+
+      // Kiểm tra xem có vé nào đã đến thời gian chiếu chưa
+      final now = DateTime.now();
+      bool hasEligibleTicket = false;
+
+      for (var ticket in tickets) {
+        if (ticket.showtime.movieId == _currentMovie.id) {
+          final showDateTime = DateTime(
+            ticket.showtime.startTime.year,
+            ticket.showtime.startTime.month,
+            ticket.showtime.startTime.day,
+            ticket.showtime.startTime.hour,
+            ticket.showtime.startTime.minute,
+          );
+
+          // Nếu thời gian hiện tại đã qua thời gian chiếu
+          if (now.isAfter(showDateTime)) {
+            // Kiểm tra xem người dùng đã comment chưa
+            final commentSnapshot = await FirebaseFirestore.instance
+                .collection('comments')
+                .where('userId', isEqualTo: _auth.currentUser!.uid)
+                .where('movieId', isEqualTo: _currentMovie.id)
+                .where('ticketId', isEqualTo: ticket.id)
+                .get();
+
+            if (commentSnapshot.docs.isEmpty) {
+              hasEligibleTicket = true;
+              break;
+            }
+          }
+        }
+      }
+
+      setState(() {
+        _canComment = hasEligibleTicket;
+        _commentMessage = hasEligibleTicket
+            ? 'Bạn có thể bình luận phim này'
+            : 'Bạn chưa thể bình luận phim này';
+      });
+    } catch (e) {
+      print('Error checking comment eligibility: $e');
+      setState(() {
+        _canComment = false;
+        _commentMessage = 'Có lỗi xảy ra khi kiểm tra điều kiện bình luận';
+      });
+    }
   }
 
   Future<void> _loadComments() async {
+    print('Loading comments for movie: ${_currentMovie.id}'); // Debug log
     setState(() {
       _isLoading = true;
     });
+
     try {
-      final comments =
-          await _commentService.getCommentsByMovie(_currentMovie.id).first;
-
-      if (!mounted) return;
-
-      setState(() {
-        _comments = comments;
-        if (_comments.isNotEmpty) {
-          _averageRating =
-              _comments.map((c) => c.rating).reduce((a, b) => a + b) /
-                  _comments.length;
-        } else {
-          _averageRating = 10.0;
-        }
-        _isLoading = false;
-      });
-    } catch (e) {
-      print('Error loading comments: $e');
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Không thể tải bình luận. Vui lòng thử lại sau.'),
-          backgroundColor: Colors.red,
-        ),
+      _commentService.getCommentsByMovie(_currentMovie.id).listen(
+        (comments) {
+          print('Received ${comments.length} comments'); // Debug log
+          if (mounted) {
+            setState(() {
+              _comments = comments;
+              if (_comments.isNotEmpty) {
+                _averageRating =
+                    _comments.map((c) => c.rating).reduce((a, b) => a + b) /
+                        _comments.length;
+                print('Average rating: $_averageRating'); // Debug log
+                print(
+                    'First comment content: ${_comments.first.content}'); // Debug log
+              } else {
+                _averageRating = 10.0;
+                print('No comments found'); // Debug log
+              }
+              _isLoading = false;
+            });
+          }
+        },
+        onError: (error) {
+          print('Error in comment stream: $error'); // Debug log
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Không thể tải bình luận: $error'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        },
       );
+    } catch (e) {
+      print('Error setting up comment stream: $e'); // Debug log
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Lỗi khi tải bình luận: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -117,13 +213,23 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
     }
   }
 
-  Future<void> _addComment() async {
-    if (_commentController.text.trim().isEmpty) return;
-
-    final user = _auth.currentUser;
-    if (user == null) {
+  Future<void> _submitComment() async {
+    if (_commentController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng đăng nhập để bình luận')),
+        const SnackBar(
+          content: Text('Vui lòng nhập nội dung bình luận'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (!_canComment) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_commentMessage),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
@@ -131,28 +237,36 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
     try {
       final comment = Comment(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
-        userId: user.uid,
-        userName: user.displayName ?? 'Anonymous',
-        content: _commentController.text.trim(),
-        rating: _selectedRating,
-        timestamp: DateTime.now(),
+        userId: _auth.currentUser!.uid,
         movieId: _currentMovie.id,
+        content: _commentController.text.trim(),
+        createdAt: DateTime.now(),
+        rating: _selectedRating,
       );
 
       await _commentService.createComment(comment);
-      await _updateMovieRating();
       _commentController.clear();
-      _loadComments();
-    } catch (e) {
-      print('Error adding comment: $e');
+      await _updateMovieRating();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Có lỗi xảy ra khi thêm bình luận')),
+        const SnackBar(
+          content: Text('Bình luận thành công'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      print('Error submitting comment: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Có lỗi xảy ra khi gửi bình luận'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
 
   @override
   void dispose() {
+    _tabController.removeListener(() {}); // Remove listener when disposing
     _tabController.dispose();
     _commentController.dispose();
     super.dispose();
@@ -332,51 +446,52 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
             ],
           ),
           // Bottom Button
-          Positioned(
-            left: 16,
-            right: 16,
-            bottom: 16,
-            child: GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        ShowtimePickerScreen(movie: _currentMovie),
-                  ),
-                );
-              },
-              child: Container(
-                height: 56,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.orange,
-                      Colors.orange.shade700,
+          if (_tabController.index == 0) // Only show when on introduction tab
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 16,
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          ShowtimePickerScreen(movie: _currentMovie),
+                    ),
+                  );
+                },
+                child: Container(
+                  height: 56,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.orange,
+                        Colors.orange.shade700,
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.orange.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
                     ],
                   ),
-                  borderRadius: BorderRadius.circular(15),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.orange.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: const Center(
-                  child: Text(
-                    "Đặt Vé",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                  child: const Center(
+                    child: Text(
+                      "Đặt Vé",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -483,25 +598,28 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
-                    Icons.star,
-                    color: Colors.orange,
-                    size: 32,
-                  ),
+                  const Icon(Icons.star, color: Colors.orange, size: 32),
                   const SizedBox(width: 8),
                   Text(
                     _averageRating.toStringAsFixed(1),
                     style: const TextStyle(
+                      color: Colors.white,
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                    ),
+                  ),
+                  const Text(
+                    '/10',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 24,
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 8),
               Text(
-                "${_comments.length} đánh giá",
+                '${_comments.length} đánh giá',
                 style: const TextStyle(
                   color: Colors.white70,
                   fontSize: 16,
@@ -510,29 +628,21 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
             ],
           ),
         ),
-        // Reviews List
+        // Comments List
         Expanded(
           child: _isLoading
               ? const Center(
-                  child: CircularProgressIndicator(
-                    color: Colors.orange,
-                  ),
-                )
-              : _comments.isEmpty
-                  ? const Center(
-                      child: Text(
-                        "Chưa có đánh giá nào",
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 16,
-                        ),
-                      ),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _comments.length,
-                      itemBuilder: (context, index) {
-                        final comment = _comments[index];
+                  child: CircularProgressIndicator(color: Colors.orange))
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _comments.length,
+                  itemBuilder: (context, index) {
+                    final comment = _comments[index];
+                    return FutureBuilder<app_user.User?>(
+                      future: _commentService.getUserForComment(comment.userId),
+                      builder: (context, userSnapshot) {
+                        final userName =
+                            userSnapshot.data?.fullName ?? 'Người dùng';
                         return Container(
                           margin: const EdgeInsets.only(bottom: 12),
                           padding: const EdgeInsets.all(16),
@@ -552,11 +662,11 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    comment.userName,
+                                    userName,
                                     style: const TextStyle(
-                                      color: Colors.orange,
-                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
                                       fontSize: 16,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                   Row(
@@ -578,14 +688,13 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
                               Text(
                                 comment.content,
                                 style: const TextStyle(
-                                  color: Colors.white,
+                                  color: Colors.white70,
                                   fontSize: 14,
-                                  height: 1.5,
                                 ),
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                _formatTimestamp(comment.timestamp),
+                                _formatTimestamp(comment.createdAt),
                                 style: TextStyle(
                                   color: Colors.white.withOpacity(0.5),
                                   fontSize: 12,
@@ -595,9 +704,11 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
                           ),
                         );
                       },
-                    ),
+                    );
+                  },
+                ),
         ),
-        // Comment Input with Rating
+        // Comment Input
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -608,6 +719,14 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
           ),
           child: Column(
             children: [
+              Text(
+                _commentMessage,
+                style: TextStyle(
+                  color: _canComment ? Colors.green : Colors.red,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 12),
               // Rating Stars
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -648,7 +767,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
                           fontSize: 16,
                         ),
                         decoration: const InputDecoration(
-                          hintText: "Viết đánh giá...",
+                          hintText: "Viết bình luận...",
                           hintStyle: TextStyle(color: Colors.white54),
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.symmetric(vertical: 12),
@@ -664,11 +783,12 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
                     ),
                     child: IconButton(
                       icon: const Icon(Icons.send, color: Colors.white),
-                      onPressed: _addComment,
+                      onPressed: _canComment ? _submitComment : null,
                     ),
                   ),
                 ],
               ),
+              const SizedBox(height: 12),
             ],
           ),
         ),
@@ -681,13 +801,25 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
     final difference = now.difference(timestamp);
 
     if (difference.inDays > 0) {
-      return '${difference.inDays} ngày trước';
+      if (difference.inDays == 1) {
+        return 'Hôm qua';
+      } else if (difference.inDays < 7) {
+        return '${difference.inDays} ngày trước';
+      } else if (difference.inDays < 30) {
+        final weeks = (difference.inDays / 7).floor();
+        return '$weeks tuần trước';
+      } else if (difference.inDays < 365) {
+        final months = (difference.inDays / 30).floor();
+        return '$months tháng trước';
+      } else {
+        return '${timestamp.day.toString().padLeft(2, '0')}/${timestamp.month.toString().padLeft(2, '0')}/${timestamp.year}';
+      }
     } else if (difference.inHours > 0) {
       return '${difference.inHours} giờ trước';
     } else if (difference.inMinutes > 0) {
       return '${difference.inMinutes} phút trước';
     } else {
-      return 'Vừa nãy';
+      return 'Vừa xong';
     }
   }
 }
