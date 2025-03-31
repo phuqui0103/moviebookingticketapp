@@ -60,6 +60,11 @@ class UserService {
     return hash.toString();
   }
 
+  // Hàm băm mật khẩu public
+  String hashPassword(String password) {
+    return _hashPassword(password);
+  }
+
   // Kiểm tra mật khẩu hợp lệ
   Map<String, dynamic> isPasswordValid(String password) {
     if (password.length < 8) {

@@ -8,6 +8,7 @@ import 'package:movieticketbooking/View/user/register_screen.dart';
 import 'firebase_options.dart';
 import 'package:provider/provider.dart';
 import 'Providers/user_provider.dart';
+import 'Providers/ticket_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,6 +26,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => TicketProvider()),
       ],
       child: const MyApp(),
     ),
@@ -48,8 +50,8 @@ class MyApp extends StatelessWidget {
               fontSize: 18, color: const Color.fromARGB(255, 184, 49, 49)),
         ),
       ),
-      //home: const SplashScreen(),
-      home: AdminMainScreen(),
+      home: const SplashScreen(),
+      //home: AdminMainScreen(),
       //home: DataImportScreen(),
       //home: const RegisterScreen(),
     );

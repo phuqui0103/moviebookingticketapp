@@ -7,6 +7,8 @@ import 'ticket_detail_screen.dart'; // Chứa danh sách phim & phòng chiếu
 import '../../Services/ticket_service.dart';
 import '../../Services/movie_service.dart';
 import '../../Components/custom_image_widget.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'login_screen.dart';
 
 class MyTicketListScreen extends StatefulWidget {
   final String userId;
@@ -28,6 +30,7 @@ class _MyTicketListScreenState extends State<MyTicketListScreen>
 
   final TicketService _ticketService = TicketService();
   final MovieService _movieService = MovieService();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   @override
   void initState() {

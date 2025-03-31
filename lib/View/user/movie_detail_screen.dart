@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:movieticketbooking/View/user/showtime_picker_screen.dart';
 import '../../Model/Movie.dart';
 import '../../Model/Comment.dart';
-import '../../Model/Ticket.dart';
 import '../../Model/User.dart' as app_user;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
@@ -252,6 +251,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen>
         content: _commentController.text.trim(),
         createdAt: DateTime.now(),
         rating: _selectedRating,
+        userName: _auth.currentUser!.displayName ?? 'Người dùng',
         ticketId: _currentTicketId,
       );
 

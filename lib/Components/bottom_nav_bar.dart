@@ -22,7 +22,6 @@ class BottomNavBar extends StatefulWidget {
 class _BottomNavBarState extends State<BottomNavBar> {
   int currentIndex = 0;
   bool isBottomNavBarVisible = true;
-  bool isLoading = true;
   List<Ticket> userTickets = [];
   final TicketService _ticketService = TicketService();
 
@@ -33,9 +32,9 @@ class _BottomNavBarState extends State<BottomNavBar> {
 
   setBottomBarIndex(index) {
     final userProvider = context.read<UserProvider>();
-    if (index == 4 && userProvider.currentUser == null) {
-      // Nếu nhấn vào tab Profile và chưa đăng nhập
-      Navigator.push(
+    if ((index == 3 || index == 4) && userProvider.currentUser == null) {
+      // Nếu nhấn vào tab Vé của tôi hoặc Profile và chưa đăng nhập
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (context) => LoginScreen(),

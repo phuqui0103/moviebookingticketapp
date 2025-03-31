@@ -1,9 +1,10 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import '../../../Components/movie_card_widget.dart';
-import '../../Components/backgroud_widget.dart';
+import '../../../Components/backgroud_widget.dart';
 import '../../Model/Movie.dart';
 import '../../Services/movie_service.dart';
+import 'chat_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -28,16 +29,16 @@ class _HomeScreenState extends State<HomeScreen> {
   void _loadMovies() {
     _movieService.getNowShowingMovies().listen(
       (movies) async {
+        setState(() {
+          _showingMovies = movies;
+          _isLoading = false;
+        });
+
         // Cập nhật rating cho từng phim
         for (var movie in movies) {
           final ratingData = await Movie.calculateRating(movie.id);
           await movie.updateReviewCount();
         }
-
-        setState(() {
-          _showingMovies = movies;
-          _isLoading = false;
-        });
       },
       onError: (error) {
         print('Error loading movies: $error');
@@ -88,34 +89,65 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Welcome text
+                  // Welcome text and Chat button
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Chào bạn!',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            shadows: [
-                              Shadow(
-                                color: Colors.orange.withOpacity(0.3),
-                                blurRadius: 10,
-                                offset: const Offset(0, 2),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Chào bạn!',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                  shadows: [
+                                    Shadow(
+                                      color: Colors.orange.withOpacity(0.3),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Hôm nay bạn muốn xem phim gì?',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Hôm nay bạn muốn xem phim gì?',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w500,
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(25),
+                            border: Border.all(
+                              color: Colors.orange.withOpacity(0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: IconButton(
+                            icon: const Icon(
+                              Icons.chat_bubble_outline,
+                              color: Colors.orange,
+                            ),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const ChatScreen(),
+                                ),
+                              );
+                            },
                           ),
                         ),
                       ],

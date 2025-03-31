@@ -84,10 +84,10 @@ class _MovieListScreenState extends State<MovieListScreen> {
       elevation: 0,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back, color: Colors.white),
-        onPressed: () => Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => BottomNavBar()),
-        ),
+        onPressed: () {
+          Navigator.push(
+              context, MaterialPageRoute(builder: (context) => BottomNavBar()));
+        },
       ),
     );
   }

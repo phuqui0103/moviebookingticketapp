@@ -211,4 +211,34 @@ class User {
 
     return data;
   }
+
+  User copyWith({
+    String? id,
+    String? fullName,
+    String? phoneNumber,
+    String? email,
+    String? hashedPassword,
+    DateTime? birthDate,
+    String? gender,
+    String? province,
+    String? district,
+    String? status,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return User(
+      id: id ?? this.id,
+      fullName: fullName ?? this.fullName,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      email: email ?? this.email,
+      hashedPassword: hashedPassword ?? this.hashedPassword,
+      birthDate: birthDate ?? this.birthDate,
+      gender: gender ?? this.gender,
+      province: province ?? this.province,
+      district: district ?? this.district,
+      status: status ?? this.status,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
 }

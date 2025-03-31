@@ -199,21 +199,19 @@ class _MovieCardWidgetState extends State<MovieCardWidget> {
   Widget buildRating() => Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          ...List.generate(5, (index) {
-            return Icon(
-              index < (_rating / 2).round() ? Icons.star : Icons.star_border,
-              color: Colors.orangeAccent,
-              size: 16,
-            );
-          }),
-          const SizedBox(width: 8),
           Text(
-            _rating.toStringAsFixed(1),
+            '${_rating.toStringAsFixed(1)}/10',
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: Colors.orangeAccent,
             ),
+          ),
+          const SizedBox(width: 4),
+          const Icon(
+            Icons.star,
+            color: Colors.orangeAccent,
+            size: 16,
           ),
         ],
       );
