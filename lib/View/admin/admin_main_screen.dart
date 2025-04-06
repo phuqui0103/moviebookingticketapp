@@ -6,6 +6,7 @@ import 'package:movieticketbooking/View/admin/movie_management_screen.dart';
 import 'package:movieticketbooking/View/admin/revenue_statistics_screen.dart';
 import 'package:movieticketbooking/View/admin/showtime_management_screen.dart';
 import 'package:movieticketbooking/View/admin/user_management_screen.dart';
+import 'package:movieticketbooking/View/admin/comment_management_screen.dart';
 
 import '../../Components/sidebar_menu.dart';
 
@@ -21,18 +22,20 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
     "Quản lý phim",
     "Quản lý suất chiếu",
     "Quản lý rạp và phòng",
-    "Thống kê doanh thu",
     "Quản lý người dùng ",
     "Quản lý đồ uống",
+    "Quản lý bình luận",
+    "Thống kê doanh thu",
   ];
 
   final List<Widget> _screens = [
     MovieManagementScreen(),
     ShowtimeManagementScreen(),
     CinemaAndRoomManagementScreen(),
-    RevenueStatisticsScreen(),
     UserManagementScreen(),
     FoodManagementScreen(),
+    CommentManagementScreen(),
+    RevenueStatisticsScreen(),
   ];
 
   @override

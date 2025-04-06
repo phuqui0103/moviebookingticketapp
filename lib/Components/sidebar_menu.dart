@@ -76,11 +76,12 @@ class _SidebarMenuState extends State<SidebarMenu> {
                       Icons.schedule_rounded, "Quản lý suất chiếu", 1),
                   _buildMenuItem(Icons.house, "Quản lý rạp và phòng", 2),
                   _buildMenuItem(
-                      Icons.bar_chart_rounded, "Thống kê doanh thu", 3),
+                      Icons.people_alt_rounded, "Quản lý người dùng", 3),
                   _buildMenuItem(
-                      Icons.people_alt_rounded, "Quản lý người dùng", 4),
+                      Icons.restaurant_rounded, "Quản lý đồ uống", 4),
+                  _buildMenuItem(Icons.comment_rounded, "Quản lý bình luận", 5),
                   _buildMenuItem(
-                      Icons.restaurant_rounded, "Quản lý đồ uống", 5),
+                      Icons.bar_chart_rounded, "Thống kê doanh thu", 6),
                 ],
               ),
             ),
