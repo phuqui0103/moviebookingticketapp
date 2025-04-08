@@ -19,6 +19,30 @@ class _ChatBoxState extends State<ChatBox> {
   List<Map<String, dynamic>> _messages = [];
 
   @override
+  void initState() {
+    super.initState();
+    _loadMessages();
+  }
+
+  void _loadMessages() {
+    _chatService.getMessages().listen((snapshot) {
+      setState(() {
+        _messages = snapshot.docs.map((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          print('Message data: $data'); // Debug log
+          return {
+            'content': data['content'] ?? '',
+            'userName':
+                data['userName'] ?? (data['userId'] == 'bot' ? 'AI' : 'Bạn'),
+            'userId': data['userId'] ?? 'user',
+          };
+        }).toList();
+        print('Messages loaded: $_messages'); // Debug log
+      });
+    });
+  }
+
+  @override
   void dispose() {
     _messageController.dispose();
     _chatService.clearMessages();
@@ -30,24 +54,7 @@ class _ChatBoxState extends State<ChatBox> {
 
     try {
       final message = _messageController.text.trim();
-      setState(() {
-        _messages.insert(0, {
-          'content': message,
-          'userName': _auth.currentUser?.displayName ?? 'Người dùng',
-          'userId': _auth.currentUser?.uid,
-        });
-      });
-
-      final response = await _chatService.sendMessage(message);
-
-      setState(() {
-        _messages.insert(0, {
-          'content': response,
-          'userName': 'Hệ thống',
-          'userId': 'system',
-        });
-      });
-
+      await _chatService.sendMessage(message);
       _messageController.clear();
     } catch (e) {
       print('Error sending message: $e');
@@ -86,11 +93,11 @@ class _ChatBoxState extends State<ChatBox> {
                 itemCount: _messages.length,
                 itemBuilder: (context, index) {
                   final message = _messages[index];
-                  final isSystem = message['userId'] == 'system';
+                  final isBot = message['userId'] == 'bot';
 
                   return Align(
                     alignment:
-                        isSystem ? Alignment.centerLeft : Alignment.centerRight,
+                        isBot ? Alignment.centerLeft : Alignment.centerRight,
                     child: Container(
                       margin: const EdgeInsets.symmetric(
                         vertical: 4,
@@ -101,7 +108,7 @@ class _ChatBoxState extends State<ChatBox> {
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: isSystem
+                        color: isBot
                             ? Colors.orange.withOpacity(0.2)
                             : Colors.white.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(15),
@@ -113,7 +120,7 @@ class _ChatBoxState extends State<ChatBox> {
                           Text(
                             message['userName'] ?? 'Người dùng',
                             style: TextStyle(
-                              color: isSystem ? Colors.orange : Colors.white70,
+                              color: isBot ? Colors.orange : Colors.white70,
                               fontSize: 12,
                             ),
                           ),
@@ -125,7 +132,7 @@ class _ChatBoxState extends State<ChatBox> {
                               fontSize: 14,
                             ),
                           ),
-                          if (isSystem &&
+                          if (isBot &&
                               message['content'] ==
                                   'Hôm nay có phim gì hay?') ...[
                             const SizedBox(height: 8),
@@ -151,7 +158,7 @@ class _ChatBoxState extends State<ChatBox> {
                               ),
                             ),
                           ],
-                          if (isSystem &&
+                          if (isBot &&
                               message['content'] == 'Xem vé đã đặt ở đâu?') ...[
                             const SizedBox(height: 8),
                             ElevatedButton(
@@ -237,6 +244,7 @@ class _ChatBoxState extends State<ChatBox> {
                             border: InputBorder.none,
                             contentPadding: EdgeInsets.symmetric(vertical: 8),
                           ),
+                          onSubmitted: (_) => _sendMessage(),
                         ),
                       ),
                     ),

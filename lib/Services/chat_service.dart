@@ -1,21 +1,31 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart' as auth;
+import 'package:firebase_auth/firebase_auth.dart';
 import 'movie_service.dart';
-import '../Model/Movie.dart';
+import 'ai_service.dart';
 
 class ChatService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final auth.FirebaseAuth _auth = auth.FirebaseAuth.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   final MovieService _movieService = MovieService();
+  final AIService _aiService = AIService();
 
   // Danh sách các từ khóa và câu trả lời tự động
   final Map<String, String> _autoResponses = {
     'giá vé':
-        'Giá vé phim từ 50.000đ - 100.000đ tùy theo suất chiếu và loại ghế.',
+        'Giá vé phim từ 50.000đ - 150.000đ tùy theo suất chiếu và loại ghế:\n\n' +
+            '• Ghế thường: 50.000đ - 80.000đ\n' +
+            '• Ghế VIP: 100.000đ - 120.000đ\n' +
+            '• Ghế đôi: 150.000đ\n\n' +
+            'Bạn có thể xem chi tiết giá vé khi chọn suất chiếu.',
     'giờ chiếu':
         'Các suất chiếu thường từ 10:00 - 22:00. Vui lòng kiểm tra lịch chiếu cụ thể cho từng phim.',
-    'đặt vé':
-        'Bạn có thể đặt vé trực tiếp tại rạp hoặc đặt online qua ứng dụng.',
+    'đặt vé': 'Để đặt vé online, bạn cần thực hiện các bước sau:\n\n' +
+        '1. Chọn phim và suất chiếu phù hợp\n' +
+        '2. Chọn ghế theo sơ đồ rạp\n' +
+        '3. Xác nhận thông tin cá nhân\n' +
+        '4. Chọn phương thức thanh toán\n' +
+        '5. Nhận mã vé qua email\n\n' +
+        'Lưu ý: Vui lòng đến rạp trước 15 phút để đổi vé.',
     'hủy vé':
         'Vé có thể được hủy trước 24h so với thời gian chiếu. Vui lòng liên hệ hotline để được hỗ trợ.',
     'thanh toán':
@@ -29,6 +39,21 @@ class ChatService {
     'thành viên':
         'Đăng ký thành viên để nhận nhiều ưu đãi đặc biệt và tích điểm khi mua vé.',
     'hotline': 'Hotline hỗ trợ: 1900xxxx. Thời gian làm việc: 8:00 - 22:00.',
+    'phim':
+        'Bạn muốn xem thông tin về phim nào? Tôi có thể giúp bạn tìm hiểu về:\n\n' +
+            '• Phim đang chiếu\n' +
+            '• Thông tin chi tiết phim\n' +
+            '• Lịch chiếu\n' +
+            '• Giá vé',
+    'vé': 'Bạn cần hỗ trợ gì về vé?\n\n' +
+        '• Đặt vé\n' +
+        '• Hủy vé\n' +
+        '• Xem vé đã đặt\n' +
+        '• Giá vé',
+    'lịch': 'Bạn muốn xem lịch chiếu của phim nào? Tôi có thể giúp bạn:\n\n' +
+        '• Xem lịch chiếu theo ngày\n' +
+        '• Xem lịch chiếu theo phim\n' +
+        '• Xem lịch chiếu theo rạp',
   };
 
   // Tìm câu trả lời tự động dựa trên nội dung tin nhắn
@@ -68,102 +93,67 @@ class ChatService {
   }
 
   // Gửi tin nhắn và xử lý trả lời tự động
-  Future<String> sendMessage(String content) async {
+  Future<void> sendMessage(String content) async {
     try {
-      final user = auth.FirebaseAuth.instance.currentUser;
-      if (user == null) throw Exception('User not logged in');
+      final user = _auth.currentUser;
+      if (user == null) return;
 
-      // Gửi tin nhắn của người dùng
+      final sessionId = '${user.uid}_${DateTime.now().millisecondsSinceEpoch}';
+
+      // Lưu tin nhắn của người dùng
       await _firestore.collection('messages').add({
-        'content': content,
         'userId': user.uid,
         'userName': user.displayName ?? 'Người dùng',
+        'content': content,
         'timestamp': FieldValue.serverTimestamp(),
-        'sessionId':
-            user.uid + DateTime.now().millisecondsSinceEpoch.toString(),
+        'sessionId': sessionId,
       });
 
-      // Xử lý câu trả lời dựa trên nội dung tin nhắn
-      String response = '';
-      if (content.toLowerCase().contains('phim')) {
-        response = await _getNowShowingMovies();
-      } else if (content.toLowerCase().contains('vé')) {
-        response = 'Xem vé đã đặt ở đâu?';
-      } else if (content.toLowerCase().contains('giá')) {
-        response =
-            'Giá vé phim từ 50.000đ - 150.000đ tùy theo suất chiếu và loại ghế:\n\n' +
-                '• Ghế thường: 50.000đ - 80.000đ\n' +
-                '• Ghế VIP: 100.000đ - 120.000đ\n' +
-                '• Ghế đôi: 150.000đ\n\n' +
-                'Bạn có thể xem chi tiết giá vé khi chọn suất chiếu.';
-      } else if (content.toLowerCase().contains('cách đặt')) {
-        response = 'Để đặt vé online, bạn cần thực hiện các bước sau:\n\n' +
-            '1. Chọn phim và suất chiếu phù hợp\n' +
-            '2. Chọn ghế theo sơ đồ rạp\n' +
-            '3. Xác nhận thông tin cá nhân\n' +
-            '4. Chọn phương thức thanh toán\n' +
-            '5. Nhận mã vé qua email\n\n' +
-            'Lưu ý: Vui lòng đến rạp trước 15 phút để đổi vé.';
-      } else {
-        response =
-            'Xin lỗi, tôi không hiểu câu hỏi của bạn. Bạn có thể hỏi về:\n\n' +
-                '• Phim đang chiếu\n' +
-                '• Vé đã đặt\n' +
-                '• Giá vé\n' +
-                '• Cách đặt vé online';
-      }
+      // Gọi AI để lấy phản hồi
+      final response = await _aiService.getAnswer(content);
 
-      // Gửi câu trả lời của hệ thống
+      // Lưu phản hồi của bot
       await _firestore.collection('messages').add({
+        'userId': 'bot',
+        'userName': 'Trợ lý ảo',
         'content': response,
-        'userId': 'system',
-        'userName': 'Hệ thống',
         'timestamp': FieldValue.serverTimestamp(),
-        'sessionId':
-            user.uid + DateTime.now().millisecondsSinceEpoch.toString(),
+        'sessionId': sessionId,
       });
-
-      return response;
     } catch (e) {
       print('Error sending message: $e');
-      rethrow;
     }
   }
 
   Future<void> clearMessages() async {
     try {
-      final user = auth.FirebaseAuth.instance.currentUser;
-      if (user == null) return;
-
       final batch = _firestore.batch();
-      final messages = await _firestore
-          .collection('messages')
-          .where('userId', isEqualTo: user.uid)
-          .get();
+      final messages = await _firestore.collection('messages').get();
 
       for (var doc in messages.docs) {
         batch.delete(doc.reference);
       }
 
       await batch.commit();
+      print('All messages cleared successfully'); // Debug log
     } catch (e) {
       print('Error clearing messages: $e');
-      rethrow;
     }
   }
 
   // Lấy stream tin nhắn
   Stream<QuerySnapshot> getMessages() {
-    final user = auth.FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      return Stream.empty();
-    }
-
+    print('Getting messages from Firestore...'); // Debug log
     return _firestore
         .collection('messages')
-        .where('userId', isEqualTo: user.uid)
         .orderBy('timestamp', descending: true)
-        .limit(50)
-        .snapshots();
+        .snapshots()
+        .map((snapshot) {
+      print('Received ${snapshot.docs.length} messages'); // Debug log
+      for (var doc in snapshot.docs) {
+        print('Message: ${doc.data()}'); // Debug log
+      }
+      return snapshot;
+    });
   }
 }
