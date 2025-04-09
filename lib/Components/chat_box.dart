@@ -29,15 +29,15 @@ class _ChatBoxState extends State<ChatBox> {
       setState(() {
         _messages = snapshot.docs.map((doc) {
           final data = doc.data() as Map<String, dynamic>;
-          print('Message data: $data'); // Debug log
           return {
             'content': data['content'] ?? '',
-            'userName':
-                data['userName'] ?? (data['userId'] == 'bot' ? 'AI' : 'Bạn'),
+            'userName': data['userName'] ??
+                (data['userId'] == 'bot' ? 'Trợ lý ảo' : 'Bạn'),
             'userId': data['userId'] ?? 'user',
+            'type': data['type'],
+            'action': data['action'],
           };
         }).toList();
-        print('Messages loaded: $_messages'); // Debug log
       });
     });
   }
@@ -69,6 +69,56 @@ class _ChatBoxState extends State<ChatBox> {
 
   void _handleSuggestedQuestion(String question) {
     _messageController.text = question;
+  }
+
+  Widget _buildActionButton(String action) {
+    VoidCallback? onPressed;
+    String label = action;
+
+    switch (action) {
+      case 'Xem vé của tôi':
+        onPressed = () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => MyTicketListScreen(
+                userId: _auth.currentUser?.uid ?? '',
+              ),
+            ),
+          );
+        };
+        break;
+      case 'Xem lịch chiếu':
+        onPressed = () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => MovieListScreen(),
+            ),
+          );
+        };
+        break;
+      default:
+        return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 8.0),
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.orange,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(fontSize: 12),
+        ),
+      ),
+    );
   }
 
   @override
@@ -130,62 +180,11 @@ class _ChatBoxState extends State<ChatBox> {
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 14,
+                              fontFamily: 'Roboto',
                             ),
                           ),
-                          if (isBot &&
-                              message['content'] ==
-                                  'Hôm nay có phim gì hay?') ...[
-                            const SizedBox(height: 8),
-                            ElevatedButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => MovieListScreen()),
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.orange,
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 4),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                              ),
-                              child: const Text(
-                                'Xem danh sách phim',
-                                style: TextStyle(fontSize: 12),
-                              ),
-                            ),
-                          ],
-                          if (isBot &&
-                              message['content'] == 'Xem vé đã đặt ở đâu?') ...[
-                            const SizedBox(height: 8),
-                            ElevatedButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => MyTicketListScreen(
-                                      userId: _auth.currentUser?.uid ?? '',
-                                    ),
-                                  ),
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.orange,
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 4),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                              ),
-                              child: const Text(
-                                'Xem vé đã đặt',
-                                style: TextStyle(fontSize: 12),
-                              ),
-                            ),
-                          ],
+                          if (isBot && message['action'] != null)
+                            _buildActionButton(message['action']),
                         ],
                       ),
                     ),
@@ -210,10 +209,10 @@ class _ChatBoxState extends State<ChatBox> {
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      _buildSuggestedQuestion('Hôm nay có phim gì hay?'),
-                      _buildSuggestedQuestion('Xem vé đã đặt ở đâu?'),
-                      _buildSuggestedQuestion('Giá vé phim bao nhiêu?'),
-                      _buildSuggestedQuestion('Cách đặt vé online?'),
+                      _buildSuggestedQuestion('Phim nào đang chiếu hôm nay?'),
+                      _buildSuggestedQuestion('Xem lịch chiếu phim mới nhất'),
+                      _buildSuggestedQuestion('Kiểm tra vé đã đặt'),
+                      _buildSuggestedQuestion('Hướng dẫn đặt vé online'),
                     ],
                   ),
                 ),
